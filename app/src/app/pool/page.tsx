@@ -1,0 +1,483 @@
+"use client";
+
+import { useState } from "react";
+import { useConnection, useWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
+import { SystemProgram, PublicKey } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, getAccount, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
+import BN from "bn.js";
+
+import { getProgram } from "@/lib/program";
+import {
+  PROTOCOL_STATE,
+  FEE_VAULT,
+  USDC_MINT,
+  LIQUIDITY_POOL,
+  LP_VAULT,
+  getLpPositionPDA,
+} from "@/lib/addresses";
+import { rawToUsdc, usdcToRaw, bpsToPercent } from "@/lib/utils";
+import { useProtocolState } from "@/hooks/useProtocolState";
+import { useLiquidityPool } from "@/hooks/useLiquidityPool";
+import { useLpPosition } from "@/hooks/useLpPosition";
+import { useWalletBalances } from "@/hooks/useWalletBalances";
+import { Skeleton } from "@/components/Skeleton";
+
+async function ensureAta(connection: any, payer: PublicKey, mint: PublicKey, owner: PublicKey) {
+  const ata = await getAssociatedTokenAddress(mint, owner);
+  try {
+    await getAccount(connection, ata);
+    return { ata, needsCreate: false };
+  } catch {
+    return { ata, needsCreate: true };
+  }
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border border-border bg-panel p-4 md:p-6">
+      <h2 className="text-[10px] md:text-xs font-semibold text-secondary uppercase tracking-wider mb-4 md:mb-5">
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+function StatRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
+      <span className="text-xs md:text-sm text-secondary">{label}</span>
+      <span className={`text-xs md:text-sm ${mono ? "font-mono" : ""} text-primary`}>{value}</span>
+    </div>
+  );
+}
+
+export default function PoolPage() {
+  const { connection } = useConnection();
+  const { publicKey, connected } = useWallet();
+  const anchorWallet = useAnchorWallet();
+  const protocol = useProtocolState();
+  const pool = useLiquidityPool();
+  const lpPos = useLpPosition();
+  const walletBalances = useWalletBalances();
+
+  const [depositInput, setDepositInput] = useState("");
+  const [withdrawSharesInput, setWithdrawSharesInput] = useState("");
+  const [loading, setLoading] = useState<"deposit" | "withdraw" | "claim" | null>(null);
+  const [txStatus, setTxStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  // Derived values
+  const tvl = rawToUsdc(pool.totalUsdc);
+  const sharePrice = pool.totalShares > 0 ? pool.totalUsdc / pool.totalShares : 1;
+  const userShareValue = lpPos.shares * sharePrice;
+  const userPoolPct = pool.totalShares > 0 ? (lpPos.shares / pool.totalShares) * 100 : 0;
+
+  // Claimable fees: user's proportional share of accumulated_fees minus already claimed
+  const totalEntitled = pool.totalShares > 0
+    ? Math.floor((lpPos.shares / pool.totalShares) * pool.accumulatedFees)
+    : 0;
+  const claimable = Math.max(0, totalEntitled - lpPos.feesClaimed);
+
+  // APY estimate: (accumulated_fees / tvl) * annualized
+  // Simple estimate assuming fees accumulated since pool inception
+  const estApy = tvl > 0 ? (rawToUsdc(pool.accumulatedFees) / tvl) * 52 * 100 : 0;
+
+  // Preview calculations for deposit
+  const depositAmount = parseFloat(depositInput) || 0;
+  const depositRaw = usdcToRaw(depositAmount);
+  const previewShares = pool.totalShares > 0 && pool.totalUsdc > 0
+    ? Math.floor((depositRaw * pool.totalShares) / pool.totalUsdc)
+    : depositRaw;
+  const previewPoolPct = pool.totalShares > 0
+    ? ((lpPos.shares + previewShares) / (pool.totalShares + previewShares)) * 100
+    : depositRaw > 0 ? 100 : 0;
+
+  // Preview for withdraw
+  const withdrawShares = parseFloat(withdrawSharesInput) || 0;
+  const withdrawUsdcValue = pool.totalShares > 0
+    ? rawToUsdc(Math.floor((withdrawShares * pool.totalUsdc) / pool.totalShares))
+    : 0;
+
+  async function handleDeposit() {
+    if (!publicKey || !anchorWallet) return;
+    const amountRaw = usdcToRaw(parseFloat(depositInput) || 0);
+    if (amountRaw <= 0) return;
+    setLoading("deposit");
+    setTxStatus(null);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const lpPositionPda = getLpPositionPDA(publicKey);
+      const { ata, needsCreate } = await ensureAta(connection, publicKey, USDC_MINT, publicKey);
+
+      const txBuilder = (program.methods as any)
+        .lpDeposit(new BN(amountRaw))
+        .accounts({
+          user: publicKey,
+          protocolState: PROTOCOL_STATE,
+          liquidityPool: LIQUIDITY_POOL,
+          lpPosition: lpPositionPda,
+          userTokenAccount: ata,
+          lpVault: LP_VAULT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        });
+
+      if (needsCreate) {
+        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
+        await txBuilder.preInstructions([createIx]).rpc();
+      } else {
+        await txBuilder.rpc();
+      }
+      setTxStatus({ type: "success", msg: `Deposited $${depositInput} USDC into LP pool` });
+      setDepositInput("");
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "LP deposit failed" });
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleWithdraw() {
+    if (!publicKey || !anchorWallet) return;
+    const shares = parseFloat(withdrawSharesInput) || 0;
+    if (shares <= 0 || shares > lpPos.shares) return;
+    setLoading("withdraw");
+    setTxStatus(null);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const lpPositionPda = getLpPositionPDA(publicKey);
+      const { ata, needsCreate } = await ensureAta(connection, publicKey, USDC_MINT, publicKey);
+
+      const txBuilder = (program.methods as any)
+        .lpWithdraw(new BN(shares))
+        .accounts({
+          user: publicKey,
+          protocolState: PROTOCOL_STATE,
+          liquidityPool: LIQUIDITY_POOL,
+          lpPosition: lpPositionPda,
+          userTokenAccount: ata,
+          lpVault: LP_VAULT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        });
+
+      if (needsCreate) {
+        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
+        await txBuilder.preInstructions([createIx]).rpc();
+      } else {
+        await txBuilder.rpc();
+      }
+      setTxStatus({ type: "success", msg: `Withdrew ${shares} shares from LP pool` });
+      setWithdrawSharesInput("");
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "LP withdraw failed" });
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleClaimFees() {
+    if (!publicKey || !anchorWallet) return;
+    if (claimable <= 0) return;
+    setLoading("claim");
+    setTxStatus(null);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const lpPositionPda = getLpPositionPDA(publicKey);
+      const { ata, needsCreate } = await ensureAta(connection, publicKey, USDC_MINT, publicKey);
+
+      const txBuilder = (program.methods as any)
+        .claimFees()
+        .accounts({
+          user: publicKey,
+          protocolState: PROTOCOL_STATE,
+          liquidityPool: LIQUIDITY_POOL,
+          lpPosition: lpPositionPda,
+          userTokenAccount: ata,
+          feeVault: FEE_VAULT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        });
+
+      if (needsCreate) {
+        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
+        await txBuilder.preInstructions([createIx]).rpc();
+      } else {
+        await txBuilder.rpc();
+      }
+      setTxStatus({ type: "success", msg: `Claimed $${rawToUsdc(claimable).toFixed(2)} USDC in fees` });
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "Claim fees failed" });
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-8">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-primary">Liquidity Pool</h1>
+        <p className="text-secondary text-xs md:text-sm mt-1">
+          Provide liquidity and earn 30% of all trading fees.
+        </p>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+        <StatCard
+          label="Pool TVL"
+          value={pool.isLoading ? "..." : `$${tvl.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+        />
+        <StatCard
+          label="Accumulated Fees"
+          value={pool.isLoading ? "..." : `$${rawToUsdc(pool.accumulatedFees).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+        />
+        <StatCard
+          label="Est. APY"
+          value={pool.isLoading ? "..." : `${estApy.toFixed(1)}%`}
+          highlight={estApy > 0}
+        />
+        <StatCard
+          label="Your Share"
+          value={!connected ? "—" : lpPos.isLoading ? "..." : `${userPoolPct.toFixed(2)}%`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        {/* Left: Pool info + Your Position */}
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
+          {/* Your LP Position */}
+          <Section title="Your LP Position">
+            {!connected ? (
+              <p className="text-secondary text-sm">Connect wallet to view</p>
+            ) : lpPos.isLoading ? (
+              <Skeleton height="h-20" />
+            ) : !lpPos.exists ? (
+              <p className="text-secondary text-sm">No LP position yet. Deposit USDC to start earning fees.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                <div>
+                  <div className="text-[10px] md:text-xs text-secondary mb-1">Shares</div>
+                  <div className="text-base md:text-lg font-mono font-bold text-primary">
+                    {lpPos.shares.toLocaleString()}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] md:text-xs text-secondary mb-1">Value</div>
+                  <div className="text-base md:text-lg font-mono font-bold text-primary">
+                    ${rawToUsdc(userShareValue).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] md:text-xs text-secondary mb-1">Pool %</div>
+                  <div className="text-base md:text-lg font-mono font-bold text-primary">
+                    {userPoolPct.toFixed(2)}%
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] md:text-xs text-secondary mb-1">Fees Earned</div>
+                  <div className="text-base md:text-lg font-mono font-bold text-long">
+                    ${rawToUsdc(lpPos.feesClaimed + claimable).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Section>
+
+          {/* Pool Stats */}
+          <Section title="Pool Stats">
+            {pool.isLoading ? (
+              <Skeleton height="h-32" />
+            ) : (
+              <div className="space-y-0">
+                <StatRow label="Total USDC" value={`$${tvl.toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
+                <StatRow label="Total Shares" value={pool.totalShares.toLocaleString()} mono />
+                <StatRow label="Share Price" value={`$${rawToUsdc(sharePrice).toFixed(6)}`} mono />
+                <StatRow label="LP Fee Rate" value={bpsToPercent(pool.lpFeeBps) + " of trade fees"} mono />
+                <StatRow label="Accumulated Fees" value={`$${rawToUsdc(pool.accumulatedFees).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
+                <StatRow label="Est. APY" value={`${estApy.toFixed(1)}%`} mono />
+              </div>
+            )}
+          </Section>
+
+          {/* Protocol Open Interest */}
+          <Section title="Open Interest">
+            {protocol.isLoading ? (
+              <Skeleton height="h-20" />
+            ) : (
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="bg-bg border border-border p-3 md:p-4">
+                  <div className="text-[10px] md:text-xs text-secondary mb-1">Total Long</div>
+                  <div className="text-long font-mono font-semibold text-sm md:text-base">
+                    ${rawToUsdc(protocol.totalLongExposure).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+                <div className="bg-bg border border-border p-3 md:p-4">
+                  <div className="text-[10px] md:text-xs text-secondary mb-1">Total Short</div>
+                  <div className="text-short font-mono font-semibold text-sm md:text-base">
+                    ${rawToUsdc(protocol.totalShortExposure).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Section>
+        </div>
+
+        {/* Right: Deposit / Withdraw / Claim */}
+        <div className="space-y-4 md:space-y-6">
+          {/* Wallet info */}
+          <Section title="Wallet">
+            {!connected ? (
+              <p className="text-secondary text-sm">Connect wallet</p>
+            ) : (
+              <div>
+                <div className="text-xs text-secondary mb-1">USDC Balance</div>
+                <div className="text-xl font-mono font-bold text-primary">
+                  ${rawToUsdc(walletBalances.usdcRaw).toFixed(2)}
+                </div>
+              </div>
+            )}
+          </Section>
+
+          {/* Deposit */}
+          <Section title="Deposit">
+            <div className="space-y-3">
+              <div className="flex border border-border focus-within:border-secondary">
+                <input
+                  type="number"
+                  min="0"
+                  value={depositInput}
+                  onChange={(e) => setDepositInput(e.target.value)}
+                  placeholder="0.00"
+                  disabled={!connected}
+                  className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 disabled:opacity-50"
+                />
+                <span className="px-3 py-2.5 text-xs text-secondary bg-bg border-l border-border flex items-center">
+                  USDC
+                </span>
+              </div>
+
+              {depositAmount > 0 && (
+                <div className="text-xs text-secondary space-y-1 bg-bg border border-border p-3">
+                  <div className="flex justify-between">
+                    <span>Shares received</span>
+                    <span className="font-mono text-primary">{previewShares.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Your pool share</span>
+                    <span className="font-mono text-primary">{previewPoolPct.toFixed(2)}%</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleDeposit}
+                disabled={!connected || loading === "deposit" || !depositInput || depositAmount <= 0}
+                className="w-full py-2.5 text-sm font-bold holo-bg text-black hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {loading === "deposit" ? "Confirming..." : "Deposit to Pool"}
+              </button>
+            </div>
+          </Section>
+
+          {/* Withdraw */}
+          <Section title="Withdraw">
+            <div className="space-y-3">
+              <div className="flex border border-border focus-within:border-secondary">
+                <input
+                  type="number"
+                  min="0"
+                  value={withdrawSharesInput}
+                  onChange={(e) => setWithdrawSharesInput(e.target.value)}
+                  placeholder="0"
+                  disabled={!connected || lpPos.shares <= 0}
+                  className="flex-1 bg-transparent px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 disabled:opacity-50"
+                />
+                <span className="px-3 py-2.5 text-xs text-secondary bg-bg border-l border-border flex items-center">
+                  SHARES
+                </span>
+              </div>
+
+              {lpPos.exists && (
+                <div className="flex gap-2">
+                  {[25, 50, 75, 100].map((pct) => (
+                    <button
+                      key={pct}
+                      onClick={() => setWithdrawSharesInput(String(Math.floor(lpPos.shares * pct / 100)))}
+                      className="flex-1 text-xs py-1 border border-border text-secondary hover:text-primary hover:border-primary/50 transition-colors"
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {withdrawShares > 0 && (
+                <div className="text-xs text-secondary bg-bg border border-border p-3">
+                  <div className="flex justify-between">
+                    <span>USDC received</span>
+                    <span className="font-mono text-primary">${withdrawUsdcValue.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleWithdraw}
+                disabled={!connected || loading === "withdraw" || withdrawShares <= 0 || withdrawShares > lpPos.shares}
+                className="w-full py-2.5 text-sm font-bold border border-border text-primary hover:border-primary/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {loading === "withdraw" ? "Confirming..." : "Withdraw from Pool"}
+              </button>
+            </div>
+          </Section>
+
+          {/* Claim Fees */}
+          <Section title="Claim Fees">
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs text-secondary mb-1">Claimable</div>
+                <div className={`text-xl font-mono font-bold ${claimable > 0 ? "text-long" : "text-secondary"}`}>
+                  ${rawToUsdc(claimable).toFixed(2)}
+                </div>
+              </div>
+              {lpPos.exists && (
+                <div className="text-xs text-secondary">
+                  Total earned: ${rawToUsdc(lpPos.feesClaimed + claimable).toFixed(2)} USDC
+                </div>
+              )}
+              <button
+                onClick={handleClaimFees}
+                disabled={!connected || loading === "claim" || claimable <= 0}
+                className="w-full py-2.5 text-sm font-bold border border-long text-long hover:bg-long/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {loading === "claim" ? "Confirming..." : "Claim Fees"}
+              </button>
+            </div>
+          </Section>
+
+          {/* Tx status */}
+          {txStatus && (
+            <div
+              className={`text-xs px-3 py-2 border font-mono ${
+                txStatus.type === "success"
+                  ? "border-long text-long bg-long/10"
+                  : "border-short text-short bg-short/10"
+              }`}
+            >
+              {txStatus.msg}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="border border-border bg-panel p-3 md:p-4">
+      <div className="text-[10px] md:text-xs text-secondary mb-1">{label}</div>
+      <div className={`text-base md:text-lg font-mono font-bold ${highlight ? "text-long" : "text-primary"}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
