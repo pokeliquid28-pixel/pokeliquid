@@ -3,7 +3,7 @@
 import { useAnchorWallet, useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, getAccount, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { getProgram } from "@/lib/program";
 import { useNotifications } from "@/providers/NotificationProvider";
@@ -22,7 +22,6 @@ import {
   calcPnl,
   calcLiqPriceLong,
   calcLiqPriceShort,
-  timeOpen,
 } from "@/lib/utils";
 import { OracleData } from "@/hooks/useOracle";
 import { MarginAccountData, Position } from "@/hooks/useMarginAccount";
@@ -38,7 +37,19 @@ type Props = {
 };
 
 export function PositionPanel({ oracle, margin, protocol, onRefresh }: Props) {
-  if (margin.positions.length === 0) return null;
+  const { connected } = useWallet();
+
+  if (margin.positions.length === 0) {
+    if (!connected) return null;
+    return (
+      <div className="border border-border bg-panel p-6 md:p-8">
+        <div className="text-center space-y-2">
+          <div className="text-secondary text-sm">No open positions</div>
+          <div className="text-secondary/60 text-xs">Open your first position above</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -55,6 +66,26 @@ export function PositionPanel({ oracle, margin, protocol, onRefresh }: Props) {
     </div>
   );
 }
+
+// ── Live timer hook ─────────────────────────────────────────────────────────
+
+function useLiveTimer(openTimestamp: number) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const elapsed = Math.max(0, Math.floor(Date.now() / 1000) - openTimestamp);
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+// ── Position Card ───────────────────────────────────────────────────────────
 
 function PositionCard({
   pos,
@@ -75,49 +106,106 @@ function PositionCard({
   const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [txStatus, setTxStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-  const [showSlTp, setShowSlTp] = useState(false);
   const [slInput, setSlInput] = useState(pos.slPrice ? rawToPrice(pos.slPrice).toFixed(2) : "");
   const [tpInput, setTpInput] = useState(pos.tpPrice ? rawToPrice(pos.tpPrice).toFixed(2) : "");
   const [marginMode, setMarginMode] = useState<"idle" | "add" | "remove">("idle");
   const [marginInput, setMarginInput] = useState("");
+  const [confirmClose, setConfirmClose] = useState(false);
+  const [pnlFlash, setPnlFlash] = useState("");
 
+  const isLong = pos.direction === "Long";
+  const timeStr = useLiveTimer(pos.openTimestamp);
+
+  // ── Price & PnL ─────────────────────────────────────────────────────────
   const currentPriceRaw = oracle.price;
   const entryPriceUsd = rawToPrice(pos.entryPrice);
   const currentPriceUsd = rawToPrice(currentPriceRaw);
+  const collateralUsdc = rawToUsdc(pos.collateral);
+  const notionalUsdc = rawToUsdc(pos.notional);
 
   const pnlRaw = calcPnl(pos.direction, currentPriceRaw, pos.entryPrice, pos.notional);
   const pnlUsdc = rawToUsdc(pnlRaw);
   const isProfit = pnlUsdc >= 0;
+  const pnlPct = notionalUsdc > 0 ? (pnlUsdc / collateralUsdc) * 100 : 0;
 
-  const liqPrice =
-    pos.direction === "Long"
-      ? calcLiqPriceLong(pos.entryPrice, pos.leverage)
-      : calcLiqPriceShort(pos.entryPrice, pos.leverage);
+  // PnL flash on price change
+  const prevPnl = useRef(pnlUsdc);
+  useEffect(() => {
+    if (prevPnl.current !== pnlUsdc && prevPnl.current !== 0) {
+      setPnlFlash(pnlUsdc > prevPnl.current ? "pnl-flash-up" : "pnl-flash-down");
+      const t = setTimeout(() => setPnlFlash(""), 600);
+      prevPnl.current = pnlUsdc;
+      return () => clearTimeout(t);
+    }
+    prevPnl.current = pnlUsdc;
+  }, [pnlUsdc]);
 
-  // Accrued funding
+  const liqPrice = isLong
+    ? calcLiqPriceLong(pos.entryPrice, pos.leverage)
+    : calcLiqPriceShort(pos.entryPrice, pos.leverage);
+
+  // ── Margin ratio ────────────────────────────────────────────────────────
+  const marginRatio = pos.notional > 0 ? (pos.collateral / pos.notional) * 100 : 100;
+  const marginBarPct = Math.max(0, Math.min(marginRatio, 100));
+  const marginColor =
+    marginRatio < 15 ? "bg-short" : marginRatio < 30 ? "bg-yellow-400" : "bg-long";
+  const marginLabel =
+    marginRatio < 15 ? "text-short" : marginRatio < 30 ? "text-yellow-400" : "text-long";
+  const safetyLabel =
+    marginRatio < 15 ? "Danger" : marginRatio < 30 ? "Warning" : "Safe";
+  const safetyDot =
+    marginRatio < 15 ? "bg-short" : marginRatio < 30 ? "bg-yellow-400" : "bg-long";
+
+  // ── Funding ─────────────────────────────────────────────────────────────
   const nowSec = Math.floor(Date.now() / 1000);
   const hoursOpen = Math.max(0, Math.floor((nowSec - pos.openTimestamp) / 3600));
   const totalOI = protocol.totalLongExposure + protocol.totalShortExposure;
   const skewRate = totalOI > 0
     ? Math.floor(Math.abs(protocol.totalLongExposure - protocol.totalShortExposure) * protocol.skewFactor / totalOI)
     : 0;
-  const onMajority = pos.direction === "Long"
+  const onMajority = isLong
     ? protocol.totalLongExposure >= protocol.totalShortExposure
     : protocol.totalShortExposure >= protocol.totalLongExposure;
   const hourlyRate = onMajority
     ? protocol.baseFundingRatePerHour + skewRate
     : Math.max(0, protocol.baseFundingRatePerHour - skewRate);
-  const fundingOwedRaw = Math.floor(pos.notional * hourlyRate * hoursOpen / FUNDING_RATE_SCALE);
-  const fundingOwedUsdc = rawToUsdc(fundingOwedRaw);
+  const fundingAccrued = rawToUsdc(Math.floor(pos.notional * hourlyRate * hoursOpen / FUNDING_RATE_SCALE));
+  const fundingRatePct = (hourlyRate / FUNDING_RATE_SCALE) * 100;
+  const funding24hEst = rawToUsdc(Math.floor(pos.notional * hourlyRate * 24 / FUNDING_RATE_SCALE));
 
-  // Distance to liquidation
-  const distToLiq =
-    pos.direction === "Long"
-      ? ((currentPriceUsd - liqPrice) / currentPriceUsd) * 100
-      : ((liqPrice - currentPriceUsd) / currentPriceUsd) * 100;
-  const pastLiquidation = distToLiq <= 0;
-  const nearLiquidation = distToLiq < 15;
-  const healthBarPct = Math.max(0, Math.min(distToLiq, 100));
+  // ── SL/TP ───────────────────────────────────────────────────────────────
+  const slPriceUsd = pos.slPrice ? rawToPrice(pos.slPrice) : null;
+  const tpPriceUsd = pos.tpPrice ? rawToPrice(pos.tpPrice) : null;
+
+  // SL/TP input validation
+  const slVal = parseFloat(slInput) || 0;
+  const tpVal = parseFloat(tpInput) || 0;
+  const slValid = slVal === 0 || (isLong ? slVal < entryPriceUsd : slVal > entryPriceUsd);
+  const tpValid = tpVal === 0 || (isLong ? tpVal > entryPriceUsd : tpVal < entryPriceUsd);
+
+  // Estimated PnL at SL/TP prices
+  const estimatePnlAt = (price: number) => {
+    if (price === 0 || entryPriceUsd === 0) return 0;
+    const delta = isLong ? price - entryPriceUsd : entryPriceUsd - price;
+    return (delta / entryPriceUsd) * notionalUsdc;
+  };
+  const slEstPnl = slVal > 0 ? estimatePnlAt(slVal) : null;
+  const tpEstPnl = tpVal > 0 ? estimatePnlAt(tpVal) : null;
+
+  // ── Margin add/remove ───────────────────────────────────────────────────
+  const marginInputAmt = parseFloat(marginInput) || 0;
+  const marginInputRaw = marginInputAmt * 1e6;
+  const newCollateral = marginMode === "add"
+    ? pos.collateral + marginInputRaw
+    : pos.collateral - marginInputRaw;
+  const newMarginRatio = pos.notional > 0 ? (newCollateral / pos.notional) * 100 : 100;
+  const removeMarginWarning = marginMode === "remove" && newMarginRatio < 20 && newMarginRatio >= 15;
+  const removeMarginBlocked = marginMode === "remove" && newMarginRatio < 15;
+
+  // ── Close fee preview ───────────────────────────────────────────────────
+  const closeFeeUsdc = rawToUsdc(Math.floor((pos.collateral * protocol.feeBps) / 10_000));
+
+  // ── TX handlers ─────────────────────────────────────────────────────────
 
   async function handleClose() {
     if (!publicKey || !anchorWallet) return;
@@ -129,11 +217,7 @@ function PositionCard({
       const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
 
       let needsCreate = false;
-      try {
-        await getAccount(connection, ata);
-      } catch {
-        needsCreate = true;
-      }
+      try { await getAccount(connection, ata); } catch { needsCreate = true; }
 
       const txBuilder = (program.methods as any).closePosition(pos.index).accounts({
         user: publicKey,
@@ -162,6 +246,7 @@ function PositionCard({
         `Position #${pos.index} Closed`,
         `${pos.direction} closed at $${currentPriceUsd.toFixed(2)} — PnL: ${isProfit ? "+" : ""}$${pnlUsdc.toFixed(2)}`
       );
+      setConfirmClose(false);
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Transaction failed" });
@@ -179,11 +264,11 @@ function PositionCard({
       const program = getProgram(connection, anchorWallet);
       const marginPda = getMarginAccountPDA(publicKey);
 
-      const slVal = slInput ? new BN(Math.round(parseFloat(slInput) * 1_000_000)) : null;
-      const tpVal = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
+      const slBn = slInput ? new BN(Math.round(parseFloat(slInput) * 1_000_000)) : null;
+      const tpBn = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
 
       await (program.methods as any)
-        .setSlTp(pos.index, slVal, tpVal)
+        .setSlTp(pos.index, slBn, tpBn)
         .accounts({
           user: publicKey,
           protocolState: PROTOCOL_STATE,
@@ -192,9 +277,8 @@ function PositionCard({
         })
         .rpc();
 
-      setTxStatus({ type: "success", msg: `SL/TP updated for position #${pos.index}` });
+      setTxStatus({ type: "success", msg: `SL/TP updated` });
       addNotification("success", `SL/TP Updated — #${pos.index}`, `SL: ${slInput || "none"} / TP: ${tpInput || "none"}`);
-      setShowSlTp(false);
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Failed to set SL/TP" });
@@ -221,7 +305,7 @@ function PositionCard({
           marginAccount: marginPda,
         })
         .rpc();
-      setTxStatus({ type: "success", msg: `Added $${amt.toFixed(2)} margin to position #${pos.index}` });
+      setTxStatus({ type: "success", msg: `+$${amt.toFixed(2)} margin added` });
       addNotification("success", `Margin Added — #${pos.index}`, `+$${amt.toFixed(2)} USDC`);
       setMarginMode("idle");
       setMarginInput("");
@@ -252,7 +336,7 @@ function PositionCard({
           oracle: ORACLE_ACCOUNT,
         })
         .rpc();
-      setTxStatus({ type: "success", msg: `Removed $${amt.toFixed(2)} margin from position #${pos.index}` });
+      setTxStatus({ type: "success", msg: `-$${amt.toFixed(2)} margin removed` });
       addNotification("info", `Margin Removed — #${pos.index}`, `-$${amt.toFixed(2)} USDC`);
       setMarginMode("idle");
       setMarginInput("");
@@ -265,171 +349,198 @@ function PositionCard({
     }
   }
 
-  // Margin ratio calculations
-  const currentMarginRatio = pos.notional > 0 ? (pos.collateral / pos.notional) * 100 : 100;
-  const marginInputAmt = parseFloat(marginInput) || 0;
-  const marginInputRaw = marginInputAmt * 1e6;
-  const newCollateral = marginMode === "add"
-    ? pos.collateral + marginInputRaw
-    : pos.collateral - marginInputRaw;
-  const newMarginRatio = pos.notional > 0 ? (newCollateral / pos.notional) * 100 : 100;
-  const removeMarginWarning = marginMode === "remove" && newMarginRatio < 20 && newMarginRatio >= 15;
-  const removeMarginBlocked = marginMode === "remove" && newMarginRatio < 15;
+  // ── Render ──────────────────────────────────────────────────────────────
 
-  // SL/TP proximity warning
-  const slPriceUsd = pos.slPrice ? rawToPrice(pos.slPrice) : null;
-  const tpPriceUsd = pos.tpPrice ? rawToPrice(pos.tpPrice) : null;
-  const nearSl = slPriceUsd !== null && Math.abs(currentPriceUsd - slPriceUsd) / currentPriceUsd < 0.05;
+  const borderColor = isLong ? "border-l-long" : "border-l-short";
 
   return (
-    <div className="border border-border bg-panel p-4 md:p-6 space-y-4 md:space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider">
-          Position #{pos.index}
-        </h2>
-        <div className="flex items-center gap-3">
+    <div className={`border border-border border-l-2 ${borderColor} bg-panel`}>
+      {/* ── Header row ──────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+        <div className="flex items-center gap-2.5">
           <span
-            className={`px-2.5 py-0.5 text-xs font-bold tracking-wider ${
-              pos.direction === "Long"
-                ? "bg-long/20 text-long border border-long/30"
-                : "bg-short/20 text-short border border-short/30"
+            className={`px-2 py-0.5 text-[11px] font-bold tracking-wider ${
+              isLong
+                ? "bg-long/15 text-long border border-long/30"
+                : "bg-short/15 text-short border border-short/30"
             }`}
           >
-            {pos.direction}
+            {pos.direction.toUpperCase()}
           </span>
           <span className="text-xs font-mono text-secondary">{pos.leverage}x</span>
+          <span className="text-xs font-mono text-primary">${collateralUsdc.toFixed(2)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {marginMode === "idle" && (
+            <>
+              <button
+                onClick={() => { setMarginMode("add"); setMarginInput(""); }}
+                disabled={loading || rawToUsdc(freeCollateral) <= 0}
+                className="px-2.5 py-1 text-[10px] font-medium border border-border text-secondary hover:text-long hover:border-long/50 transition-colors disabled:opacity-40"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => { setMarginMode("remove"); setMarginInput(""); }}
+                disabled={loading}
+                className="px-2.5 py-1 text-[10px] font-medium border border-border text-secondary hover:text-short hover:border-short/50 transition-colors disabled:opacity-40"
+              >
+                Remove
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {pastLiquidation ? (
-        <div className="border border-short bg-short/20 px-3 py-2 text-xs text-short font-bold">
-          PAST LIQUIDATION — Close this position immediately
+      {/* ── Main data ───────────────────────────────────────────────────── */}
+      <div className="px-4 py-3 space-y-3">
+        {/* Price row */}
+        <div className="grid grid-cols-2 gap-x-4 text-xs font-mono">
+          <div>
+            <span className="text-secondary">Entry </span>
+            <span className="text-primary">${entryPriceUsd.toFixed(2)}</span>
+          </div>
+          <div className="text-right">
+            <span className="text-secondary">Current </span>
+            <span className="text-primary">${currentPriceUsd.toFixed(2)}</span>
+          </div>
         </div>
-      ) : nearLiquidation ? (
-        <div className="border border-short bg-short/10 px-3 py-2 text-xs text-short font-medium">
-          WARNING: Position within {distToLiq.toFixed(1)}% of liquidation price
+
+        {/* Size + PnL row */}
+        <div className="grid grid-cols-2 gap-x-4 text-xs font-mono">
+          <div>
+            <span className="text-secondary">Size </span>
+            <span className="text-primary">${notionalUsdc.toFixed(2)}</span>
+          </div>
+          <div className={`text-right ${pnlFlash}`}>
+            <span className="text-secondary">PnL </span>
+            <span className={isProfit ? "text-long" : "text-short"}>
+              {isProfit ? "+" : ""}${pnlUsdc.toFixed(2)}{" "}
+              <span className="text-[10px]">
+                {isProfit ? "+" : ""}{pnlPct.toFixed(2)}%
+              </span>
+            </span>
+          </div>
         </div>
-      ) : null}
 
-      <div className="grid grid-cols-2 gap-2 md:gap-3 text-xs">
-        <Stat label="Entry Price" value={`$${entryPriceUsd.toFixed(2)}`} />
-        <Stat label="Current Price" value={`$${currentPriceUsd.toFixed(2)}`} />
-        <Stat
-          label="Unrealized PnL"
-          value={`${isProfit ? "+" : ""}$${pnlUsdc.toFixed(4)}`}
-          color={isProfit ? "text-long" : "text-short"}
-        />
-        <Stat label="Liq. Price" value={`$${liqPrice.toFixed(2)}`} color="text-short" />
-        <Stat label="Collateral" value={`$${rawToUsdc(pos.collateral).toFixed(2)}`} />
-        <Stat label="Notional" value={`$${rawToUsdc(pos.notional).toFixed(2)}`} />
-        <Stat label="Time Open" value={timeOpen(pos.openTimestamp)} />
-        <Stat label="Stop Loss" value={slPriceUsd ? `$${slPriceUsd.toFixed(2)}` : "Not set"} color={nearSl ? "text-short" : slPriceUsd ? "text-primary" : "text-secondary"} />
-        <Stat label="Take Profit" value={tpPriceUsd ? `$${tpPriceUsd.toFixed(2)}` : "Not set"} color={tpPriceUsd ? "text-long" : "text-secondary"} />
-        <Stat label="Oracle Status" value={oracle.isStale ? "STALE" : "LIVE"} color={oracle.isStale ? "text-short" : "text-long"} />
-        <Stat
-          label={`Funding Owed (${hoursOpen}h)`}
-          value={hoursOpen > 0 ? `-$${fundingOwedUsdc.toFixed(4)}` : "< 1h"}
-          color={hoursOpen > 0 ? "text-short" : "text-secondary"}
-        />
-        <Stat
-          label="Funding Rate/hr"
-          value={`${((hourlyRate / FUNDING_RATE_SCALE) * 100).toFixed(4)}%`}
-          color="text-secondary"
-        />
-      </div>
-
-      {/* Margin health bar */}
-      <div className="space-y-1">
-        <div className="flex justify-between text-xs text-secondary">
-          <span>Margin health</span>
-          <span className={pastLiquidation || nearLiquidation ? "text-short" : "text-long"}>
-            {pastLiquidation
-              ? "Past liquidation"
-              : `${distToLiq.toFixed(1)}% from liquidation`}
-          </span>
-        </div>
-        <div className="h-1.5 bg-border overflow-hidden">
-          <div
-            className={`h-full transition-all duration-500 ${
-              pastLiquidation || nearLiquidation ? "bg-short" : healthBarPct < 30 ? "bg-yellow-400" : "bg-long"
-            }`}
-            style={{ width: `${healthBarPct.toFixed(1)}%` }}
-          />
-        </div>
-      </div>
-
-      {nearSl && (
-        <div className="border border-yellow-500 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-400 font-medium">
-          WARNING: Price within 5% of stop-loss trigger
-        </div>
-      )}
-
-      {/* SL/TP edit section */}
-      <button
-        onClick={() => setShowSlTp(!showSlTp)}
-        className="w-full py-2 text-xs border border-border text-secondary hover:text-primary hover:border-secondary transition-colors"
-      >
-        {showSlTp ? "Hide SL/TP" : "Set SL/TP"}
-      </button>
-
-      {showSlTp && (
-        <div className="border border-border p-4 space-y-3 bg-bg">
-          <div className="space-y-1.5">
-            <label className="text-xs text-secondary">
-              Stop Loss {pos.direction === "Long" ? "(below entry)" : "(above entry)"}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={slInput}
-              onChange={(e) => setSlInput(e.target.value)}
-              placeholder={pos.direction === "Long" ? `< $${entryPriceUsd.toFixed(2)}` : `> $${entryPriceUsd.toFixed(2)}`}
-              className="w-full bg-transparent border border-border px-3 py-2 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+        {/* Margin ratio bar */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[11px]">
+            <span className="text-secondary">Margin ratio</span>
+            <div className="flex items-center gap-1.5">
+              <span className={`font-mono font-medium ${marginLabel}`}>{marginRatio.toFixed(0)}%</span>
+            </div>
+          </div>
+          <div className="h-1.5 bg-border overflow-hidden rounded-full">
+            <div
+              className={`h-full transition-all duration-500 rounded-full ${marginColor}`}
+              style={{ width: `${marginBarPct}%` }}
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs text-secondary">
-              Take Profit {pos.direction === "Long" ? "(above entry)" : "(below entry)"}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={tpInput}
-              onChange={(e) => setTpInput(e.target.value)}
-              placeholder={pos.direction === "Long" ? `> $${entryPriceUsd.toFixed(2)}` : `< $${entryPriceUsd.toFixed(2)}`}
-              className="w-full bg-transparent border border-border px-3 py-2 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-            />
+          <div className="flex justify-between text-[10px]">
+            <span className="text-secondary">
+              Liq: <span className="text-short font-mono">${liqPrice.toFixed(2)}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${safetyDot}`} />
+              <span className={marginLabel}>{safetyLabel}</span>
+            </div>
           </div>
-          <button
-            onClick={handleSetSlTp}
-            disabled={loading || (!slInput && !tpInput)}
-            className="w-full py-2 text-xs font-bold border border-long text-long hover:bg-long/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Confirming..." : "Update SL/TP"}
-          </button>
         </div>
-      )}
 
-      {/* Add/Remove margin */}
-      {marginMode === "idle" ? (
-        <div className="flex gap-3">
-          <button
-            onClick={() => { setMarginMode("add"); setMarginInput(""); }}
-            disabled={loading || rawToUsdc(freeCollateral) <= 0}
-            className="flex-1 py-2 text-xs border border-long/50 text-long hover:bg-long/10 transition-colors disabled:opacity-50"
-          >
-            Add Margin
-          </button>
-          <button
-            onClick={() => { setMarginMode("remove"); setMarginInput(""); }}
-            disabled={loading}
-            className="flex-1 py-2 text-xs border border-short/50 text-short hover:bg-short/10 transition-colors disabled:opacity-50"
-          >
-            Remove Margin
-          </button>
+        {/* SL/TP inline */}
+        <div className="border border-border/50 bg-bg p-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-secondary mb-1 block">
+                Stop Loss {slPriceUsd ? "" : "(not set)"}
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={slInput}
+                onChange={(e) => setSlInput(e.target.value)}
+                placeholder={isLong ? `< ${entryPriceUsd.toFixed(2)}` : `> ${entryPriceUsd.toFixed(2)}`}
+                className={`w-full bg-transparent border px-2 py-1.5 text-xs font-mono text-primary outline-none placeholder:text-secondary/30 ${
+                  slVal > 0 && !slValid ? "border-short" : "border-border focus:border-secondary"
+                }`}
+              />
+              {slVal > 0 && !slValid && (
+                <div className="text-[9px] text-short mt-0.5">
+                  {isLong ? "Must be below entry" : "Must be above entry"}
+                </div>
+              )}
+              {slEstPnl !== null && slValid && (
+                <div className={`text-[9px] mt-0.5 font-mono ${slEstPnl >= 0 ? "text-long" : "text-short"}`}>
+                  Est: {slEstPnl >= 0 ? "+" : ""}${slEstPnl.toFixed(2)}
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="text-[10px] text-secondary mb-1 block">
+                Take Profit {tpPriceUsd ? "" : "(not set)"}
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={tpInput}
+                onChange={(e) => setTpInput(e.target.value)}
+                placeholder={isLong ? `> ${entryPriceUsd.toFixed(2)}` : `< ${entryPriceUsd.toFixed(2)}`}
+                className={`w-full bg-transparent border px-2 py-1.5 text-xs font-mono text-primary outline-none placeholder:text-secondary/30 ${
+                  tpVal > 0 && !tpValid ? "border-short" : "border-border focus:border-secondary"
+                }`}
+              />
+              {tpVal > 0 && !tpValid && (
+                <div className="text-[9px] text-short mt-0.5">
+                  {isLong ? "Must be above entry" : "Must be below entry"}
+                </div>
+              )}
+              {tpEstPnl !== null && tpValid && (
+                <div className={`text-[9px] mt-0.5 font-mono ${tpEstPnl >= 0 ? "text-long" : "text-short"}`}>
+                  Est: {tpEstPnl >= 0 ? "+" : ""}${tpEstPnl.toFixed(2)}
+                </div>
+              )}
+            </div>
+          </div>
+          {(slInput || tpInput) && (slValid && tpValid) && (
+            <button
+              onClick={handleSetSlTp}
+              disabled={loading || (!slInput && !tpInput)}
+              className="w-full py-1.5 text-[11px] font-bold border border-long/50 text-long hover:bg-long/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Confirming..." : "Set SL/TP"}
+            </button>
+          )}
         </div>
-      ) : (
-        <div className="border border-border p-4 space-y-3 bg-bg">
+
+        {/* Funding */}
+        <div className="grid grid-cols-3 gap-2 text-[10px] md:text-[11px] font-mono">
+          <div>
+            <div className="text-secondary mb-0.5">Funding accrued</div>
+            <div className={hoursOpen > 0 ? "text-short" : "text-secondary"}>
+              {hoursOpen > 0 ? `-$${fundingAccrued.toFixed(4)}` : "< 1h"}
+            </div>
+          </div>
+          <div>
+            <div className="text-secondary mb-0.5">Rate</div>
+            <div className="text-primary">{fundingRatePct.toFixed(4)}%/hr</div>
+          </div>
+          <div>
+            <div className="text-secondary mb-0.5">Est 24h</div>
+            <div className="text-short">-${funding24hEst.toFixed(4)}</div>
+          </div>
+        </div>
+
+        {/* Time open */}
+        <div className="flex justify-between text-[10px] md:text-[11px] text-secondary">
+          <span>Time open: <span className="text-primary font-mono">{timeStr}</span></span>
+          <span>Oracle: <span className={oracle.isStale ? "text-short" : "text-long"}>{oracle.isStale ? "STALE" : "LIVE"}</span></span>
+        </div>
+      </div>
+
+      {/* ── Margin add/remove panel ─────────────────────────────────────── */}
+      {marginMode !== "idle" && (
+        <div className="border-t border-border px-4 py-3 bg-bg space-y-2.5">
           <div className="flex justify-between text-xs text-secondary">
             <span>{marginMode === "add" ? "Add Margin" : "Remove Margin"}</span>
             <span
@@ -451,30 +562,28 @@ function PositionCard({
             className="w-full bg-transparent border border-border px-3 py-2 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
           />
           {marginInputAmt > 0 && (
-            <div className="text-xs text-secondary space-y-1">
-              <div className="flex justify-between">
-                <span>Margin ratio</span>
-                <span>
-                  <span className="text-primary">{currentMarginRatio.toFixed(1)}%</span>
-                  <span className="mx-1">→</span>
-                  <span className={newMarginRatio < 15 ? "text-short" : newMarginRatio < 20 ? "text-yellow-400" : "text-long"}>
-                    {newMarginRatio.toFixed(1)}%
-                  </span>
+            <div className="flex justify-between text-xs text-secondary">
+              <span>Margin ratio</span>
+              <span>
+                <span className="text-primary">{marginRatio.toFixed(1)}%</span>
+                <span className="mx-1">→</span>
+                <span className={newMarginRatio < 15 ? "text-short" : newMarginRatio < 20 ? "text-yellow-400" : "text-long"}>
+                  {newMarginRatio.toFixed(1)}%
                 </span>
-              </div>
+              </span>
             </div>
           )}
           {removeMarginWarning && (
-            <div className="text-xs text-yellow-400 border border-yellow-500/30 bg-yellow-500/10 px-3 py-2">
+            <div className="text-[10px] text-yellow-400 border border-yellow-500/30 bg-yellow-500/10 px-2 py-1.5">
               Warning: Margin ratio will drop below 20%
             </div>
           )}
           {removeMarginBlocked && (
-            <div className="text-xs text-short border border-short/30 bg-short/10 px-3 py-2">
+            <div className="text-[10px] text-short border border-short/30 bg-short/10 px-2 py-1.5">
               Cannot remove — margin ratio would drop below 15%
             </div>
           )}
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button
               onClick={marginMode === "add" ? handleAddMargin : handleRemoveMargin}
               disabled={loading || marginInputAmt <= 0 || (marginMode === "remove" && removeMarginBlocked)}
@@ -497,9 +606,10 @@ function PositionCard({
         </div>
       )}
 
+      {/* ── TX status ───────────────────────────────────────────────────── */}
       {txStatus && (
         <div
-          className={`text-xs px-3 py-2 border font-mono ${
+          className={`mx-4 mb-3 text-xs px-3 py-2 border font-mono ${
             txStatus.type === "success"
               ? "border-long text-long bg-long/10"
               : "border-short text-short bg-short/10"
@@ -509,31 +619,74 @@ function PositionCard({
         </div>
       )}
 
-      <button
-        onClick={handleClose}
-        disabled={loading || oracle.isStale}
-        className="w-full py-3.5 md:py-3 text-sm font-bold border border-short text-short hover:bg-short/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? "Confirming..." : oracle.isStale ? "Oracle Stale — Cannot Close" : `Close Position #${pos.index}`}
-      </button>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color?: string;
-}) {
-  return (
-    <div className="bg-bg p-2.5 border border-border/50">
-      <div className="text-secondary text-xs mb-1">{label}</div>
-      <div className={`font-mono font-medium text-sm ${color ?? "text-primary"}`}>
-        {value}
+      {/* ── Close section ───────────────────────────────────────────────── */}
+      <div className="border-t border-border px-4 py-3">
+        {!confirmClose ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setConfirmClose(true)}
+              disabled={loading || oracle.isStale}
+              className="flex-1 py-2.5 text-xs font-bold border border-short/60 text-short hover:bg-short/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {oracle.isStale ? "Oracle Stale" : "Close Position"}
+            </button>
+            <button
+              disabled
+              className="px-3 py-2.5 text-[10px] border border-border text-secondary/40 cursor-not-allowed"
+              title="Partial close coming soon"
+            >
+              50%
+            </button>
+            <button
+              disabled
+              className="px-3 py-2.5 text-[10px] border border-border text-secondary/40 cursor-not-allowed"
+              title="Partial close coming soon"
+            >
+              25%
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="text-xs text-secondary font-mono bg-bg border border-border p-2.5 space-y-1">
+              <div className="flex justify-between">
+                <span>Close at</span>
+                <span className="text-primary">${currentPriceUsd.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>PnL</span>
+                <span className={isProfit ? "text-long" : "text-short"}>
+                  {isProfit ? "+" : ""}${pnlUsdc.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Close fee</span>
+                <span className="text-primary">-${closeFeeUsdc.toFixed(4)}</span>
+              </div>
+              {hoursOpen > 0 && (
+                <div className="flex justify-between">
+                  <span>Funding owed</span>
+                  <span className="text-short">-${fundingAccrued.toFixed(4)}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleClose}
+                disabled={loading}
+                className="flex-1 py-2.5 text-xs font-bold bg-short text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {loading ? "Confirming..." : "Confirm Close"}
+              </button>
+              <button
+                onClick={() => setConfirmClose(false)}
+                disabled={loading}
+                className="px-4 py-2.5 text-xs border border-border text-secondary hover:text-primary transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

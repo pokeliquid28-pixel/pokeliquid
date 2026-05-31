@@ -1276,6 +1276,72 @@ async function parseRecentTrades(connection) {
   }
 }
 
+// ─── Event decoder validation ─────────────────────────────────────────────────
+
+const EVENT_DISC_ORACLE_UPDATED = createHash("sha256").update("event:OracleUpdated").digest().slice(0, 8);
+
+let eventDecoderValidated = false;
+
+async function validateEventDecoder(connection, txSig) {
+  if (eventDecoderValidated) return;
+  try {
+    const tx = await connection.getTransaction(txSig, {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0,
+    });
+    if (!tx || !tx.meta || !tx.meta.logMessages) {
+      log(`WARN  [EVENTS] Cannot validate decoder — no logs for tx ${txSig.slice(0, 16)}…`);
+      return;
+    }
+
+    let foundEvents = 0;
+    for (const logLine of tx.meta.logMessages) {
+      const data = parseEventData(logLine);
+      if (!data || data.length < 8) continue;
+      const disc = data.slice(0, 8);
+
+      if (disc.equals(EVENT_DISC_ORACLE_UPDATED)) {
+        // OracleUpdated: disc(8) + old_price(8) + new_price(8) + timestamp(8)
+        if (data.length >= 32) {
+          const oldPrice = Number(data.readBigUInt64LE(8)) / 1e6;
+          const newPrice = Number(data.readBigUInt64LE(16)) / 1e6;
+          const timestamp = Number(data.readBigInt64LE(24));
+          log(`INFO  [EVENTS] EVENT DECODED: OracleUpdated { old_price: ${oldPrice.toFixed(2)}, new_price: ${newPrice.toFixed(2)}, timestamp: ${timestamp} }`);
+          insertEvent.run(timestamp, "OracleUpdated", JSON.stringify({ oldPrice, newPrice, timestamp }), txSig);
+          foundEvents++;
+        } else {
+          log(`WARN  [EVENTS] OracleUpdated decode failed — raw bytes: ${data.toString("hex")}`);
+        }
+      } else if (disc.equals(EVENT_DISC_POSITION_OPENED)) {
+        const evt = decodePositionOpened(data);
+        if (evt) {
+          log(`INFO  [EVENTS] EVENT DECODED: PositionOpened { user: ${evt.user.slice(0, 8)}…, entry_price: ${evt.entryPrice.toFixed(2)} }`);
+          foundEvents++;
+        } else {
+          log(`WARN  [EVENTS] PositionOpened decode failed — raw bytes: ${data.toString("hex").slice(0, 80)}…`);
+        }
+      } else if (disc.equals(EVENT_DISC_POSITION_CLOSED)) {
+        const evt = decodePositionClosed(data);
+        if (evt) {
+          log(`INFO  [EVENTS] EVENT DECODED: PositionClosed { user: ${evt.user.slice(0, 8)}…, reason: ${evt.reason}, pnl: ${evt.pnl.toFixed(2)} }`);
+          foundEvents++;
+        } else {
+          log(`WARN  [EVENTS] PositionClosed decode failed — raw bytes: ${data.toString("hex").slice(0, 80)}…`);
+        }
+      }
+    }
+
+    if (foundEvents > 0) {
+      log(`INFO  [EVENTS] Event decoder validated: ${foundEvents} events decoded from tx ${txSig.slice(0, 16)}…`);
+    } else {
+      log(`INFO  [EVENTS] No trade/oracle events in tx ${txSig.slice(0, 16)}… (normal for oracle-only tx)`);
+    }
+    eventDecoderValidated = true;
+  } catch (err) {
+    log(`WARN  [EVENTS] Event decoder validation failed: ${err.message}`);
+  }
+}
+
 // ─── Main cycle ───────────────────────────────────────────────────────────────
 
 async function runCycle(connection, payer) {
@@ -1329,6 +1395,11 @@ async function runCycle(connection, payer) {
   saveState();
   if (rawPrice !== null) {
     recordPrice(rawPrice, ewma, ewmaDeviation, ewmaAlpha, sig);
+  }
+
+  // Validate event decoder on first successful oracle update
+  if (!eventDecoderValidated) {
+    await validateEventDecoder(connection, sig);
   }
 
   // Parse trade events from recent transactions
