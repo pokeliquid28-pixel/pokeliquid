@@ -1,39 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair } from "@solana/web3.js";
 import {
   setSessionFromPrivateKey,
   setSavedEmail,
   saveSessionKeypair,
-  getSavedEmail,
   SessionWalletName,
 } from "@/lib/session-wallet";
 
-type Mode = "login" | "signup" | "reset";
+type Mode = "login" | "signup";
 
 export function LandingAuth() {
   const { select } = useWallet();
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   function clearFields() {
     setPassword("");
     setConfirmPassword("");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmNewPassword("");
     setError("");
-    setSuccess("");
   }
 
   async function handleLogin() {
@@ -118,42 +111,11 @@ export function LandingAuth() {
     }
   }
 
-  async function handleResetPassword() {
-    if (!email || !currentPassword || !newPassword || !confirmNewPassword || loading) return;
-
-    if (newPassword !== confirmNewPassword) {
-      setError("New passwords don't match");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, currentPassword, newPassword }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Reset failed");
-
-      setSuccess("Password updated! You can now log in.");
-      setTimeout(() => { setMode("login"); clearFields(); }, 2000);
-    } catch (e: any) {
-      setError(e?.message ?? "Reset failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   function handleGuest() {
     select(SessionWalletName);
   }
 
   const signupValid = email && password && confirmPassword && password.length >= 6 && password === confirmPassword;
-  const resetValid = email && currentPassword && newPassword && confirmNewPassword && newPassword.length >= 6 && newPassword === confirmNewPassword;
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -169,154 +131,99 @@ export function LandingAuth() {
 
         <div className="border border-border bg-panel p-6 space-y-4">
           <h2 className="text-sm font-bold text-primary text-center">
-            {mode === "login" ? "Log In" : mode === "signup" ? "Create Account" : "Reset Password"}
+            {mode === "login" ? "Log In" : "Create Account"}
           </h2>
 
-          {success ? (
-            <div className="border border-long bg-long/10 p-4 text-center">
-              <div className="text-sm font-bold text-long">{success}</div>
-            </div>
-          ) : (
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@example.com"
+            className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+          />
+
+          {mode === "login" && (
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            />
+          )}
+
+          {mode === "signup" && (
             <>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@example.com"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password (min 6 characters)"
                 className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
               />
-
-              {mode === "login" && (
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+                className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+                onKeyDown={(e) => e.key === "Enter" && handleSignup()}
+              />
+              {password && confirmPassword && password !== confirmPassword && (
+                <div className="text-xs text-short">Passwords don't match</div>
               )}
-
-              {mode === "signup" && (
-                <>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password (min 6 characters)"
-                    className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                  />
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm password"
-                    className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                    onKeyDown={(e) => e.key === "Enter" && handleSignup()}
-                  />
-                  {password && confirmPassword && password !== confirmPassword && (
-                    <div className="text-xs text-short">Passwords don't match</div>
-                  )}
-                </>
-              )}
-
-              {mode === "reset" && (
-                <>
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Current password"
-                    className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                  />
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="New password (min 6 characters)"
-                    className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                  />
-                  <input
-                    type="password"
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                    onKeyDown={(e) => e.key === "Enter" && handleResetPassword()}
-                  />
-                  {newPassword && confirmNewPassword && newPassword !== confirmNewPassword && (
-                    <div className="text-xs text-short">Passwords don't match</div>
-                  )}
-                </>
-              )}
-
-              {error && (
-                <div className="text-xs text-short border border-short/30 bg-short/10 px-3 py-2">
-                  {error}
-                </div>
-              )}
-
-              <button
-                onClick={
-                  mode === "login"
-                    ? handleLogin
-                    : mode === "signup"
-                    ? handleSignup
-                    : handleResetPassword
-                }
-                disabled={
-                  loading ||
-                  (mode === "login" && (!email || !password)) ||
-                  (mode === "signup" && !signupValid) ||
-                  (mode === "reset" && !resetValid)
-                }
-                className="w-full py-3 text-sm font-bold holo-bg text-black hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading
-                  ? "..."
-                  : mode === "login"
-                  ? "Log In"
-                  : mode === "signup"
-                  ? "Create Account"
-                  : "Update Password"}
-              </button>
-
-              <div className="text-center space-y-1.5">
-                {mode === "login" && (
-                  <>
-                    <button
-                      onClick={() => { setMode("signup"); clearFields(); }}
-                      className="text-xs text-secondary hover:text-primary transition-colors block w-full"
-                    >
-                      Don't have an account? Sign up
-                    </button>
-                    <button
-                      onClick={() => { setMode("reset"); clearFields(); }}
-                      className="text-xs text-secondary/60 hover:text-primary transition-colors block w-full"
-                    >
-                      Forgot password?
-                    </button>
-                  </>
-                )}
-                {mode === "signup" && (
-                  <button
-                    onClick={() => { setMode("login"); clearFields(); }}
-                    className="text-xs text-secondary hover:text-primary transition-colors"
-                  >
-                    Already have an account? Log in
-                  </button>
-                )}
-                {mode === "reset" && (
-                  <button
-                    onClick={() => { setMode("login"); clearFields(); }}
-                    className="text-xs text-secondary hover:text-primary transition-colors"
-                  >
-                    Back to log in
-                  </button>
-                )}
-              </div>
             </>
           )}
+
+          {error && (
+            <div className="text-xs text-short border border-short/30 bg-short/10 px-3 py-2">
+              {error}
+            </div>
+          )}
+
+          <button
+            onClick={mode === "login" ? handleLogin : handleSignup}
+            disabled={
+              loading ||
+              (mode === "login" && (!email || !password)) ||
+              (mode === "signup" && !signupValid)
+            }
+            className="w-full py-3 text-sm font-bold holo-bg text-black hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading
+              ? "..."
+              : mode === "login"
+              ? "Log In"
+              : "Create Account"}
+          </button>
+
+          <div className="text-center space-y-1.5">
+            {mode === "login" && (
+              <>
+                <button
+                  onClick={() => { setMode("signup"); clearFields(); }}
+                  className="text-xs text-secondary hover:text-primary transition-colors block w-full"
+                >
+                  Don't have an account? Sign up
+                </button>
+                <button
+                  onClick={() => router.push("/reset-password")}
+                  className="text-xs text-secondary/60 hover:text-primary transition-colors block w-full"
+                >
+                  Forgot password?
+                </button>
+              </>
+            )}
+            {mode === "signup" && (
+              <button
+                onClick={() => { setMode("login"); clearFields(); }}
+                className="text-xs text-secondary hover:text-primary transition-colors"
+              >
+                Already have an account? Log in
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="text-center">

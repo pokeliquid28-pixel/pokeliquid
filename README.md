@@ -121,9 +121,13 @@ app/                        # Next.js 14 frontend
       pool/page.tsx         # Liquidity pool page
       api/
         create-session-wallet/  # POST — Generate + fund session wallet
-        signup/                 # POST — Create account (email + password + encrypted key)
-        login/                  # POST — Verify password, return decrypted key
+        signup/                 # POST — Create account, set JWT session cookie
+        login/                  # POST — Verify password, return key, set JWT cookie
+        logout/                 # POST — Clear session cookie
+        me/                     # GET  — Return session from JWT cookie (or 401)
+        forgot-password/        # POST — Send reset email via Resend
         reset-password/         # POST — Change password (requires current password)
+        reset-password-with-token/ # POST — Reset password via emailed token
     components/
       LandingAuth.tsx       # Login / signup / reset password landing page
       AuthModal.tsx         # In-app auth modal (save account from header)
@@ -133,6 +137,9 @@ app/                        # Next.js 14 frontend
       SaveWalletSheet.tsx   # Bottom sheet after first trade prompts account creation
       WalletButton.tsx      # Header wallet button (login/email/address/disconnect)
       TradeHistory.tsx      # Trade history from keeper API
+    app/
+      reset-password/
+        page.tsx            # Forgot password / token-based reset page
       NotificationBell.tsx  # Header notification dropdown
       ToastContainer.tsx    # Ephemeral toast notifications
       Header.tsx            # Nav + oracle indicator + wallet button
@@ -146,7 +153,8 @@ app/                        # Next.js 14 frontend
     lib/
       session-wallet.ts     # SessionWalletAdapter (custom wallet adapter, only wallet option)
       crypto.ts             # AES-256-GCM encrypt/decrypt
-      db.ts                 # Supabase Postgres via pg (wallets table)
+      auth.ts               # Argon2id hashing, JWT session tokens (jose)
+      db.ts                 # Supabase Postgres via pg (wallets, reset tokens)
       addresses.ts          # PDA derivation
       program.ts            # Anchor program setup
       utils.ts              # Price formatting, PnL calc
@@ -209,23 +217,29 @@ Users authenticate with email + password. No external wallet extensions required
 
 ### Flow
 1. **New user** visits the site → sees **LandingAuth** landing page with login/signup/guest options
-2. **Sign up** → email + password (with confirmation) → generates Solana keypair → encrypts private key with AES-256-GCM → stores in Supabase Postgres
-3. **Log in** → verifies password (PBKDF2-SHA512, timing-safe) → decrypts private key → restores to localStorage
-4. **Reset password** → verifies current password → updates hash in DB
+2. **Sign up** → email + password (with confirmation) → generates Solana keypair → encrypts private key with AES-256-GCM → stores in Supabase Postgres → sets JWT session cookie
+3. **Log in** → verifies password (argon2id) → decrypts private key → restores to localStorage → sets JWT session cookie
+4. **Forgot password** → `/reset-password` page → enter email → receives reset link via Resend → click link → set new password (token-based, 1hr expiry, single-use)
 5. **Guest mode** → generates ephemeral keypair in localStorage (no persistence across devices)
 6. **Save account** → after trading as guest, header prompts to create account to save wallet
+7. **Session restore** → on page load, `GET /api/me` reads JWT cookie to restore auth state
+8. **Logout** → `POST /api/logout` clears session cookie + disconnects wallet
 
 ### Security
-- Passwords hashed with PBKDF2-SHA512 (100,000 iterations, random salt)
+- **Passwords hashed with argon2id** (64MB memory, time cost 3, parallelism 4) — memory-hard, resists GPU attacks
+- Legacy PBKDF2 hashes auto-migrated to argon2id on next successful login
+- **JWT sessions** (HS256, 30-day expiry) stored as `HttpOnly; Secure; SameSite=Lax` cookies
+- Private key sent only once (at login/signup), then lives in localStorage — JWT cookie has no private key
 - Private keys encrypted with AES-256-GCM (key derived from `EMAIL_ENCRYPTION_SECRET`)
-- Password verification uses `crypto.timingSafeEqual` to prevent timing attacks
+- Password reset tokens: cryptographically random (32 bytes), 1-hour expiry, single-use
+- Forgot-password endpoint returns success regardless of whether email exists (prevents enumeration)
 - Session wallet creation rate limited to 1 per IP per hour
 - No external wallet adapters (Phantom/Solflare removed) — session wallet only
 
 ### Database (Supabase Postgres)
 - Connected via `pg` package (not `@vercel/postgres`)
 - SSL with `rejectUnauthorized: false` for Supabase compatibility
-- Tables: `wallets` (email, password_hash, encrypted_key, public_key), `session_wallets`
+- Tables: `wallets`, `session_wallets`, `password_reset_tokens`
 
 ---
 
@@ -252,7 +266,11 @@ Users authenticate with email + password. No external wallet extensions required
 ```
 # Required for auth:
 EMAIL_ENCRYPTION_SECRET=<random-32-char-string>
+JWT_SECRET=<random-64-char-string>        # Signs JWT session cookies
 POSTGRES_URL=postgresql://...             # Supabase Postgres connection string
+
+# Required for forgot-password emails:
+RESEND_API_KEY=re_xxxxx                   # Resend.com API key
 
 # Required for auto-funding new wallets:
 RELAYER_PRIVATE_KEY=<base58-private-key>  # Funds new session wallets with SOL
@@ -368,8 +386,8 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - **Insurance fund** — automatic 10% fee routing for protocol solvency
 - **LP pool** — users can provide liquidity and earn fees
 - **Persistent infrastructure** — Hetzner keeper (pm2 + systemd), Vercel frontend, Supabase Postgres
-- **Secure auth** — PBKDF2 password hashing, AES-256-GCM key encryption, timing-safe comparisons
-- **Password reset** — users can change password without losing their wallet
+- **Secure auth** — argon2id password hashing, AES-256-GCM key encryption, JWT sessions (HttpOnly cookies)
+- **Password recovery** — email-based forgot password flow via Resend (token-based, 1hr expiry, single-use)
 
 ## Known Limitations & Roadmap
 
@@ -402,3 +420,6 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - Database uses `pg` package (not `@vercel/postgres`) — strips `sslmode` and `supa` params from connection string, sets `ssl: { rejectUnauthorized: false }` for Supabase
 - Only wallet adapter is `SessionWalletAdapter` — Phantom/Solflare removed
 - RELAYER_PRIVATE_KEY is base58 format (not JSON array)
+- Password hashing uses `argon2` npm package (native bindings) — legacy PBKDF2 hashes auto-migrate on login
+- JWT sessions use `jose` package (HS256) — 30-day expiry, HttpOnly/Secure/SameSite=Lax cookies
+- Forgot-password emails sent via Resend API — reset tokens stored in `password_reset_tokens` table

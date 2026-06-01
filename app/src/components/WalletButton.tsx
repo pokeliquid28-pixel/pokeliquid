@@ -12,8 +12,29 @@ export function WalletButton() {
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    setEmail(getSavedEmail());
+    // Check localStorage first (fast)
+    const localEmail = getSavedEmail();
+    if (localEmail) {
+      setEmail(localEmail);
+      return;
+    }
+
+    // Fall back to JWT session cookie via /api/me
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.email) setEmail(data.email);
+      })
+      .catch(() => {});
   }, [connected]);
+
+  async function handleDisconnect() {
+    // Clear server session cookie
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } catch {}
+    disconnect();
+  }
 
   if (connected && publicKey) {
     const addr = publicKey.toBase58();
@@ -36,9 +57,7 @@ export function WalletButton() {
             {addr.slice(0, 4)}...{addr.slice(-4)}
           </span>
           <button
-            onClick={() => {
-              disconnect();
-            }}
+            onClick={handleDisconnect}
             className="px-2 md:px-3 py-1.5 text-[10px] md:text-xs border border-border text-secondary hover:text-primary hover:border-primary/50 transition-colors min-h-[36px] md:min-h-0"
           >
             <span className="hidden md:inline">Disconnect</span>

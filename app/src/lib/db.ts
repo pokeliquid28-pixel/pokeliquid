@@ -44,6 +44,16 @@ async function ensureTables() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
   initialized = true;
 }
 
@@ -114,4 +124,41 @@ export async function emailExists(email: string): Promise<boolean> {
     [email]
   );
   return result.rows.length > 0;
+}
+
+export async function updatePasswordHash(id: number, newHash: string): Promise<void> {
+  await ensureTables();
+  await query(`UPDATE wallets SET password_hash = $1 WHERE id = $2`, [newHash, id]);
+}
+
+// ── Password reset tokens ───────────────────────────────────────────────────
+
+export async function createResetToken(email: string, token: string, expiresAt: Date): Promise<void> {
+  await ensureTables();
+  await query(
+    `INSERT INTO password_reset_tokens (email, token, expires_at) VALUES ($1, $2, $3)`,
+    [email, token, expiresAt]
+  );
+}
+
+export async function getResetToken(
+  token: string
+): Promise<{ id: number; email: string; expiresAt: Date; used: boolean } | null> {
+  await ensureTables();
+  const result = await query(
+    `SELECT id, email, expires_at, used FROM password_reset_tokens WHERE token = $1`,
+    [token]
+  );
+  if (result.rows.length === 0) return null;
+  return {
+    id: result.rows[0].id,
+    email: result.rows[0].email,
+    expiresAt: result.rows[0].expires_at,
+    used: result.rows[0].used,
+  };
+}
+
+export async function markResetTokenUsed(id: number): Promise<void> {
+  await ensureTables();
+  await query(`UPDATE password_reset_tokens SET used = TRUE WHERE id = $1`, [id]);
 }

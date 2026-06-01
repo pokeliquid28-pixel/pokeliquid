@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { encrypt } from "@/lib/crypto";
 import { createAccount, emailExists } from "@/lib/db";
-
-function hashPassword(password: string, salt: string): string {
-  return crypto.pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex") + ":" + salt;
-}
+import { hashPassword, createSessionToken, sessionCookieHeader } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,21 +24,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
-    // Check if email already exists
     if (await emailExists(email)) {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
 
-    // Hash password for storage
-    const salt = crypto.randomBytes(16).toString("hex");
-    const passwordHash = hashPassword(password, salt);
-
-    // Encrypt private key with server secret
+    const passwordHash = await hashPassword(password);
     const encryptedKey = encrypt(privateKey, encryptionSecret);
+    const userId = await createAccount(email, passwordHash, encryptedKey, publicKey);
 
-    await createAccount(email, passwordHash, encryptedKey, publicKey);
+    const jwt = await createSessionToken({ userId, email, walletPubkey: publicKey });
 
-    return NextResponse.json({ success: true });
+    const res = NextResponse.json({ success: true });
+    res.headers.set("Set-Cookie", sessionCookieHeader(jwt));
+    return res;
   } catch (e: any) {
     console.error("signup error:", e);
     return NextResponse.json({ error: e?.message ?? "Signup failed" }, { status: 500 });

@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { decrypt } from "@/lib/crypto";
-import { getAccountByEmail } from "@/lib/db";
-
-function verifyPassword(password: string, stored: string): boolean {
-  const [hash, salt] = stored.split(":").length === 2
-    ? [stored.split(":")[0], stored.split(":")[1]]
-    : ["", ""];
-  if (!salt) return false;
-  const computed = crypto.pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(computed, "hex"), Buffer.from(hash, "hex"));
-}
+import { getAccountByEmail, updatePasswordHash } from "@/lib/db";
+import {
+  verifyPassword,
+  isLegacyHash,
+  hashPassword,
+  createSessionToken,
+  sessionCookieHeader,
+} from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,14 +27,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    if (!verifyPassword(password, account.passwordHash)) {
+    const valid = await verifyPassword(account.passwordHash, password);
+    if (!valid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    // Decrypt the private key
-    const privateKey = decrypt(account.encryptedKey, encryptionSecret);
+    // Migrate legacy PBKDF2 hash to argon2id on successful login
+    if (isLegacyHash(account.passwordHash)) {
+      const newHash = await hashPassword(password);
+      await updatePasswordHash(account.id, newHash);
+    }
 
-    return NextResponse.json({ privateKey, publicKey: account.publicKey });
+    const privateKey = decrypt(account.encryptedKey, encryptionSecret);
+    const jwt = await createSessionToken({
+      userId: account.id,
+      email,
+      walletPubkey: account.publicKey,
+    });
+
+    const res = NextResponse.json({ privateKey, publicKey: account.publicKey });
+    res.headers.set("Set-Cookie", sessionCookieHeader(jwt));
+    return res;
   } catch (e: any) {
     console.error("login error:", e);
     return NextResponse.json({ error: e?.message ?? "Login failed" }, { status: 500 });
