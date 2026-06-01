@@ -10,6 +10,7 @@ import {
   saveSessionKeypair,
   SessionWalletName,
 } from "@/lib/session-wallet";
+import { Logo } from "./Logo";
 
 type Mode = "login" | "signup";
 
@@ -120,7 +121,10 @@ export function LandingAuth() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <Logo size={72} />
+          </div>
           <h1 className="holo-text text-3xl font-bold tracking-tight">
             Pokeliquid
           </h1>

@@ -16,6 +16,20 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Pokeliquid | PRISMATIC-ETB-PERP",
   description: "Pokémon card perpetual futures on Solana",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
+  openGraph: {
+    title: "Pokeliquid | PRISMATIC-ETB-PERP",
+    description: "Pokémon card perpetual futures on Solana",
+    siteName: "Pokeliquid",
+  },
+  twitter: {
+    card: "summary",
+    title: "Pokeliquid | PRISMATIC-ETB-PERP",
+    description: "Pokémon card perpetual futures on Solana",
+  },
 };
 
 export default function RootLayout({
