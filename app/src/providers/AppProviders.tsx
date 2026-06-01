@@ -7,6 +7,8 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
+import { SessionWalletAdapter } from "@/lib/session-wallet";
+import { SessionWalletProvider } from "@/providers/SessionWalletProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import { ToastContainer } from "@/components/ToastContainer";
 
@@ -20,8 +22,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     () => [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
-      // Backpack uses standard wallet detection; add if package is installed:
-      // new BackpackWalletAdapter(),
+      new SessionWalletAdapter(),
     ],
     []
   );
@@ -30,10 +31,12 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <ConnectionProvider endpoint={RPC}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          <NotificationProvider>
-            {children}
-            <ToastContainer />
-          </NotificationProvider>
+          <SessionWalletProvider>
+            <NotificationProvider>
+              {children}
+              <ToastContainer />
+            </NotificationProvider>
+          </SessionWalletProvider>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

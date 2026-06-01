@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
 type Trade = {
   id: number;

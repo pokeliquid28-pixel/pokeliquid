@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/keeper/:path*",
+      "destination": "http://157.180.67.25:3001/:path*"
+    }
+  ]
+}

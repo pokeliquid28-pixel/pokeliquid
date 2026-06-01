@@ -9,32 +9,34 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "14.2.29",
-    "react": "^18",
-    "react-dom": "^18",
     "@anchor-lang/core": "^1.0.2",
-    "@solana/web3.js": "^1.95.0",
     "@solana/spl-token": "^0.4.14",
+    "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-react": "^0.15.35",
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/wallet-adapter-wallets": "^0.19.32",
-    "@solana/wallet-adapter-base": "^0.9.23",
-    "bn.js": "^5.2.1"
+    "@solana/web3.js": "^1.95.0",
+    "@vercel/postgres": "^0.10.0",
+    "bn.js": "^5.2.1",
+    "next": "14.2.29",
+    "react": "^18",
+    "react-dom": "^18",
+    "resend": "^6.12.4"
   },
   "overrides": {
     "@types/react": "18.2.79",
     "@types/react-dom": "18.2.25"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@types/bn.js": "^5.1.0",
     "@types/node": "^20",
     "@types/react": "18.2.79",
     "@types/react-dom": "18.2.25",
-    "@types/bn.js": "^5.1.0",
-    "tailwindcss": "^3.4.1",
-    "postcss": "^8",
     "autoprefixer": "^10",
     "eslint": "^8",
-    "eslint-config-next": "14.2.29"
+    "eslint-config-next": "14.2.29",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
   }
 }

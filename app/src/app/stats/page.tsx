@@ -14,7 +14,7 @@ import {
   timeSince,
 } from "@/lib/utils";
 
-const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

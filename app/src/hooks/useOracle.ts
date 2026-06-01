@@ -24,7 +24,7 @@ export type OracleData = {
   error: string | null;
 };
 
-const PRICE_API = process.env.NEXT_PUBLIC_PRICE_API || "http://localhost:3001";
+const PRICE_API = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
 export function useOracle(): OracleData {
   const { connection } = useConnection();

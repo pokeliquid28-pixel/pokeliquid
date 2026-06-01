@@ -8,6 +8,7 @@ import BN from "bn.js";
 
 import { getProgram } from "@/lib/program";
 import { useNotifications } from "@/providers/NotificationProvider";
+import { incrementTradeCount } from "@/components/SaveWalletSheet";
 import {
   PROTOCOL_STATE,
   ORACLE_ACCOUNT,
@@ -219,6 +220,7 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh }: Props) {
         type: "success",
         msg: `${side} position opened at $${entryPriceUsd.toFixed(2)}`,
       });
+      incrementTradeCount();
       addNotification(
         "success",
         `${side} Position Opened`,

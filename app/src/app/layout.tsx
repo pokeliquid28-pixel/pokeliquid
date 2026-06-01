@@ -3,6 +3,7 @@ import "./globals.css";
 import { AppProviders } from "@/providers/AppProviders";
 import { DevnetBanner } from "@/components/DevnetBanner";
 import { Header } from "@/components/Header";
+import { SaveWalletSheet } from "@/components/SaveWalletSheet";
 import { PROGRAM_ID, USDC_MINT } from "@/lib/addresses";
 
 export const viewport: Viewport = {
@@ -29,6 +30,7 @@ export default function RootLayout({
           <DevnetBanner />
           <Header />
           <main className="min-h-screen">{children}</main>
+          <SaveWalletSheet />
           <footer className="border-t border-border mt-8 md:mt-16 py-4 md:py-6 px-4 md:px-6">
             <div className="max-w-7xl mx-auto flex flex-col items-center gap-2 text-[10px] md:text-xs text-secondary font-mono text-center">
               <div className="flex items-center gap-2 md:gap-4 flex-wrap justify-center">

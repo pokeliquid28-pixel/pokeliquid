@@ -219,6 +219,15 @@ input[type="range"]::-moz-range-thumb {
   animation: slide-in-right 0.3s ease-out;
 }
 
+/* Bottom sheet slide-in animation */
+@keyframes slide-in-bottom {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-in.slide-in-from-bottom {
+  animation: slide-in-bottom 0.4s ease-out;
+}
+
 /* Prevent horizontal overflow everywhere */
 html, body {
   overflow-x: hidden;
