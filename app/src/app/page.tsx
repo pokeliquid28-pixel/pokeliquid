@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useOracle } from "@/hooks/useOracle";
 import { useProtocolState } from "@/hooks/useProtocolState";
 import { useMarginAccount } from "@/hooks/useMarginAccount";
@@ -11,6 +12,7 @@ import { PositionPanel } from "@/components/PositionPanel";
 import { TradeHistory } from "@/components/TradeHistory";
 import { CollateralPanel } from "@/components/CollateralPanel";
 import { Skeleton } from "@/components/Skeleton";
+import { LandingAuth } from "@/components/LandingAuth";
 import { formatPrice, rawToPrice, timeSince } from "@/lib/utils";
 
 function PriceTicker({ price, isLoading }: { price: number; isLoading: boolean }) {
@@ -42,6 +44,7 @@ function PriceTicker({ price, isLoading }: { price: number; isLoading: boolean }
 }
 
 export default function TradePage() {
+  const { connected } = useWallet();
   const oracle = useOracle();
   const protocol = useProtocolState();
   const margin = useMarginAccount();
@@ -50,6 +53,10 @@ export default function TradePage() {
   const handleRefresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
   }, []);
+
+  if (!connected) {
+    return <LandingAuth />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-8">

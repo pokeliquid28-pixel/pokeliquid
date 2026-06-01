@@ -13,8 +13,8 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
                                                                   │
                       Next.js Frontend <──RPC──────────────────────┘
                            │
-                           ├── Session wallet (auto-create)
-                           ├── Email wallet recovery
+                           ├── Session wallet (localStorage keypair)
+                           ├── Email + password auth (Supabase Postgres)
                            └── Vercel proxy → Keeper API
 ```
 
@@ -102,6 +102,9 @@ programs/pokeliquid/src/
   constants.rs              # Seeds, defaults, rates
   instructions/             # 20 instruction handlers (one file each)
 
+programs/pokeliquid/tests/
+  fuzz_tests.rs             # 38 fuzz/property-based tests (math, attacks, random inputs)
+
 keeper/
   keeper.js                 # Oracle + liquidation + SL/TP + funding keeper
   prices.db                 # SQLite price history (auto-created)
@@ -113,19 +116,22 @@ app/                        # Next.js 14 frontend
   vercel.json               # Rewrites: /api/keeper/* → Hetzner keeper
   src/
     app/
-      page.tsx              # Trade page
-      recover/page.tsx      # Email wallet recovery page
+      page.tsx              # Trade page (gates behind auth — shows LandingAuth if not connected)
       stats/page.tsx        # Protocol statistics + charts
       pool/page.tsx         # Liquidity pool page
       api/
         create-session-wallet/  # POST — Generate + fund session wallet
-        save-wallet/            # POST — Encrypt key + send recovery email
-        recover-wallet/         # GET  — Decrypt key from one-time token
+        signup/                 # POST — Create account (email + password + encrypted key)
+        login/                  # POST — Verify password, return decrypted key
+        reset-password/         # POST — Change password (requires current password)
     components/
+      LandingAuth.tsx       # Login / signup / reset password landing page
+      AuthModal.tsx         # In-app auth modal (save account from header)
       TradingPanel.tsx      # Order entry (long/short, collateral, leverage, SL/TP)
       PositionPanel.tsx     # Open positions with margin mgmt, SL/TP, close confirm
-      CollateralPanel.tsx   # Deposit/withdraw collateral
-      SaveWalletSheet.tsx   # Email save prompt (bottom sheet after first trade)
+      CollateralPanel.tsx   # Deposit/withdraw collateral (auto-airdrops SOL if needed)
+      SaveWalletSheet.tsx   # Bottom sheet after first trade prompts account creation
+      WalletButton.tsx      # Header wallet button (login/email/address/disconnect)
       TradeHistory.tsx      # Trade history from keeper API
       NotificationBell.tsx  # Header notification dropdown
       ToastContainer.tsx    # Ephemeral toast notifications
@@ -138,24 +144,17 @@ app/                        # Next.js 14 frontend
       useMarginAccount.ts   # Margin account + positions
       useLiquidityPool.ts   # LP pool data
     lib/
-      session-wallet.ts     # SessionWalletAdapter (custom wallet adapter)
+      session-wallet.ts     # SessionWalletAdapter (custom wallet adapter, only wallet option)
       crypto.ts             # AES-256-GCM encrypt/decrypt
-      db.ts                 # Vercel Postgres (wallets, recovery tokens)
+      db.ts                 # Supabase Postgres via pg (wallets table)
       addresses.ts          # PDA derivation
       program.ts            # Anchor program setup
       utils.ts              # Price formatting, PnL calc
       pokeliquid.idl.json   # Anchor IDL
     providers/
-      AppProviders.tsx      # Wallet + session + notification providers
-      SessionWalletProvider.tsx  # Auto-connect session wallet
+      AppProviders.tsx      # Session wallet adapter only (no Phantom/Solflare)
+      SessionWalletProvider.tsx  # Auto-connect returning users only
       NotificationProvider.tsx   # Notifications + toasts + liquidation alerts
-
-scripts/
-  init.ts                   # Initialize protocol on devnet
-  init-pool.ts              # Initialize LP pool
-  set-secondary-authority.ts
-  close-margin.ts
-  e2e-test.js               # 13-step end-to-end test
 ```
 
 ---
@@ -198,9 +197,35 @@ npm run dev                 # http://localhost:3000
 
 ### Run Tests
 ```bash
-cargo test --package pokeliquid       # 23 Rust tests
+cargo test --package pokeliquid       # 60 tests (22 unit + 38 fuzz/property)
 node scripts/e2e-test.js              # 13-step e2e test
 ```
+
+---
+
+## Authentication System
+
+Users authenticate with email + password. No external wallet extensions required.
+
+### Flow
+1. **New user** visits the site → sees **LandingAuth** landing page with login/signup/guest options
+2. **Sign up** → email + password (with confirmation) → generates Solana keypair → encrypts private key with AES-256-GCM → stores in Supabase Postgres
+3. **Log in** → verifies password (PBKDF2-SHA512, timing-safe) → decrypts private key → restores to localStorage
+4. **Reset password** → verifies current password → updates hash in DB
+5. **Guest mode** → generates ephemeral keypair in localStorage (no persistence across devices)
+6. **Save account** → after trading as guest, header prompts to create account to save wallet
+
+### Security
+- Passwords hashed with PBKDF2-SHA512 (100,000 iterations, random salt)
+- Private keys encrypted with AES-256-GCM (key derived from `EMAIL_ENCRYPTION_SECRET`)
+- Password verification uses `crypto.timingSafeEqual` to prevent timing attacks
+- Session wallet creation rate limited to 1 per IP per hour
+- No external wallet adapters (Phantom/Solflare removed) — session wallet only
+
+### Database (Supabase Postgres)
+- Connected via `pg` package (not `@vercel/postgres`)
+- SSL with `rejectUnauthorized: false` for Supabase compatibility
+- Tables: `wallets` (email, password_hash, encrypted_key, public_key), `session_wallets`
 
 ---
 
@@ -225,33 +250,17 @@ node scripts/e2e-test.js              # 13-step e2e test
 
 ### Env Vars (Vercel)
 ```
-# Required for session wallet / email recovery:
+# Required for auth:
 EMAIL_ENCRYPTION_SECRET=<random-32-char-string>
-RESEND_API_KEY=re_xxxxx
-POSTGRES_URL=postgres://...           # Vercel Postgres
-RELAYER_PRIVATE_KEY=[1,2,3,...]       # Optional: auto-fund session wallets
+POSTGRES_URL=postgresql://...             # Supabase Postgres connection string
+
+# Required for auto-funding new wallets:
+RELAYER_PRIVATE_KEY=<base58-private-key>  # Funds new session wallets with SOL
 
 # Optional:
 NEXT_PUBLIC_RPC_ENDPOINT=https://api.devnet.solana.com
 NEXT_PUBLIC_APP_URL=https://app-two-green-66.vercel.app
 ```
-
----
-
-## Session Wallet System
-
-Users can trade without installing a browser wallet extension:
-
-1. **Auto-create:** On page load, if no wallet detected, a `SessionWalletAdapter` generates a keypair in localStorage and requests a devnet SOL airdrop
-2. **Trade:** User mints test USDC, deposits, and trades — all signed with the session keypair
-3. **Save:** After first trade, a bottom sheet prompts for email to encrypt and store the key
-4. **Recover:** Email contains a one-time recovery link → `/recover?token=XXX` → restores keypair to localStorage on any device
-5. **External wallet:** If user connects Phantom/Solflare, it takes priority over the session wallet
-
-### Security
-- Private keys encrypted with AES-256-GCM (PBKDF2 key derivation from `EMAIL_ENCRYPTION_SECRET`)
-- Recovery tokens are one-time use, expire in 24 hours
-- Session wallet creation rate limited to 1 per IP per hour
 
 ---
 
@@ -296,6 +305,21 @@ GET /events/recent              # Recent decoded program events
 
 ---
 
+## Tests
+
+### Rust Tests (60 total)
+- **22 unit tests** — core math, state transitions, instruction logic
+- **38 fuzz/property-based tests** covering:
+  - Math edge cases (17): PnL symmetry, liquidation boundaries, overflow, zero-value safety, profit cap, funding accumulation
+  - Attack vectors (11): oracle manipulation, leverage overflow, dust positions, reentrancy-style exploits, sandwich scenarios
+  - Property-based with 1000 random inputs (10): deterministic PRNG (xorshift64), tests invariants hold across random parameter combinations
+
+```bash
+cargo test --package pokeliquid    # runs all 60 tests
+```
+
+---
+
 ## Math
 
 All arithmetic uses `u64` and `i128` for intermediate calculations. No floats. Division is always last. All operations use `checked_*` and return `MathOverflow` on failure.
@@ -334,16 +358,18 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 
 - **Unique market** — perpetual futures on a physical TCG product
 - **Full vertical stack** — on-chain program + keeper + scraper + frontend, all integrated
-- **No wallet required** — session wallet auto-creates, email recovery for cross-device
+- **No wallet extension required** — session wallet in localStorage, email+password auth for persistence
 - **Professional trading UX** — inline SL/TP, margin ratio bar, PnL flash, close confirmation
-- **Correct math** — PnL, liquidation, funding rates all verified (23 Rust tests)
+- **Correct math** — PnL, liquidation, funding rates all verified (60 Rust tests including 38 fuzz tests)
 - **Adaptive EWMA oracle** — 4-tier spike protection handles manipulation attempts
 - **Oracle resilience** — secondary authority fallback, auto-pause on stale, Telegram alerts
 - **Multi-position** — 5 simultaneous positions per account with add/remove margin
 - **On-chain funding settlement** — hourly settlement keeps liquidation checks accurate
 - **Insurance fund** — automatic 10% fee routing for protocol solvency
 - **LP pool** — users can provide liquidity and earn fees
-- **Persistent infrastructure** — Hetzner keeper (pm2 + systemd), Vercel frontend, auto-deploy
+- **Persistent infrastructure** — Hetzner keeper (pm2 + systemd), Vercel frontend, Supabase Postgres
+- **Secure auth** — PBKDF2 password hashing, AES-256-GCM key encryption, timing-safe comparisons
+- **Password reset** — users can change password without losing their wallet
 
 ## Known Limitations & Roadmap
 
@@ -351,7 +377,6 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - [ ] **No partial close** — can't close a percentage of a position
 - [ ] **Single admin oracle** — one keypair pushes price, no decentralized oracle fallback
 - [ ] **No limit orders** — market orders only
-- [ ] Set up Vercel Postgres + Resend for email recovery (env vars needed)
 
 ### Nice to have
 - [ ] Multi-asset support (additional perp markets)
@@ -374,4 +399,6 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - Direction enum in TS: `{ long: {} }` / `{ short: {} }`
 - MarginAccount::SPACE = 386 bytes (verified via Rust test)
 - Vercel rewrites `/api/keeper/*` → Hetzner to avoid HTTPS→HTTP mixed content
-- Session wallet stored in localStorage, encrypted with AES-256-GCM for email recovery
+- Database uses `pg` package (not `@vercel/postgres`) — strips `sslmode` and `supa` params from connection string, sets `ssl: { rejectUnauthorized: false }` for Supabase
+- Only wallet adapter is `SessionWalletAdapter` — Phantom/Solflare removed
+- RELAYER_PRIVATE_KEY is base58 format (not JSON array)

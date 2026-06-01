@@ -149,6 +149,26 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
     setLoading(true);
     setTxStatus(null);
     try {
+      // Check SOL balance — airdrop if empty
+      const solBalance = await connection.getBalance(publicKey);
+      if (solBalance < 5_000_000) { // < 0.005 SOL
+        setTxStatus({ type: "success", msg: "Airdropping SOL for fees..." });
+        try {
+          const sig = await connection.requestAirdrop(publicKey, 0.05 * 1_000_000_000);
+          await connection.confirmTransaction(sig, "confirmed");
+        } catch {
+          // Retry once with smaller amount
+          try {
+            const sig = await connection.requestAirdrop(publicKey, 0.01 * 1_000_000_000);
+            await connection.confirmTransaction(sig, "confirmed");
+          } catch {
+            setTxStatus({ type: "error", msg: "Devnet airdrop failed — try again in a minute" });
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
       const program = getProgram(connection, anchorWallet);
       const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
 
