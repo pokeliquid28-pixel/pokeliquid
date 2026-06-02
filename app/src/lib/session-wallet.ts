@@ -13,11 +13,7 @@ export const SessionWalletName = "Pokeliquid Wallet" as WalletName<"Pokeliquid W
 export class SessionWalletAdapter extends BaseSignerWalletAdapter {
   name = SessionWalletName;
   url = "https://pokeliquid.xyz";
-  icon =
-    "data:image/svg+xml;base64," +
-    btoa(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><defs><linearGradient id="h" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff6ec7"/><stop offset="33%" stop-color="#a78bfa"/><stop offset="66%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#34d399"/></linearGradient><clipPath id="d"><path d="M32 4C32 4 8 30 8 42A24 24 0 0056 42C56 30 32 4 32 4Z"/></clipPath></defs><path d="M32 4C32 4 8 30 8 42A24 24 0 0056 42C56 30 32 4 32 4Z" fill="url(#h)"/><path d="M32 10C32 10 13 32 13 42A19 19 0 0051 42C51 32 32 10 32 10Z" fill="#0a0a0f"/><g clip-path="url(#d)"><rect x="13" y="26" width="38" height="16" fill="#e53e3e"/><rect x="13" y="42" width="38" height="18" fill="#1a1a2e"/><rect x="13" y="40" width="38" height="4" fill="#2d2d44"/><circle cx="32" cy="42" r="7" fill="#2d2d44"/><circle cx="32" cy="42" r="5" fill="#0a0a0f"/><circle cx="32" cy="42" r="3" fill="url(#h)"/></g></svg>'
-    );
+  icon = "/logo-64.png";
   supportedTransactionVersions = null;
 
   private _keypair: Keypair | null = null;

@@ -84,12 +84,9 @@ export function Header() {
       )}
       <header className="sticky top-0 z-40 border-b border-border bg-bg/90 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-3 md:px-6 h-12 md:h-14 flex items-center justify-between gap-2 md:gap-6">
-          {/* Logo + wordmark */}
-          <Link href="/" className="shrink-0 flex items-center gap-2">
-            <Logo size={28} />
-            <span className="holo-text text-base md:text-lg font-bold tracking-tight">
-              Pokeliquid
-            </span>
+          {/* Logo */}
+          <Link href="/" className="shrink-0">
+            <Logo size={36} />
           </Link>
 
           {/* Nav */}

@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   title: "Pokeliquid | PRISMATIC-ETB-PERP",
   description: "Pokémon card perpetual futures on Solana",
   icons: {
-    icon: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: "/favicon.png",
+    apple: "/logo-192.png",
   },
   openGraph: {
     title: "Pokeliquid | PRISMATIC-ETB-PERP",

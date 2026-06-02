@@ -76,11 +76,8 @@ function ResetPasswordInner() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <Logo size={72} />
+            <Logo size={160} />
           </div>
-          <h1 className="holo-text text-3xl font-bold tracking-tight">
-            Pokeliquid
-          </h1>
           <p className="text-sm text-secondary">
             {mode === "request" ? "Reset your password" : "Set a new password"}
           </p>
