@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Droplets, BarChart2, Trophy } from "lucide-react";
+import { Zap, Droplets, BarChart2, Trophy, Menu, X } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletButton } from "./WalletButton";
 import { NotificationBell } from "./NotificationBell";
 import { Logo } from "./Logo";
 import { useOracle, OracleHealth } from "@/hooks/useOracle";
+import { getSavedEmail } from "@/lib/session-wallet";
 import { MARKETS } from "@/lib/markets";
 
 // ─── Nav config ────────────────────────────────────────────────────────────────
@@ -112,12 +114,12 @@ function TickerBar() {
         }
       `}</style>
       <div
+        className="hidden md:flex"
         style={{
           background: "#111111",
           borderBottom: "1px solid #1a1a1a",
           height: 28,
           overflow: "hidden",
-          display: "flex",
           alignItems: "center",
           fontFamily: "'JetBrains Mono', 'Courier New', monospace",
           fontSize: 11,
@@ -157,124 +159,189 @@ function TickerBar() {
   );
 }
 
-// ─── Mobile Market Selector ─────────────────────────────────────────────────────
+// ─── Mobile Hamburger Menu ────────────────────────────────────────────────────
 
-function MobileMarketSelector() {
-  const { price, readings, isLoading } = useOracle();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+function MobileMenu({
+  open,
+  onClose,
+  pathname,
+}: {
+  open: boolean;
+  onClose: () => void;
+  pathname: string;
+}) {
+  const { price, lastUpdated, isLoading } = useOracle();
+  const { publicKey, connected, disconnect } = useWallet();
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEmail(getSavedEmail());
+  }, [connected]);
 
   const priceUsd = price / 1_000_000;
-  let pctChange = 0;
-  if (readings.length >= 2) {
-    const oldest = readings[0].price / 1_000_000;
-    if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
-  }
-  const positive = pctChange >= 0;
-  const changeColor = positive ? "#00ff41" : "#ff3333";
+  const ago = lastUpdated
+    ? Math.max(0, Math.floor((Date.now() / 1000 - lastUpdated) / 60))
+    : null;
 
-  // Close on outside click
+  // Prevent body scroll when menu open
   useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const activeMarket = MARKETS.find((m) => m.live) || MARKETS[0];
+  if (!open) return null;
+
+  const addr = publicKey ? publicKey.toBase58() : null;
 
   return (
-    <div
-      ref={ref}
-      className="flex md:hidden relative"
-      style={{
-        background: "#111111",
-        borderBottom: "1px solid #1a1a1a",
-        fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-      }}
-    >
-      <button
-        onClick={() => setOpen(!open)}
+    <>
+      <style>{`
+        @keyframes slide-in {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
+        }
+        .mobile-menu-panel {
+          animation: slide-in 0.2s ease-out;
+        }
+      `}</style>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
         style={{
-          width: "100%",
+          position: "fixed",
+          inset: 0,
+          zIndex: 100,
+          background: "rgba(0,0,0,0.6)",
+        }}
+      />
+      {/* Panel */}
+      <div
+        className="mobile-menu-panel"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: "min(300px, 85vw)",
+          zIndex: 101,
+          background: "#0a0a0a",
+          borderRight: "1px solid #1a1a1a",
+          fontFamily: "'JetBrains Mono', 'Courier New', monospace",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "6px 16px",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontSize: 11,
+          flexDirection: "column",
+          overflow: "auto",
         }}
       >
-        <span style={{ color: "#ccc", letterSpacing: "0.04em" }}>{activeMarket.name}</span>
-        <span style={{ color: "#555", fontSize: 10 }}>{open ? "\u25B2" : "\u25BC"}</span>
-      </button>
+        {/* Close button */}
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "14px 16px 8px" }}>
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+          >
+            <X size={22} color="#888" />
+          </button>
+        </div>
 
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            zIndex: 60,
-            background: "#111111",
-            border: "1px solid #1a1a1a",
-            borderTop: "none",
-          }}
-        >
-          {MARKETS.map((m) => (
-            <button
-              key={m.id}
-              disabled={!m.live}
-              onClick={() => setOpen(false)}
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: "8px 0" }}>
+          {NAV.map(({ href, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={onClose}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "16px 24px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textDecoration: "none",
+                  color: active ? "#00ff41" : "#ccc",
+                  borderLeft: active ? "3px solid #00ff41" : "3px solid transparent",
+                  background: active ? "rgba(0,255,65,0.04)" : "transparent",
+                  transition: "background 0.15s",
+                }}
+              >
+                <span>{label}</span>
+                <span style={{ color: "#333", fontSize: 12 }}>&rsaquo;</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: "#1a1a1a", margin: "0 24px" }} />
+
+        {/* Oracle info */}
+        <div style={{ padding: "16px 24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span
               style={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                padding: "10px 16px",
-                background: "transparent",
-                border: "none",
-                borderBottom: "1px solid #1a1a1a",
-                cursor: m.live ? "pointer" : "not-allowed",
-                opacity: m.live ? 1 : 0.4,
-                textAlign: "left",
+                fontSize: 9,
+                color: "#ff3333",
+                border: "1px solid #ff3333",
+                padding: "1px 5px",
+                letterSpacing: "0.1em",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    background: m.live ? "#00ff41" : "#333",
-                    display: "inline-block",
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ color: "#ccc", fontSize: 11, letterSpacing: "0.04em" }}>{m.name}</span>
-              </div>
-              <div style={{ paddingLeft: 14, fontSize: 10 }}>
-                {m.live ? (
-                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ color: "#ccc" }}>${isLoading ? "-.--" : priceUsd.toFixed(2)}</span>
-                    <span style={{ color: changeColor }}>
-                      {isLoading ? "+0.0%" : `${positive ? "+" : ""}${pctChange.toFixed(1)}%`}
-                    </span>
-                    <span style={{ color: "#00ff41", fontSize: 9, border: "1px solid rgba(0,255,65,.3)", padding: "0 4px" }}>{m.badge}</span>
-                  </span>
-                ) : (
-                  <span style={{ color: "#555", fontSize: 10 }}>SOON</span>
-                )}
-              </div>
-            </button>
-          ))}
+              DEVNET
+            </span>
+            <OracleDot />
+          </div>
+          <div style={{ fontSize: 12, color: "#ccc" }}>
+            Oracle: {isLoading ? "-.--" : `$${priceUsd.toFixed(2)}`}
+          </div>
+          {ago !== null && (
+            <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>
+              Last update: {ago < 1 ? "just now" : `${ago}m ago`}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: "#1a1a1a", margin: "0 24px" }} />
+
+        {/* User info */}
+        {connected && addr && (
+          <div style={{ padding: "16px 24px" }}>
+            {email && (
+              <div style={{ fontSize: 11, color: "#ccc", marginBottom: 4 }}>{email}</div>
+            )}
+            <div style={{ fontSize: 10, color: "#666", fontFamily: "monospace" }}>
+              {addr.slice(0, 4)}...{addr.slice(-4)}
+            </div>
+            <button
+              onClick={() => {
+                fetch("/api/logout", { method: "POST" }).catch(() => {});
+                disconnect();
+                onClose();
+              }}
+              style={{
+                marginTop: 12,
+                fontSize: 10,
+                color: "#ff4444",
+                background: "none",
+                border: "1px solid rgba(255,68,68,0.3)",
+                padding: "6px 16px",
+                cursor: "pointer",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              Log Out
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -282,6 +349,27 @@ function MobileMarketSelector() {
 
 export function Header() {
   const pathname = usePathname();
+  const { connected, publicKey } = useWallet();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEmail(getSavedEmail());
+  }, [connected]);
+
+  // Close menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  const addr = publicKey ? publicKey.toBase58() : null;
+
+  // Truncate email for mobile display
+  const truncEmail = email
+    ? email.length > 12
+      ? email.slice(0, 6) + "..." + email.slice(email.indexOf("@"))
+      : email
+    : null;
 
   return (
     <>
@@ -295,10 +383,58 @@ export function Header() {
           fontFamily: "'JetBrains Mono', 'Courier New', monospace",
         }}
       >
+        {/* ── MOBILE HEADER ──────────────────────────────────────── */}
         <div
+          className="flex md:hidden"
           style={{
             height: 44,
-            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingLeft: 12,
+            paddingRight: 12,
+            gap: 8,
+          }}
+        >
+          {/* Left: hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+          >
+            <Menu size={22} color="#fff" />
+          </button>
+
+          {/* Center: logo */}
+          <Link
+            href="/"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              textDecoration: "none",
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
+            <Logo size={28} />
+          </Link>
+
+          {/* Right: oracle dot + wallet info */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <OracleDot />
+            {connected && (
+              <span style={{ fontSize: 10, color: "#888", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {truncEmail || (addr ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : "")}
+              </span>
+            )}
+            {!connected && <WalletButton />}
+          </div>
+        </div>
+
+        {/* ── DESKTOP HEADER ─────────────────────────────────────── */}
+        <div
+          className="hidden md:flex"
+          style={{
+            height: 44,
             alignItems: "center",
             justifyContent: "space-between",
             paddingLeft: 16,
@@ -316,11 +452,10 @@ export function Header() {
               flexShrink: 0,
             }}
           >
-            <span className="hidden md:block"><Logo size={32} /></span>
-            <span className="block md:hidden"><Logo size={28} /></span>
+            <Logo size={32} />
           </Link>
 
-          {/* Center: nav (hidden on mobile) */}
+          {/* Center: nav */}
           <nav
             style={{
               display: "flex",
@@ -329,7 +464,6 @@ export function Header() {
               flex: 1,
               justifyContent: "center",
             }}
-            className="hidden md:flex"
           >
             {NAV.map(({ href, label }) => {
               const active = pathname === href;
@@ -355,14 +489,12 @@ export function Header() {
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
-                      (e.currentTarget as HTMLAnchorElement).style.color =
-                        "#ffffff";
+                      (e.currentTarget as HTMLAnchorElement).style.color = "#ffffff";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!active) {
-                      (e.currentTarget as HTMLAnchorElement).style.color =
-                        "#666";
+                      (e.currentTarget as HTMLAnchorElement).style.color = "#666";
                     }
                   }}
                 >
@@ -382,9 +514,7 @@ export function Header() {
             }}
           >
             <OracleDot />
-
             <span
-              className="hidden md:inline"
               style={{
                 fontSize: 9,
                 fontFamily: "'JetBrains Mono', 'Courier New', monospace",
@@ -397,7 +527,6 @@ export function Header() {
             >
               DEVNET
             </span>
-
             <NotificationBell />
             <WalletButton />
           </div>
@@ -405,9 +534,10 @@ export function Header() {
 
         {/* Desktop: scrolling ticker bar */}
         <TickerBar />
-        {/* Mobile: compact market selector */}
-        <MobileMarketSelector />
       </header>
+
+      {/* Mobile hamburger menu */}
+      <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} pathname={pathname} />
 
       {/* Bottom tab bar (mobile only) */}
       <BottomTabBar pathname={pathname} />

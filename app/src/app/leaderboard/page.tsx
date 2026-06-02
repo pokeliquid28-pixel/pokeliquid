@@ -110,8 +110,6 @@ function useLeaderboard() {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-const COL_HEADERS = ["RANK", "WALLET", "TOTAL PnL", "WIN RATE", "TRADES", "VOLUME"];
-
 export default function LeaderboardPage() {
   const { rows, loading } = useLeaderboard();
 
@@ -121,7 +119,7 @@ export default function LeaderboardPage() {
         minHeight: "100vh",
         backgroundColor: "#0a0a0a",
         fontFamily: "'JetBrains Mono', 'Fira Mono', 'Consolas', monospace",
-        padding: "32px 24px",
+        padding: "32px 16px",
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
@@ -153,18 +151,46 @@ export default function LeaderboardPage() {
           style={{
             backgroundColor: "#111111",
             border: "1px solid #1a1a1a",
+            overflowX: "auto",
           }}
         >
-          {/* Column headers */}
+          {/* Column headers — desktop */}
           <div
+            className="hidden md:grid"
             style={{
-              display: "grid",
-              gridTemplateColumns: "60px 1fr 130px 100px 80px 110px",
+              gridTemplateColumns: "60px minmax(100px, 1fr) minmax(100px, 130px) 90px 70px 100px",
+              gap: 12,
               borderBottom: "1px solid #1a1a1a",
               padding: "10px 16px",
             }}
           >
-            {COL_HEADERS.map((h) => (
+            {["RANK", "WALLET", "TOTAL PNL", "WIN RATE", "TRADES", "VOLUME"].map((h) => (
+              <div
+                key={h}
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "#666666",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                {h}
+              </div>
+            ))}
+          </div>
+
+          {/* Column headers — mobile (3 cols) */}
+          <div
+            className="grid md:hidden"
+            style={{
+              gridTemplateColumns: "50px 1fr minmax(80px, auto)",
+              gap: 8,
+              borderBottom: "1px solid #1a1a1a",
+              padding: "10px 12px",
+            }}
+          >
+            {["RANK", "WALLET", "TOTAL PNL"].map((h) => (
               <div
                 key={h}
                 style={{
@@ -213,64 +239,73 @@ export default function LeaderboardPage() {
               const isEven = idx % 2 === 0;
 
               return (
-                <div
-                  key={row.pubkey}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "60px 1fr 130px 100px 80px 110px",
-                    padding: "10px 16px",
-                    backgroundColor: isEven ? "#111111" : "#0a0a0a",
-                    borderBottom: "1px solid #1a1a1a",
-                    alignItems: "center",
-                  }}
-                >
-                  {/* Rank */}
+                <div key={row.pubkey}>
+                  {/* Desktop row */}
                   <div
+                    className="hidden md:grid"
                     style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: rankColor(rank),
+                      gridTemplateColumns: "60px minmax(100px, 1fr) minmax(100px, 130px) 90px 70px 100px",
+                      gap: 12,
+                      padding: "10px 16px",
+                      backgroundColor: isEven ? "#111111" : "#0a0a0a",
+                      borderBottom: "1px solid #1a1a1a",
+                      alignItems: "center",
                     }}
                   >
-                    #{rank}
+                    <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
+                      #{rank}
+                    </div>
+                    <div
+                      style={{ fontSize: 12, color: "#cccccc", letterSpacing: "0.02em" }}
+                      title={row.pubkey}
+                    >
+                      {truncateWallet(row.pubkey)}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: row.totalPnl >= 0 ? "#00ff41" : "#ff3333",
+                      }}
+                    >
+                      {formatPnl(row.totalPnl)}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#cccccc" }}>{winRate}%</div>
+                    <div style={{ fontSize: 12, color: "#cccccc" }}>{row.trades}</div>
+                    <div style={{ fontSize: 12, color: "#cccccc" }}>{formatVolume(row.volume)}</div>
                   </div>
 
-                  {/* Wallet */}
+                  {/* Mobile row (3 cols) */}
                   <div
+                    className="grid md:hidden"
                     style={{
-                      fontSize: 12,
-                      color: "#cccccc",
-                      letterSpacing: "0.02em",
-                    }}
-                    title={row.pubkey}
-                  >
-                    {truncateWallet(row.pubkey)}
-                  </div>
-
-                  {/* Total PnL */}
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: row.totalPnl >= 0 ? "#00ff41" : "#ff3333",
+                      gridTemplateColumns: "50px 1fr minmax(80px, auto)",
+                      gap: 8,
+                      padding: "10px 12px",
+                      backgroundColor: isEven ? "#111111" : "#0a0a0a",
+                      borderBottom: "1px solid #1a1a1a",
+                      alignItems: "center",
                     }}
                   >
-                    {formatPnl(row.totalPnl)}
-                  </div>
-
-                  {/* Win Rate */}
-                  <div style={{ fontSize: 12, color: "#cccccc" }}>
-                    {winRate}%
-                  </div>
-
-                  {/* Trades */}
-                  <div style={{ fontSize: 12, color: "#cccccc" }}>
-                    {row.trades}
-                  </div>
-
-                  {/* Volume */}
-                  <div style={{ fontSize: 12, color: "#cccccc" }}>
-                    {formatVolume(row.volume)}
+                    <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
+                      #{rank}
+                    </div>
+                    <div
+                      style={{ fontSize: 11, color: "#cccccc", letterSpacing: "0.02em" }}
+                      title={row.pubkey}
+                    >
+                      {truncateWallet(row.pubkey)}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: row.totalPnl >= 0 ? "#00ff41" : "#ff3333",
+                        textAlign: "right",
+                      }}
+                    >
+                      {formatPnl(row.totalPnl)}
+                    </div>
                   </div>
                 </div>
               );
