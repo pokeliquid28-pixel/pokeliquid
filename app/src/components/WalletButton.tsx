@@ -46,7 +46,7 @@ export function WalletButton() {
           {email ? (
             <span
               className="hidden md:inline text-[11px] font-mono truncate max-w-[120px]"
-              style={{ color: "#555" }}
+              style={{ color: "#666" }}
             >
               {email}
             </span>
@@ -55,11 +55,11 @@ export function WalletButton() {
               onClick={() => { setAuthMode("signup"); setShowAuth(true); }}
               className="hidden md:inline uppercase tracking-wider"
               style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
+                fontFamily: "'JetBrains Mono', monospace",
                 fontSize: "11px",
                 padding: "4px 10px",
                 background: "rgba(0,255,136,.08)",
-                color: "#00ff88",
+                color: "#00ff41",
                 border: "1px solid rgba(0,255,136,.3)",
                 cursor: "pointer",
                 transition: "background .15s",
@@ -74,17 +74,17 @@ export function WalletButton() {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="uppercase tracking-wider"
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "'JetBrains Mono', monospace",
               fontSize: "11px",
               padding: "5px 12px",
               background: "rgba(0,255,136,.08)",
-              color: "#00ff88",
+              color: "#00ff41",
               border: "1px solid rgba(0,255,136,.3)",
               cursor: "pointer",
               transition: "background .15s",
             }}
           >
-            <span className="font-mono" style={{ fontSize: "11px", color: "#00ff88" }}>
+            <span className="font-mono" style={{ fontSize: "11px", color: "#00ff41" }}>
               {addr.slice(0, 4)}...{addr.slice(-4)}
             </span>
           </button>
@@ -94,8 +94,8 @@ export function WalletButton() {
             <div
               className="absolute right-0 top-full mt-1 z-50 min-w-[160px]"
               style={{
-                background: "#0d0d0d",
-                border: "1px solid #1f1f1f",
+                background: "#111111",
+                border: "1px solid #1a1a1a",
                 padding: "4px",
               }}
             >
@@ -103,7 +103,7 @@ export function WalletButton() {
                 onClick={handleDisconnect}
                 className="w-full text-left uppercase tracking-wider"
                 style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontFamily: "'JetBrains Mono', monospace",
                   fontSize: "11px",
                   padding: "6px 10px",
                   background: "transparent",
@@ -144,25 +144,25 @@ export function WalletButton() {
           onClick={() => { setAuthMode("login"); setShowAuth(true); }}
           className="uppercase tracking-wider"
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "'JetBrains Mono', monospace",
             fontSize: "13px",
             fontWeight: 700,
             padding: "8px 18px",
-            background: "#ffe000",
-            color: "#1a1200",
+            background: "#00ff41",
+            color: "#000000",
             border: "none",
-            boxShadow: "3px 3px 0 #b89e00",
+            boxShadow: "3px 3px 0 #009926",
             cursor: "pointer",
             transition: "box-shadow .12s, transform .12s",
             letterSpacing: "0.06em",
             minHeight: "36px",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = "1px 1px 0 #b89e00";
+            e.currentTarget.style.boxShadow = "1px 1px 0 #009926";
             e.currentTarget.style.transform = "translate(2px, 2px)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = "3px 3px 0 #b89e00";
+            e.currentTarget.style.boxShadow = "3px 3px 0 #009926";
             e.currentTarget.style.transform = "translate(0, 0)";
           }}
         >
@@ -172,25 +172,25 @@ export function WalletButton() {
           onClick={() => select(SessionWalletName)}
           className="uppercase tracking-wider"
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
+            fontFamily: "'JetBrains Mono', monospace",
             fontSize: "13px",
             fontWeight: 700,
             padding: "8px 18px",
-            background: "#ffe000",
-            color: "#1a1200",
+            background: "#00ff41",
+            color: "#000000",
             border: "none",
-            boxShadow: "3px 3px 0 #b89e00",
+            boxShadow: "3px 3px 0 #009926",
             cursor: "pointer",
             transition: "box-shadow .12s, transform .12s",
             letterSpacing: "0.06em",
             minHeight: "36px",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = "1px 1px 0 #b89e00";
+            e.currentTarget.style.boxShadow = "1px 1px 0 #009926";
             e.currentTarget.style.transform = "translate(2px, 2px)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = "3px 3px 0 #b89e00";
+            e.currentTarget.style.boxShadow = "3px 3px 0 #009926";
             e.currentTarget.style.transform = "translate(0, 0)";
           }}
         >

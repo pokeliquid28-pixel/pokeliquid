@@ -239,7 +239,7 @@ function PriceChart({ prices }: { prices: PriceRow[] }) {
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = "#00ff88";
+    ctx.strokeStyle = "#00ff41";
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -250,7 +250,7 @@ function PriceChart({ prices }: { prices: PriceRow[] }) {
       const y = padding.top + chartH - ((last.ewma - minP) / range) * chartH;
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fillStyle = "#00ff88";
+      ctx.fillStyle = "#00ff41";
       ctx.fill();
     }
   }, [prices]);

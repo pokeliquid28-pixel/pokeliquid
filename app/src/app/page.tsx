@@ -1,167 +1,1399 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
+import { SystemProgram, PublicKey } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, getAccount } from "@solana/spl-token";
+import BN from "bn.js";
+
 import { useOracle } from "@/hooks/useOracle";
 import { useProtocolState } from "@/hooks/useProtocolState";
-import { useMarginAccount } from "@/hooks/useMarginAccount";
-import { OracleChart } from "@/components/OracleChart";
-import { LongShortBar } from "@/components/LongShortBar";
-import { TradingPanel } from "@/components/TradingPanel";
-import { PositionPanel } from "@/components/PositionPanel";
-import { TradeHistory } from "@/components/TradeHistory";
-import { CollateralPanel } from "@/components/CollateralPanel";
-import { Skeleton } from "@/components/Skeleton";
+import { useMarginAccount, Position } from "@/hooks/useMarginAccount";
+import { useMarket } from "@/hooks/useMarket";
+import { useOrderBook } from "@/hooks/useOrderBook";
+import { useNotifications } from "@/providers/NotificationProvider";
+import { incrementTradeCount } from "@/components/SaveWalletSheet";
+import { getProgram } from "@/lib/program";
+import { MARKETS, Market } from "@/lib/markets";
 import { LandingAuth } from "@/components/LandingAuth";
-import { formatPrice, rawToPrice, timeSince } from "@/lib/utils";
+import { Skeleton } from "@/components/Skeleton";
+import {
+  rawToPrice,
+  rawToUsdc,
+  usdcToRaw,
+  formatPrice,
+  calcLiqPriceLong,
+  calcLiqPriceShort,
+  calcPnl,
+  calc24hFunding,
+  calcSkewRate,
+  timeSince,
+} from "@/lib/utils";
+import {
+  PROTOCOL_STATE,
+  ORACLE_ACCOUNT,
+  FEE_VAULT,
+  INSURANCE_FUND,
+  USDC_MINT,
+  getMarginAccountPDA,
+} from "@/lib/addresses";
 
-function PriceTicker({ price, isLoading }: { price: number; isLoading: boolean }) {
-  const prevPrice = useRef(price);
-  const [flashClass, setFlashClass] = useState("");
+const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
-  useEffect(() => {
-    if (price === prevPrice.current || prevPrice.current === 0) {
-      prevPrice.current = price;
-      return;
-    }
-    setFlashClass(price > prevPrice.current ? "price-flash-up" : "price-flash-down");
-    prevPrice.current = price;
-    const t = setTimeout(() => setFlashClass(""), 800);
-    return () => clearTimeout(t);
-  }, [price]);
+type Side = "Long" | "Short";
+type OrderType = "MARKET" | "LIMIT" | "STOP";
 
-  if (isLoading) {
-    return <Skeleton height="h-10" width="w-48 md:w-64" />;
+async function ensureAta(
+  connection: any,
+  payer: PublicKey,
+  mint: PublicKey,
+  owner: PublicKey
+): Promise<{ ata: PublicKey; needsCreate: boolean }> {
+  const ata = await getAssociatedTokenAddress(mint, owner);
+  try {
+    await getAccount(connection, ata);
+    return { ata, needsCreate: false };
+  } catch {
+    return { ata, needsCreate: true };
   }
-
-  return (
-    <div className={`inline-block rounded-sm ${flashClass}`}>
-      <span className="text-primary font-mono text-3xl md:text-4xl font-bold">
-        ${rawToPrice(price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </span>
-    </div>
-  );
 }
 
+// ── Stats Hook ──────────────────────────────────────────────────────────────
+
+function useStats() {
+  const [stats, setStats] = useState<{ total_volume_24h: number } | null>(null);
+  useEffect(() => {
+    const load = () =>
+      fetch(`${API_BASE}/stats`).then((r) => r.json()).then(setStats).catch(() => {});
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return stats;
+}
+
+// ── Recent Trades Hook ──────────────────────────────────────────────────────
+
+type RecentTrade = {
+  id: number;
+  timestamp: number;
+  user_pubkey: string;
+  direction: string;
+  notional: number;
+  entry_price: number | null;
+  exit_price: number | null;
+  pnl: number | null;
+  action: string;
+};
+
+function useRecentTrades(marketId: string) {
+  const [trades, setTrades] = useState<RecentTrade[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      fetch(`${API_BASE}/trades?limit=20`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (!cancelled) {
+            setTrades(data.trades || []);
+            setLoading(false);
+          }
+        })
+        .catch(() => { if (!cancelled) setLoading(false); });
+    load();
+    const id = setInterval(load, 10_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [marketId]);
+
+  return { trades, loading };
+}
+
+// ── Wallet Balance Hook ─────────────────────────────────────────────────────
+
+function useWalletUsdc() {
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
+  const [balance, setBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!publicKey) { setBalance(null); return; }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
+        const acc = await getAccount(connection, ata);
+        if (!cancelled) setBalance(Number(acc.amount) / 1e6);
+      } catch {
+        if (!cancelled) setBalance(0);
+      }
+    };
+    load();
+    const id = setInterval(load, 10_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [connection, publicKey]);
+
+  return balance;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ═════════════════════════════════════════════════════════════════════════════
+
 export default function TradePage() {
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
+  const { connection } = useConnection();
+  const anchorWallet = useAnchorWallet();
   const oracle = useOracle();
   const protocol = useProtocolState();
   const margin = useMarginAccount();
+  const { markets, selectedMarket, setSelectedMarket } = useMarket();
+  const { asks, bids } = useOrderBook(selectedMarket.id);
+  const stats = useStats();
+  const { trades: recentTrades, loading: tradesLoading } = useRecentTrades(selectedMarket.id);
+  const walletUsdc = useWalletUsdc();
+  const { addNotification } = useNotifications();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [marketSearch, setMarketSearch] = useState("");
 
-  const handleRefresh = useCallback(() => {
-    setRefreshKey((k) => k + 1);
-  }, []);
+  const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  if (!connected) {
-    return <LandingAuth />;
+  if (!connected) return <LandingAuth />;
+
+  const currentPrice = rawToPrice(oracle.price);
+  const totalOI = protocol.totalLongExposure + protocol.totalShortExposure;
+
+  // 24h change from readings
+  const readings = oracle.readings;
+  let change24h = 0;
+  if (readings.length >= 2) {
+    const first = rawToPrice(readings[0].price);
+    const last = rawToPrice(readings[readings.length - 1].price);
+    if (first > 0) change24h = ((last - first) / first) * 100;
   }
 
+  const filteredMarkets = markets.filter((m) =>
+    m.name.toLowerCase().includes(marketSearch.toLowerCase()) ||
+    m.subtitle.toLowerCase().includes(marketSearch.toLowerCase())
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-8">
-      {/* Header */}
-      <div className="mb-4 md:mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4">
-          {/* Product image */}
-          <div className="flex-shrink-0 flex flex-row sm:flex-col items-center gap-3 sm:gap-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://product-images.tcgplayer.com/fit-in/400x400/593355.jpg"
-              alt="Prismatic Evolutions ETB"
-              width={120}
-              height={120}
-              className="etb-image rounded-sm object-contain w-16 h-16 md:w-[120px] md:h-[120px]"
+    <div className="flex flex-col h-[calc(100vh-72px)]">
+      {/* 3-column layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── LEFT COLUMN: Markets ──────────────────────────────────── */}
+        <div className="hidden lg:flex flex-col w-[220px] border-r border-border bg-panel flex-shrink-0">
+          {/* Markets header */}
+          <div className="p-3 border-b border-border">
+            <div className="text-[10px] uppercase tracking-wider text-secondary mb-2">Markets</div>
+            <input
+              type="text"
+              value={marketSearch}
+              onChange={(e) => setMarketSearch(e.target.value)}
+              placeholder="Search..."
+              className="field-input text-[11px] py-1.5"
             />
-            <span className="text-[10px] font-mono text-secondary tracking-wider uppercase">
-              Prismatic Evolutions ETB
-            </span>
           </div>
 
-          {/* Ticker + status */}
-          <div>
-            <p className="text-[10px] md:text-xs text-secondary font-mono uppercase tracking-wider mb-1">
-              PRISMATIC-ETB-PERP
-            </p>
-            <PriceTicker price={oracle.price} isLoading={oracle.isLoading} />
-            <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-mono text-secondary mt-2 flex-wrap">
-              {oracle.isStale && (
-                <span className="text-short border border-short px-2 py-0.5">
-                  STALE
-                </span>
+          {/* Market list */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredMarkets.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => m.live && setSelectedMarket(m)}
+                disabled={!m.live}
+                className={`w-full text-left p-3 border-b border-border/50 transition-colors ${
+                  selectedMarket.id === m.id
+                    ? "border-l-2 border-l-long bg-long/5"
+                    : "border-l-2 border-l-transparent hover:bg-white/[.02]"
+                } ${!m.live ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-primary">{m.name}</span>
+                  {!m.live && (
+                    <span className="text-[8px] px-1.5 py-0.5 border border-secondary text-secondary uppercase">Soon</span>
+                  )}
+                  {m.badge && m.live && (
+                    <span className="text-[8px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{m.badge}</span>
+                  )}
+                </div>
+                <div className="text-[9px] text-secondary">{m.subtitle}</div>
+                {m.live && (
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-[11px] font-bold text-primary">${currentPrice.toFixed(2)}</span>
+                    <span className={`text-[10px] font-bold ${change24h >= 0 ? "text-long" : "text-short"}`}>
+                      {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Your positions (compact) */}
+          <div className="border-t border-border">
+            <div className="p-3">
+              <div className="text-[10px] uppercase tracking-wider text-secondary mb-2">Your Positions</div>
+              {margin.positions.length === 0 ? (
+                <div className="text-[10px] text-secondary/60">No open positions</div>
+              ) : (
+                <div className="space-y-1.5">
+                  {margin.positions.map((pos) => {
+                    const pnl = rawToUsdc(calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional));
+                    return (
+                      <div key={pos.index} className="flex items-center justify-between text-[10px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className={pos.direction === "Long" ? "text-long" : "text-short"}>
+                            {pos.direction === "Long" ? "L" : "S"}
+                          </span>
+                          <span className="text-primary">{pos.leverage}x</span>
+                        </div>
+                        <span className={pnl >= 0 ? "text-long" : "text-short"}>
+                          {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
-              {oracle.lastUpdated > 0 && (
-                <span>Updated {timeSince(oracle.lastUpdated)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── CENTER COLUMN: Chart + Order Entry ────────────────────── */}
+        <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
+          {/* Market header bar */}
+          <div className="flex items-center gap-4 md:gap-6 px-4 py-3 border-b border-border bg-panel flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-primary">{selectedMarket.name}</span>
+              <span className="text-[9px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{selectedMarket.badge}</span>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-long">${oracle.isLoading ? "—" : currentPrice.toFixed(2)}</div>
+            </div>
+            <div className="text-[11px]">
+              <div className="text-secondary text-[9px] uppercase">24h Change</div>
+              <div className={change24h >= 0 ? "text-long" : "text-short"}>
+                {readings.length < 2 ? "—" : `${change24h >= 0 ? "+" : ""}${change24h.toFixed(2)}%`}
+              </div>
+            </div>
+            <div className="text-[11px]">
+              <div className="text-secondary text-[9px] uppercase">24h Volume</div>
+              <div className="text-primary">
+                {stats ? `$${stats.total_volume_24h.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
+              </div>
+            </div>
+            <div className="text-[11px]">
+              <div className="text-secondary text-[9px] uppercase">Open Interest</div>
+              <div className="text-primary">
+                {protocol.isLoading ? "—" : `$${rawToUsdc(totalOI).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+              </div>
+            </div>
+          </div>
+
+          {/* Chart */}
+          <div className="border-b border-border bg-panel">
+            <ChartSection oracle={oracle} />
+          </div>
+
+          {/* OI Bar */}
+          <div className="px-4 py-2 border-b border-border bg-panel flex items-center gap-3 text-[10px]">
+            <span className="text-secondary uppercase">Open Interest</span>
+            <div className="flex-1 flex h-1.5 bg-border overflow-hidden">
+              {totalOI > 0 ? (
+                <>
+                  <div className="bg-long transition-all" style={{ width: `${(protocol.totalLongExposure / totalOI) * 100}%` }} />
+                  <div className="bg-short transition-all" style={{ width: `${(protocol.totalShortExposure / totalOI) * 100}%` }} />
+                </>
+              ) : (
+                <div className="bg-border w-full" />
               )}
-              {protocol.isPaused && (
-                <span className="text-short border border-short px-2 py-0.5 font-bold">
-                  PAUSED
-                </span>
+            </div>
+            <span className="text-long">${rawToUsdc(protocol.totalLongExposure).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            <span className="text-secondary">/</span>
+            <span className="text-short">${rawToUsdc(protocol.totalShortExposure).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+          </div>
+
+          {/* Order Entry */}
+          <div className="p-4 bg-panel">
+            <OrderEntry
+              oracle={oracle}
+              protocol={protocol}
+              margin={margin}
+              walletUsdc={walletUsdc}
+              onRefresh={handleRefresh}
+            />
+          </div>
+        </div>
+
+        {/* ── RIGHT COLUMN: Order Book + Recent Trades ──────────────── */}
+        <div className="hidden xl:flex flex-col w-[260px] border-l border-border bg-panel flex-shrink-0">
+          {/* Order Book */}
+          <div className="flex-1 border-b border-border">
+            <div className="p-3 border-b border-border">
+              <div className="text-[10px] uppercase tracking-wider text-secondary">Order Book</div>
+            </div>
+            <div className="p-3">
+              {asks.length === 0 && bids.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-[10px] text-secondary">Order book coming soon</div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="grid grid-cols-3 text-[9px] uppercase text-secondary mb-2">
+                    <span>Price</span>
+                    <span className="text-right">Size</span>
+                    <span className="text-right">Total</span>
+                  </div>
+                  {asks.map((a, i) => (
+                    <div key={`a-${i}`} className="grid grid-cols-3 text-[11px]">
+                      <span className="text-short">${a.price.toFixed(2)}</span>
+                      <span className="text-right text-primary">{a.size.toFixed(2)}</span>
+                      <span className="text-right text-secondary">{a.total.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  {bids.map((b, i) => (
+                    <div key={`b-${i}`} className="grid grid-cols-3 text-[11px]">
+                      <span className="text-long">${b.price.toFixed(2)}</span>
+                      <span className="text-right text-primary">{b.size.toFixed(2)}</span>
+                      <span className="text-right text-secondary">{b.total.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Trades */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="p-3 border-b border-border">
+              <div className="text-[10px] uppercase tracking-wider text-secondary">Recent Trades</div>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {tradesLoading ? (
+                <div className="p-3 text-[10px] text-secondary">Loading...</div>
+              ) : recentTrades.length === 0 ? (
+                <div className="p-3 text-center py-8">
+                  <div className="text-[10px] text-secondary">No trades yet</div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 text-[9px] uppercase text-secondary px-3 py-2 border-b border-border/50">
+                    <span>Price</span>
+                    <span className="text-right">Size</span>
+                    <span className="text-right">Time</span>
+                  </div>
+                  {recentTrades.map((t) => (
+                    <div key={t.id} className="grid grid-cols-3 text-[11px] px-3 py-1.5 border-b border-border/30 hover:bg-white/[.01]">
+                      <span className={t.direction === "long" ? "text-long" : "text-short"}>
+                        ${(t.entry_price ?? t.exit_price ?? 0).toFixed(2)}
+                      </span>
+                      <span className="text-right text-primary">${t.notional.toFixed(0)}</span>
+                      <span className="text-right text-secondary">
+                        {new Date(t.timestamp * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main layout: stacked on mobile, 60/40 on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
-        {/* Left: chart + analytics */}
-        <div className="lg:col-span-3 space-y-4 md:space-y-6">
-          {/* Price chart */}
-          <div className="border border-border bg-panel p-3 md:p-5">
-            <div className="flex justify-between items-center mb-3 md:mb-4">
-              <h2 className="text-[10px] md:text-xs font-semibold text-secondary uppercase tracking-wider">
-                <span className="hidden md:inline">PRISMATIC-ETB-PERP · Price Chart (last 50 readings)</span>
-                <span className="md:hidden">Price Chart</span>
-              </h2>
-              <span className="text-[10px] md:text-xs font-mono text-secondary">
-                {oracle.readings.length} / 50
-              </span>
-            </div>
-            {oracle.isLoading ? (
-              <Skeleton height="h-[200px] md:h-28" />
-            ) : (
-              <div className="h-[200px] md:h-auto">
-                <OracleChart readings={oracle.readings} height={200} />
-              </div>
-            )}
+      {/* ── POSITIONS TABLE (full width, below) ──────────────────────── */}
+      {connected && margin.positions.length > 0 && (
+        <PositionsTable
+          positions={margin.positions}
+          oracle={oracle}
+          protocol={protocol}
+          margin={margin}
+          onRefresh={handleRefresh}
+        />
+      )}
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CHART SECTION
+// ═════════════════════════════════════════════════════════════════════════════
+
+function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [timeframe, setTimeframe] = useState("5m");
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container || oracle.readings.length < 2) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+    const pad = { top: 16, right: 60, bottom: 24, left: 8 };
+    const cw = w - pad.left - pad.right;
+    const ch = h - pad.top - pad.bottom;
+
+    const prices = oracle.readings.map((r) => rawToPrice(r.price));
+    const minP = Math.min(...prices) * 0.998;
+    const maxP = Math.max(...prices) * 1.002;
+    const range = maxP - minP || 1;
+    const currentPrice = prices[prices.length - 1];
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Grid lines
+    ctx.strokeStyle = "rgba(255,255,255,0.04)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (ch / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(w - pad.right, y);
+      ctx.stroke();
+
+      const priceVal = maxP - (range / 4) * i;
+      ctx.fillStyle = "rgba(255,255,255,0.25)";
+      ctx.font = "10px 'JetBrains Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`$${priceVal.toFixed(2)}`, w - pad.right + 6, y + 3);
+    }
+
+    // Fill area
+    const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+    gradient.addColorStop(0, "rgba(0,255,65,0.12)");
+    gradient.addColorStop(1, "rgba(0,255,65,0)");
+
+    ctx.beginPath();
+    for (let i = 0; i < prices.length; i++) {
+      const x = pad.left + (i / (prices.length - 1)) * cw;
+      const y = pad.top + ch - ((prices[i] - minP) / range) * ch;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(pad.left + cw, pad.top + ch);
+    ctx.lineTo(pad.left, pad.top + ch);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    for (let i = 0; i < prices.length; i++) {
+      const x = pad.left + (i / (prices.length - 1)) * cw;
+      const y = pad.top + ch - ((prices[i] - minP) / range) * ch;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "#00ff41";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Current price dashed line
+    const curY = pad.top + ch - ((currentPrice - minP) / range) * ch;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "rgba(0,255,65,0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, curY);
+    ctx.lineTo(w - pad.right, curY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Current price dot
+    ctx.beginPath();
+    ctx.arc(pad.left + cw, curY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "#00ff41";
+    ctx.fill();
+  }, [oracle.readings, timeframe]);
+
+  const timeframes = ["1m", "5m", "1h", "4h", "1d"];
+
+  return (
+    <div>
+      <div className="flex items-center gap-1 px-4 py-2 border-b border-border/50">
+        {timeframes.map((tf) => (
+          <button
+            key={tf}
+            onClick={() => setTimeframe(tf)}
+            className={`px-2.5 py-1 text-[10px] uppercase transition-colors ${
+              timeframe === tf
+                ? "text-long bg-long/10"
+                : "text-secondary hover:text-primary"
+            }`}
+          >
+            {tf}
+          </button>
+        ))}
+      </div>
+      <div ref={containerRef} className="h-[200px] md:h-[280px]">
+        {oracle.readings.length < 2 ? (
+          <div className="flex items-center justify-center h-full text-[11px] text-secondary">
+            Collecting price history...
           </div>
+        ) : (
+          <canvas ref={canvasRef} className="w-full h-full" />
+        )}
+      </div>
+    </div>
+  );
+}
 
-          {/* Long/short ratio */}
-          <div className="border border-border bg-panel p-3 md:p-5">
-            <h2 className="text-[10px] md:text-xs font-semibold text-secondary uppercase tracking-wider mb-3 md:mb-4">
-              Open Interest
-            </h2>
-            {protocol.isLoading ? (
-              <Skeleton height="h-8" />
-            ) : (
-              <LongShortBar
-                totalLong={protocol.totalLongExposure}
-                totalShort={protocol.totalShortExposure}
-                maxLong={protocol.maxLongExposure}
-                maxShort={protocol.maxShortExposure}
-              />
-            )}
-          </div>
+// ═════════════════════════════════════════════════════════════════════════════
+// ORDER ENTRY
+// ═════════════════════════════════════════════════════════════════════════════
 
-          {/* Position panel below chart */}
-          <PositionPanel oracle={oracle} margin={margin} protocol={protocol} onRefresh={handleRefresh} />
+function OrderEntry({
+  oracle,
+  protocol,
+  margin,
+  walletUsdc,
+  onRefresh,
+}: {
+  oracle: ReturnType<typeof useOracle>;
+  protocol: ReturnType<typeof useProtocolState>;
+  margin: ReturnType<typeof useMarginAccount>;
+  walletUsdc: number | null;
+  onRefresh: () => void;
+}) {
+  const { connection } = useConnection();
+  const { publicKey, connected } = useWallet();
+  const anchorWallet = useAnchorWallet();
+  const { addNotification } = useNotifications();
 
-          {/* Trade history */}
-          <TradeHistory />
+  const [side, setSide] = useState<Side>("Long");
+  const [orderType, setOrderType] = useState<OrderType>("MARKET");
+  const [collateralInput, setCollateralInput] = useState("");
+  const [leverage, setLeverage] = useState(1);
+  const [slInput, setSlInput] = useState("");
+  const [tpInput, setTpInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [txStatus, setTxStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  // Collateral management
+  const [showCollateral, setShowCollateral] = useState(false);
+  const [collMode, setCollMode] = useState<"deposit" | "withdraw">("deposit");
+  const [collAmount, setCollAmount] = useState("");
+
+  const collateralUsdc = parseFloat(collateralInput) || 0;
+  const collateralRaw = usdcToRaw(collateralUsdc);
+  const currentPriceUsd = rawToPrice(oracle.price);
+  const positionSizeUsdc = collateralUsdc * leverage;
+  const openFeeUsdc = rawToUsdc(Math.floor((collateralRaw * protocol.feeBps) / 10_000));
+  const liqPrice = side === "Long"
+    ? calcLiqPriceLong(oracle.price, leverage)
+    : calcLiqPriceShort(oracle.price, leverage);
+
+  const marginCollateralUsdc = rawToUsdc(margin.collateral);
+  const minPositionUsdc = rawToUsdc(protocol.minPositionSize);
+  const positionCount = margin.positions.length;
+  const maxPositions = 5;
+  const slotsAvailable = positionCount < maxPositions;
+
+  const canOpen =
+    connected &&
+    slotsAvailable &&
+    collateralUsdc >= minPositionUsdc &&
+    collateralUsdc <= marginCollateralUsdc &&
+    orderType === "MARKET";
+
+  // ── Handlers ────────────────────────────────────────────────────────────
+
+  async function handleOpenPosition() {
+    if (!publicKey || !anchorWallet || !canOpen) return;
+    setLoading(true);
+    setTxStatus(null);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      const direction = side === "Long" ? { long: {} } : { short: {} };
+      const slVal = slInput ? new BN(Math.round(parseFloat(slInput) * 1_000_000)) : null;
+      const tpVal = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
+
+      await (program.methods as any)
+        .openPosition(direction, new BN(collateralRaw), leverage, slVal, tpVal)
+        .accounts({
+          user: publicKey,
+          protocolState: PROTOCOL_STATE,
+          marginAccount: marginPda,
+          oracle: ORACLE_ACCOUNT,
+          feeVault: FEE_VAULT,
+          insuranceFund: INSURANCE_FUND,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+
+      setTxStatus({ type: "success", msg: `${side} position opened at $${currentPriceUsd.toFixed(2)}` });
+      incrementTradeCount();
+      addNotification("success", `${side} Position Opened`, `$${positionSizeUsdc.toFixed(2)} at $${currentPriceUsd.toFixed(2)} (${leverage}x)`);
+      setCollateralInput("");
+      setSlInput("");
+      setTpInput("");
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "Transaction failed" });
+      addNotification("error", "Open Position Failed", e?.message ?? "Transaction failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleMintUsdc() {
+    if (!publicKey || !anchorWallet) return;
+    setLoading(true);
+    setTxStatus(null);
+    try {
+      const solBalance = await connection.getBalance(publicKey);
+      if (solBalance < 5_000_000) {
+        setTxStatus({ type: "success", msg: "Airdropping SOL..." });
+        try {
+          const sig = await connection.requestAirdrop(publicKey, 0.05 * 1e9);
+          await connection.confirmTransaction(sig, "confirmed");
+        } catch {
+          try {
+            const sig = await connection.requestAirdrop(publicKey, 0.01 * 1e9);
+            await connection.confirmTransaction(sig, "confirmed");
+          } catch {
+            setTxStatus({ type: "error", msg: "Devnet airdrop failed" });
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      const program = getProgram(connection, anchorWallet);
+      const { ata, needsCreate } = await ensureAta(connection, publicKey, USDC_MINT, publicKey);
+      const txBuilder = (program.methods as any).mintDevnetUsdc().accounts({
+        user: publicKey, protocolState: PROTOCOL_STATE, usdcMint: USDC_MINT, userTokenAccount: ata, tokenProgram: TOKEN_PROGRAM_ID,
+      });
+      if (needsCreate) {
+        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
+        await txBuilder.preInstructions([createIx]).rpc();
+      } else {
+        await txBuilder.rpc();
+      }
+      setTxStatus({ type: "success", msg: "Minted 1,000 devnet USDC!" });
+      addNotification("success", "USDC Minted", "1,000 devnet USDC added");
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "Mint failed" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeposit() {
+    if (!publicKey || !anchorWallet) return;
+    const amt = parseFloat(collAmount) || 0;
+    if (amt <= 0) return;
+    setLoading(true);
+    setTxStatus(null);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
+      let needsCreate = false;
+      try { await getAccount(connection, ata); } catch { needsCreate = true; }
+
+      const txBuilder = (program.methods as any)
+        .depositCollateral(new BN(usdcToRaw(amt)))
+        .accounts({
+          user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
+          userTokenAccount: ata, feeVault: FEE_VAULT, tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        });
+      if (needsCreate) {
+        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
+        await txBuilder.preInstructions([createIx]).rpc();
+      } else {
+        await txBuilder.rpc();
+      }
+      setTxStatus({ type: "success", msg: `Deposited $${amt.toFixed(2)}` });
+      setCollAmount("");
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "Deposit failed" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleWithdraw() {
+    if (!publicKey || !anchorWallet) return;
+    const amt = parseFloat(collAmount) || 0;
+    if (amt <= 0 || amt > marginCollateralUsdc) return;
+    setLoading(true);
+    setTxStatus(null);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
+      let needsCreate = false;
+      try { await getAccount(connection, ata); } catch { needsCreate = true; }
+
+      const txBuilder = (program.methods as any)
+        .withdrawCollateral(new BN(usdcToRaw(amt)))
+        .accounts({
+          user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
+          userTokenAccount: ata, feeVault: FEE_VAULT, tokenProgram: TOKEN_PROGRAM_ID,
+        });
+      if (needsCreate) {
+        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
+        await txBuilder.preInstructions([createIx]).rpc();
+      } else {
+        await txBuilder.rpc();
+      }
+      setTxStatus({ type: "success", msg: `Withdrew $${amt.toFixed(2)}` });
+      setCollAmount("");
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "Withdrawal failed" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCloseMarginAccount() {
+    if (!publicKey || !anchorWallet) return;
+    setLoading(true);
+    setTxStatus(null);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      await (program.methods as any).closeMarginAccount().accounts({
+        user: publicKey, marginAccount: marginPda, systemProgram: SystemProgram.programId,
+      }).rpc();
+      setTxStatus({ type: "success", msg: "Account reset. You can now deposit fresh collateral." });
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      setTxStatus({ type: "error", msg: e?.message ?? "Failed to close account" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────
+
+  const leveragePresets = [1, 2, 5, 10];
+
+  return (
+    <div className="space-y-3">
+      {/* Migration notice */}
+      {margin.error && connected && (
+        <div className="border border-short p-3 bg-short/5 space-y-2">
+          <p className="text-[11px] text-short">Account needs reset for multi-position support.</p>
+          <button onClick={handleCloseMarginAccount} disabled={loading} className="btn-red w-full py-2 text-[10px]">
+            {loading ? "..." : "Reset Account"}
+          </button>
         </div>
+      )}
 
-        {/* Right: collateral + trading panel */}
-        <div className="lg:col-span-2 space-y-4 md:space-y-6">
-          <CollateralPanel margin={margin} onRefresh={handleRefresh} />
-          <TradingPanel
-            key={refreshKey}
-            oracle={oracle}
-            protocol={protocol}
-            margin={margin}
-            onRefresh={handleRefresh}
+      {/* Collateral bar */}
+      <div className="flex items-center justify-between text-[11px] border border-border p-2.5 bg-bg">
+        <div className="flex items-center gap-3">
+          <span className="text-secondary">Available:</span>
+          <span className="text-long font-bold">${marginCollateralUsdc.toFixed(2)}</span>
+          {walletUsdc !== null && (
+            <>
+              <span className="text-secondary">Wallet:</span>
+              <span className="text-primary">${walletUsdc.toFixed(2)}</span>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => { setShowCollateral(!showCollateral); setCollMode("deposit"); }}
+            className="btn-outline text-[9px] py-1 px-2"
+          >
+            {showCollateral ? "Hide" : "Deposit/Withdraw"}
+          </button>
+          <button onClick={handleMintUsdc} disabled={loading} className="btn-outline text-[9px] py-1 px-2">
+            {loading ? "..." : "Get USDC"}
+          </button>
+        </div>
+      </div>
+
+      {/* Collateral deposit/withdraw panel */}
+      {showCollateral && (
+        <div className="border border-border p-3 bg-bg space-y-2">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setCollMode("deposit")}
+              className={`flex-1 py-1.5 text-[10px] uppercase ${collMode === "deposit" ? "text-long border border-long" : "text-secondary border border-border"}`}
+            >
+              Deposit
+            </button>
+            <button
+              onClick={() => setCollMode("withdraw")}
+              className={`flex-1 py-1.5 text-[10px] uppercase ${collMode === "withdraw" ? "text-short border border-short" : "text-secondary border border-border"}`}
+            >
+              Withdraw
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              value={collAmount}
+              onChange={(e) => setCollAmount(e.target.value)}
+              placeholder="0.00"
+              className="field-input flex-1 text-[11px] py-1.5"
+            />
+            <button
+              onClick={() => {
+                if (collMode === "deposit" && walletUsdc !== null) setCollAmount(walletUsdc.toFixed(2));
+                else setCollAmount(marginCollateralUsdc.toFixed(2));
+              }}
+              className="text-[9px] text-secondary hover:text-primary px-2"
+            >
+              MAX
+            </button>
+          </div>
+          <button
+            onClick={collMode === "deposit" ? handleDeposit : handleWithdraw}
+            disabled={loading || !(parseFloat(collAmount) > 0)}
+            className={`w-full py-2 text-[10px] font-bold uppercase ${
+              collMode === "deposit"
+                ? "btn-green"
+                : "btn-red"
+            }`}
+          >
+            {loading ? "..." : collMode === "deposit" ? "Deposit USDC" : "Withdraw USDC"}
+          </button>
+        </div>
+      )}
+
+      {/* Long / Short toggle */}
+      <div className="flex">
+        <button
+          onClick={() => setSide("Long")}
+          className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+            side === "Long" ? "bg-long text-black" : "border border-border text-secondary hover:text-primary"
+          }`}
+        >
+          Long
+        </button>
+        <button
+          onClick={() => setSide("Short")}
+          className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+            side === "Short" ? "bg-short text-white" : "border border-border text-secondary hover:text-primary"
+          }`}
+        >
+          Short
+        </button>
+      </div>
+
+      {/* Order type tabs */}
+      <div className="flex gap-1">
+        {(["MARKET", "LIMIT", "STOP"] as OrderType[]).map((ot) => (
+          <button
+            key={ot}
+            onClick={() => setOrderType(ot)}
+            className={`px-3 py-1.5 text-[10px] uppercase tracking-wider transition-colors ${
+              orderType === ot
+                ? "text-primary border border-border2 bg-border/50"
+                : "text-secondary hover:text-primary"
+            }`}
+          >
+            {ot}
+          </button>
+        ))}
+      </div>
+
+      {/* Limit / Stop price input */}
+      {orderType !== "MARKET" && (
+        <div className="space-y-1">
+          <div className="text-[10px] text-secondary uppercase">
+            {orderType === "LIMIT" ? "Limit Price" : "Stop Price"}
+          </div>
+          <input
+            type="number"
+            placeholder={`$${currentPriceUsd.toFixed(2)}`}
+            className="field-input text-[11px] py-2"
+          />
+          <div className="text-[9px] text-secondary/60">
+            {orderType === "LIMIT" ? "Limit orders" : "Stop orders"} coming soon
+          </div>
+        </div>
+      )}
+
+      {/* Collateral input */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-[10px]">
+          <span className="text-secondary uppercase">Collateral (USDC)</span>
+          <span
+            className="text-secondary cursor-pointer hover:text-primary"
+            onClick={() => setCollateralInput(marginCollateralUsdc.toFixed(2))}
+          >
+            Max: ${marginCollateralUsdc.toFixed(2)}
+          </span>
+        </div>
+        <input
+          type="number"
+          value={collateralInput}
+          onChange={(e) => setCollateralInput(e.target.value)}
+          placeholder="0.00"
+          className="field-input text-[11px] py-2"
+        />
+      </div>
+
+      {/* Leverage */}
+      <div className="space-y-1.5">
+        <div className="text-[10px] text-secondary uppercase">Leverage</div>
+        <div className="flex gap-1">
+          {leveragePresets.map((lv) => (
+            <button
+              key={lv}
+              onClick={() => setLeverage(lv)}
+              className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${
+                leverage === lv
+                  ? "bg-long/15 text-long border border-long/40"
+                  : "border border-border text-secondary hover:text-primary"
+              }`}
+            >
+              {lv}x
+            </button>
+          ))}
+          <button
+            onClick={() => setLeverage(10)}
+            className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${
+              leverage === 10
+                ? "bg-short/20 text-short border border-short/40"
+                : "border border-border text-short/60 hover:text-short"
+            }`}
+          >
+            DEGEN
+          </button>
+        </div>
+      </div>
+
+      {/* SL/TP */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <div className="text-[10px] text-secondary">Stop Loss</div>
+          <input
+            type="number"
+            step="0.01"
+            value={slInput}
+            onChange={(e) => setSlInput(e.target.value)}
+            placeholder={side === "Long" ? "Below entry" : "Above entry"}
+            className="field-input text-[10px] py-1.5"
           />
         </div>
+        <div className="space-y-1">
+          <div className="text-[10px] text-secondary">Take Profit</div>
+          <input
+            type="number"
+            step="0.01"
+            value={tpInput}
+            onChange={(e) => setTpInput(e.target.value)}
+            placeholder={side === "Long" ? "Above entry" : "Below entry"}
+            className="field-input text-[10px] py-1.5"
+          />
+        </div>
+      </div>
+
+      {/* Calculated fields */}
+      <div className="border border-border p-2.5 bg-bg text-[10px] space-y-1.5">
+        <CalcRow label="Position Size" value={`$${positionSizeUsdc.toFixed(2)}`} />
+        <CalcRow label="Entry Price" value={`$${currentPriceUsd.toFixed(2)}`} />
+        <CalcRow label="Liq Price" value={collateralUsdc > 0 ? `$${liqPrice.toFixed(2)}` : "—"} color="text-short" />
+        <CalcRow label="Fee (2%)" value={`$${openFeeUsdc.toFixed(4)}`} />
+      </div>
+
+      {/* Status */}
+      {!slotsAvailable && (
+        <div className="text-[10px] text-short text-center">All {maxPositions} position slots full</div>
+      )}
+
+      {txStatus && (
+        <div className={`text-[10px] px-2.5 py-2 border ${txStatus.type === "success" ? "border-long text-long bg-long/5" : "border-short text-short bg-short/5"}`}>
+          {txStatus.msg}
+        </div>
+      )}
+
+      {/* Submit */}
+      <button
+        onClick={handleOpenPosition}
+        disabled={!canOpen || loading}
+        className={`w-full py-3 text-[11px] font-bold uppercase tracking-wider ${
+          canOpen && !loading
+            ? side === "Long" ? "btn-green" : "btn-red"
+            : "bg-border text-secondary cursor-not-allowed"
+        }`}
+      >
+        {loading
+          ? "Confirming..."
+          : orderType !== "MARKET"
+          ? `${orderType} orders coming soon`
+          : `Open ${side} [${orderType}]`}
+      </button>
+    </div>
+  );
+}
+
+function CalcRow({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-secondary">{label}</span>
+      <span className={color || "text-primary"}>{value}</span>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// POSITIONS TABLE
+// ═════════════════════════════════════════════════════════════════════════════
+
+function PositionsTable({
+  positions,
+  oracle,
+  protocol,
+  margin,
+  onRefresh,
+}: {
+  positions: Position[];
+  oracle: ReturnType<typeof useOracle>;
+  protocol: ReturnType<typeof useProtocolState>;
+  margin: ReturnType<typeof useMarginAccount>;
+  onRefresh: () => void;
+}) {
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
+  const anchorWallet = useAnchorWallet();
+  const { addNotification } = useNotifications();
+  const [loading, setLoading] = useState<number | null>(null);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [slInput, setSlInput] = useState("");
+  const [tpInput, setTpInput] = useState("");
+  const [marginMode, setMarginMode] = useState<"idle" | "add" | "remove">("idle");
+  const [marginInput, setMarginInput] = useState("");
+  const [confirmClose, setConfirmClose] = useState<number | null>(null);
+
+  const currentPriceUsd = rawToPrice(oracle.price);
+
+  async function handleClose(pos: Position) {
+    if (!publicKey || !anchorWallet) return;
+    setLoading(pos.index);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
+      let needsCreate = false;
+      try { await getAccount(connection, ata); } catch { needsCreate = true; }
+
+      const txBuilder = (program.methods as any).closePosition(pos.index).accounts({
+        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
+        oracle: ORACLE_ACCOUNT, feeVault: FEE_VAULT, insuranceFund: INSURANCE_FUND,
+        userTokenAccount: ata, tokenProgram: TOKEN_PROGRAM_ID,
+      });
+      if (needsCreate) {
+        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
+        await txBuilder.preInstructions([createIx]).rpc();
+      } else {
+        await txBuilder.rpc();
+      }
+      const pnl = rawToUsdc(calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional));
+      addNotification(pnl >= 0 ? "success" : "warning", `Position #${pos.index} Closed`, `PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}`);
+      setConfirmClose(null);
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      addNotification("error", "Close Failed", e?.message ?? "Transaction failed");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleSetSlTp(pos: Position) {
+    if (!publicKey || !anchorWallet) return;
+    setLoading(pos.index);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      const slBn = slInput ? new BN(Math.round(parseFloat(slInput) * 1_000_000)) : null;
+      const tpBn = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
+
+      await (program.methods as any).setSlTp(pos.index, slBn, tpBn).accounts({
+        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: ORACLE_ACCOUNT,
+      }).rpc();
+      addNotification("success", `SL/TP Updated — #${pos.index}`, `SL: ${slInput || "none"} / TP: ${tpInput || "none"}`);
+      setExpandedIdx(null);
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      addNotification("error", "SL/TP Failed", e?.message ?? "Failed");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleAddMargin(pos: Position) {
+    if (!publicKey || !anchorWallet) return;
+    const amt = parseFloat(marginInput) || 0;
+    if (amt <= 0) return;
+    setLoading(pos.index);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      await (program.methods as any).addMargin(pos.index, new BN(Math.round(amt * 1e6))).accounts({
+        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
+      }).rpc();
+      addNotification("success", `Margin Added — #${pos.index}`, `+$${amt.toFixed(2)}`);
+      setMarginMode("idle");
+      setMarginInput("");
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      addNotification("error", "Add Margin Failed", e?.message ?? "Failed");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleRemoveMargin(pos: Position) {
+    if (!publicKey || !anchorWallet) return;
+    const amt = parseFloat(marginInput) || 0;
+    if (amt <= 0) return;
+    setLoading(pos.index);
+    try {
+      const program = getProgram(connection, anchorWallet);
+      const marginPda = getMarginAccountPDA(publicKey);
+      await (program.methods as any).removeMargin(pos.index, new BN(Math.round(amt * 1e6))).accounts({
+        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: ORACLE_ACCOUNT,
+      }).rpc();
+      addNotification("info", `Margin Removed — #${pos.index}`, `-$${amt.toFixed(2)}`);
+      setMarginMode("idle");
+      setMarginInput("");
+      setTimeout(onRefresh, 2000);
+    } catch (e: any) {
+      addNotification("error", "Remove Margin Failed", e?.message ?? "Failed");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  const FUNDING_RATE_SCALE = 100_000;
+
+  return (
+    <div className="border-t border-border bg-panel">
+      <div className="px-4 py-2 border-b border-border">
+        <span className="text-[10px] uppercase tracking-wider text-secondary">Open Positions</span>
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-x-auto">
+        <div className="grid grid-cols-9 text-[9px] uppercase text-secondary px-4 py-2 border-b border-border/50 min-w-[800px]">
+          <span>Market</span>
+          <span>Side</span>
+          <span>Size</span>
+          <span>Entry</span>
+          <span>Mark</span>
+          <span>Liq</span>
+          <span>PnL</span>
+          <span>Funding</span>
+          <span>Actions</span>
+        </div>
+        {positions.map((pos) => {
+          const pnlRaw = calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional);
+          const pnl = rawToUsdc(pnlRaw);
+          const isProfit = pnl >= 0;
+          const entryUsd = rawToPrice(pos.entryPrice);
+          const liq = pos.direction === "Long"
+            ? calcLiqPriceLong(pos.entryPrice, pos.leverage)
+            : calcLiqPriceShort(pos.entryPrice, pos.leverage);
+          const nowSec = Math.floor(Date.now() / 1000);
+          const hoursOpen = Math.max(0, Math.floor((nowSec - pos.openTimestamp) / 3600));
+          const totalOI = protocol.totalLongExposure + protocol.totalShortExposure;
+          const skewRate = totalOI > 0 ? Math.floor(Math.abs(protocol.totalLongExposure - protocol.totalShortExposure) * protocol.skewFactor / totalOI) : 0;
+          const onMajority = pos.direction === "Long" ? protocol.totalLongExposure >= protocol.totalShortExposure : protocol.totalShortExposure >= protocol.totalLongExposure;
+          const hourlyRate = onMajority ? protocol.baseFundingRatePerHour + skewRate : Math.max(0, protocol.baseFundingRatePerHour - skewRate);
+          const fundingAccrued = rawToUsdc(Math.floor(pos.notional * hourlyRate * hoursOpen / FUNDING_RATE_SCALE));
+          const isExpanded = expandedIdx === pos.index;
+
+          return (
+            <div key={pos.index}>
+              <div className="grid grid-cols-9 text-[11px] px-4 py-2.5 border-b border-border/30 hover:bg-white/[.01] items-center min-w-[800px]">
+                <span className="text-primary">{MARKETS[0]?.name ?? "—"}</span>
+                <span className={pos.direction === "Long" ? "text-long" : "text-short"}>
+                  {pos.direction.toUpperCase()} {pos.leverage}x
+                </span>
+                <span className="text-primary">${rawToUsdc(pos.notional).toFixed(2)}</span>
+                <span className="text-primary">${entryUsd.toFixed(2)}</span>
+                <span className="text-primary">${currentPriceUsd.toFixed(2)}</span>
+                <span className="text-short">${liq.toFixed(2)}</span>
+                <span className={isProfit ? "text-long" : "text-short"}>
+                  {isProfit ? "+" : ""}${pnl.toFixed(2)}
+                </span>
+                <span className={hoursOpen > 0 ? "text-short" : "text-secondary"}>
+                  {hoursOpen > 0 ? `-$${fundingAccrued.toFixed(4)}` : "< 1h"}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      setExpandedIdx(isExpanded ? null : pos.index);
+                      setSlInput(pos.slPrice ? rawToPrice(pos.slPrice).toFixed(2) : "");
+                      setTpInput(pos.tpPrice ? rawToPrice(pos.tpPrice).toFixed(2) : "");
+                      setMarginMode("idle");
+                    }}
+                    className="text-[9px] text-secondary hover:text-primary border border-border px-2 py-1"
+                  >
+                    {isExpanded ? "Hide" : "Manage"}
+                  </button>
+                  {confirmClose === pos.index ? (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleClose(pos)}
+                        disabled={loading === pos.index}
+                        className="text-[9px] btn-red py-1 px-2"
+                      >
+                        {loading === pos.index ? "..." : "Confirm"}
+                      </button>
+                      <button onClick={() => setConfirmClose(null)} className="text-[9px] text-secondary px-1">
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmClose(pos.index)}
+                      disabled={loading === pos.index || oracle.isStale}
+                      className="text-[9px] text-short hover:bg-short/10 border border-short/40 px-2 py-1 disabled:opacity-40"
+                    >
+                      Close
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Expanded management panel */}
+              {isExpanded && (
+                <div className="px-4 py-3 bg-bg border-b border-border/30 min-w-[800px]">
+                  <div className="grid grid-cols-3 gap-4">
+                    {/* SL/TP */}
+                    <div className="space-y-2">
+                      <div className="text-[9px] text-secondary uppercase">Stop Loss / Take Profit</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="number" step="0.01" value={slInput} onChange={(e) => setSlInput(e.target.value)}
+                          placeholder="SL Price" className="field-input text-[10px] py-1.5" />
+                        <input type="number" step="0.01" value={tpInput} onChange={(e) => setTpInput(e.target.value)}
+                          placeholder="TP Price" className="field-input text-[10px] py-1.5" />
+                      </div>
+                      <button onClick={() => handleSetSlTp(pos)} disabled={loading === pos.index}
+                        className="btn-outline w-full text-[9px] py-1.5 active">
+                        {loading === pos.index ? "..." : "Set SL/TP"}
+                      </button>
+                    </div>
+
+                    {/* Add/Remove Margin */}
+                    <div className="space-y-2">
+                      <div className="text-[9px] text-secondary uppercase">Margin</div>
+                      <div className="flex gap-1">
+                        <button onClick={() => setMarginMode("add")}
+                          className={`flex-1 text-[9px] py-1 border ${marginMode === "add" ? "border-long text-long" : "border-border text-secondary"}`}>
+                          Add
+                        </button>
+                        <button onClick={() => setMarginMode("remove")}
+                          className={`flex-1 text-[9px] py-1 border ${marginMode === "remove" ? "border-short text-short" : "border-border text-secondary"}`}>
+                          Remove
+                        </button>
+                      </div>
+                      {marginMode !== "idle" && (
+                        <>
+                          <input type="number" step="0.01" value={marginInput} onChange={(e) => setMarginInput(e.target.value)}
+                            placeholder="0.00" className="field-input text-[10px] py-1.5" />
+                          <button
+                            onClick={() => marginMode === "add" ? handleAddMargin(pos) : handleRemoveMargin(pos)}
+                            disabled={loading === pos.index || !(parseFloat(marginInput) > 0)}
+                            className={`w-full text-[9px] py-1.5 font-bold uppercase ${marginMode === "add" ? "btn-green" : "btn-red"}`}>
+                            {loading === pos.index ? "..." : marginMode === "add" ? "Add Margin" : "Remove Margin"}
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Position Info */}
+                    <div className="space-y-1 text-[10px]">
+                      <div className="text-[9px] text-secondary uppercase mb-1">Position Details</div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary">Margin Ratio</span>
+                        <span className={`${(pos.collateral / pos.notional) * 100 < 15 ? "text-short" : "text-long"}`}>
+                          {((pos.collateral / pos.notional) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary">SL</span>
+                        <span className="text-primary">{pos.slPrice ? `$${rawToPrice(pos.slPrice).toFixed(2)}` : "Not set"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary">TP</span>
+                        <span className="text-primary">{pos.tpPrice ? `$${rawToPrice(pos.tpPrice).toFixed(2)}` : "Not set"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary">Collateral</span>
+                        <span className="text-primary">${rawToUsdc(pos.collateral).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary">Funding Rate</span>
+                        <span className="text-primary">{(hourlyRate / FUNDING_RATE_SCALE * 100).toFixed(4)}%/hr</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-0">
+        {positions.map((pos) => {
+          const pnl = rawToUsdc(calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional));
+          const isProfit = pnl >= 0;
+          const liq = pos.direction === "Long" ? calcLiqPriceLong(pos.entryPrice, pos.leverage) : calcLiqPriceShort(pos.entryPrice, pos.leverage);
+          return (
+            <div key={pos.index} className="p-3 border-b border-border/30">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-bold ${pos.direction === "Long" ? "text-long" : "text-short"}`}>
+                    {pos.direction.toUpperCase()} {pos.leverage}x
+                  </span>
+                  <span className="text-[10px] text-primary">${rawToUsdc(pos.notional).toFixed(2)}</span>
+                </div>
+                <span className={`text-[11px] font-bold ${isProfit ? "text-long" : "text-short"}`}>
+                  {isProfit ? "+" : ""}${pnl.toFixed(2)}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-[10px] mb-2">
+                <div>
+                  <div className="text-secondary">Entry</div>
+                  <div className="text-primary">${rawToPrice(pos.entryPrice).toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-secondary">Mark</div>
+                  <div className="text-primary">${currentPriceUsd.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-secondary">Liq</div>
+                  <div className="text-short">${liq.toFixed(2)}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => confirmClose === pos.index ? handleClose(pos) : setConfirmClose(pos.index)}
+                disabled={loading === pos.index || oracle.isStale}
+                className="w-full py-2 text-[10px] font-bold uppercase border border-short/40 text-short hover:bg-short/10 disabled:opacity-40"
+              >
+                {loading === pos.index ? "..." : confirmClose === pos.index ? "Confirm Close" : "Close Position"}
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

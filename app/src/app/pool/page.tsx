@@ -371,7 +371,7 @@ export default function PoolPage() {
               <button
                 onClick={handleDeposit}
                 disabled={!connected || loading === "deposit" || !depositInput || depositAmount <= 0}
-                className="w-full py-2.5 text-sm btn-long disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full py-2.5 text-sm btn-green disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading === "deposit" ? "Confirming..." : "Deposit to Pool"}
               </button>

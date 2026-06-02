@@ -119,13 +119,13 @@ export function LandingAuth() {
   const signupValid = email && password && confirmPassword && password.length >= 6 && password === confirmPassword;
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ backgroundColor: "#080808" }}>
+    <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ backgroundColor: "#0a0a0a" }}>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
             <Logo size={160} />
           </div>
-          <p className="text-sm" style={{ color: "#555" }}>
+          <p className="text-sm" style={{ color: "#666" }}>
             Pok&eacute;mon card perpetual futures on Solana
           </p>
         </div>
@@ -137,9 +137,9 @@ export function LandingAuth() {
             mode === "login" ? handleLogin() : handleSignup();
           }}
           className="p-6 space-y-4"
-          style={{ backgroundColor: "#0d0d0d", border: "1px solid #1f1f1f" }}
+          style={{ backgroundColor: "#111111", border: "1px solid #1a1a1a" }}
         >
-          <h2 className="font-cond text-center text-lg font-bold" style={{ color: "#e8e8e8" }}>
+          <h2 className="font-mono text-center text-lg font-bold" style={{ color: "#ffffff" }}>
             {mode === "login" ? "Log In" : "Create Account"}
           </h2>
 
@@ -178,7 +178,7 @@ export function LandingAuth() {
                 className="field-input w-full"
               />
               {password && confirmPassword && password !== confirmPassword && (
-                <div className="text-xs" style={{ color: "#ff3355" }}>Passwords don&apos;t match</div>
+                <div className="text-xs" style={{ color: "#ff3333" }}>Passwords don&apos;t match</div>
               )}
             </>
           )}
@@ -187,7 +187,7 @@ export function LandingAuth() {
             <div
               className="text-xs px-3 py-2"
               style={{
-                color: "#ff3355",
+                color: "#ff3333",
                 border: "1px solid rgba(255,51,85,0.3)",
                 backgroundColor: "rgba(255,51,85,0.1)",
               }}
@@ -203,7 +203,7 @@ export function LandingAuth() {
               (mode === "login" && (!email || !password)) ||
               (mode === "signup" && !signupValid)
             }
-            className="btn-yellow w-full py-3 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-green w-full py-3 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
               ? "..."
@@ -219,7 +219,7 @@ export function LandingAuth() {
                   type="button"
                   onClick={() => { setMode("signup"); clearFields(); }}
                   className="text-xs block w-full transition-colors hover:opacity-80"
-                  style={{ color: "#555" }}
+                  style={{ color: "#666" }}
                 >
                   Don&apos;t have an account? Sign up
                 </button>
@@ -227,7 +227,7 @@ export function LandingAuth() {
                   type="button"
                   onClick={() => router.push("/reset-password")}
                   className="text-xs block w-full transition-colors hover:opacity-80"
-                  style={{ color: "#555" }}
+                  style={{ color: "#666" }}
                 >
                   Forgot password?
                 </button>
@@ -238,7 +238,7 @@ export function LandingAuth() {
                 type="button"
                 onClick={() => { setMode("login"); clearFields(); }}
                 className="text-xs transition-colors hover:opacity-80"
-                style={{ color: "#555" }}
+                style={{ color: "#666" }}
               >
                 Already have an account? Log in
               </button>
@@ -250,13 +250,13 @@ export function LandingAuth() {
           <button
             onClick={handleGuest}
             className="text-xs underline underline-offset-2 transition-colors hover:opacity-80"
-            style={{ color: "#555" }}
+            style={{ color: "#666" }}
           >
             Continue as guest (no account)
           </button>
         </div>
 
-        <p className="text-[10px] text-center" style={{ color: "#555" }}>
+        <p className="text-[10px] text-center" style={{ color: "#666" }}>
           DEVNET ONLY — NOT REAL MONEY — TESTNET ONLY
         </p>
       </div>
