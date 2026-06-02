@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Zap, Droplets, BarChart2, Trophy } from "lucide-react";
 import { WalletButton } from "./WalletButton";
 import { NotificationBell } from "./NotificationBell";
+import { Logo } from "./Logo";
 import { useOracle, OracleHealth } from "@/hooks/useOracle";
 import { MARKETS } from "@/lib/markets";
 
@@ -60,14 +63,13 @@ function OracleDot() {
   );
 }
 
-// ─── Ticker Bar ─────────────────────────────────────────────────────────────────
+// ─── Desktop Ticker Bar ─────────────────────────────────────────────────────────
 
 function TickerBar() {
   const { price, readings, isLoading } = useOracle();
 
   const priceUsd = price / 1_000_000;
 
-  // Compute % change from oldest available reading vs current
   let pctChange = 0;
   if (readings.length >= 2) {
     const oldest = readings[0].price / 1_000_000;
@@ -80,16 +82,15 @@ function TickerBar() {
   const changeColor = positive ? "#00ff41" : "#ff3333";
   const changePrefix = positive ? "+" : "";
 
-  // Build ticker items — one per market (only one currently)
   const items = MARKETS.map((m) => ({
     id: m.id,
     name: m.name,
     price: isLoading ? "-.--" : priceUsd.toFixed(2),
     change: isLoading ? "+0.00%" : `${changePrefix}${pctChange.toFixed(1)}%`,
     color: isLoading ? "#666" : changeColor,
+    live: m.live,
   }));
 
-  // Duplicate for seamless loop — minimum 6 copies so there's always content off-screen
   const copies = Math.max(6, Math.ceil(12 / items.length));
   const repeated = Array.from({ length: copies }, () => items).flat();
 
@@ -111,12 +112,12 @@ function TickerBar() {
         }
       `}</style>
       <div
+        className="hidden md:flex"
         style={{
           background: "#111111",
           borderBottom: "1px solid #1a1a1a",
           height: 28,
           overflow: "hidden",
-          display: "flex",
           alignItems: "center",
           fontFamily: "'JetBrains Mono', 'Courier New', monospace",
           fontSize: 11,
@@ -136,17 +137,144 @@ function TickerBar() {
                 color: "#666",
               }}
             >
-              <span style={{ color: "#888", letterSpacing: "0.05em" }}>
+              <span style={{ color: item.live ? "#888" : "#444", letterSpacing: "0.05em" }}>
                 {item.name}
               </span>
-              <span style={{ color: item.color }}>{item.change}</span>
-              <span style={{ color: "#ccc" }}>${item.price}</span>
+              {item.live ? (
+                <>
+                  <span style={{ color: item.color }}>{item.change}</span>
+                  <span style={{ color: "#ccc" }}>${item.price}</span>
+                </>
+              ) : (
+                <span style={{ color: "#444" }}>SOON</span>
+              )}
               <span style={{ color: "#2a2a2a", paddingLeft: 16 }}>|</span>
             </span>
           ))}
         </div>
       </div>
     </>
+  );
+}
+
+// ─── Mobile Market Selector ─────────────────────────────────────────────────────
+
+function MobileMarketSelector() {
+  const { price, readings, isLoading } = useOracle();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const priceUsd = price / 1_000_000;
+  let pctChange = 0;
+  if (readings.length >= 2) {
+    const oldest = readings[0].price / 1_000_000;
+    if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
+  }
+  const positive = pctChange >= 0;
+  const changeColor = positive ? "#00ff41" : "#ff3333";
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const activeMarket = MARKETS.find((m) => m.live) || MARKETS[0];
+
+  return (
+    <div
+      ref={ref}
+      className="flex md:hidden relative"
+      style={{
+        background: "#111111",
+        borderBottom: "1px solid #1a1a1a",
+        fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+      }}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "6px 16px",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          fontSize: 11,
+        }}
+      >
+        <span style={{ color: "#ccc", letterSpacing: "0.04em" }}>{activeMarket.name}</span>
+        <span style={{ color: "#555", fontSize: 10 }}>{open ? "\u25B2" : "\u25BC"}</span>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            zIndex: 60,
+            background: "#111111",
+            border: "1px solid #1a1a1a",
+            borderTop: "none",
+          }}
+        >
+          {MARKETS.map((m) => (
+            <button
+              key={m.id}
+              disabled={!m.live}
+              onClick={() => setOpen(false)}
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                padding: "10px 16px",
+                background: "transparent",
+                border: "none",
+                borderBottom: "1px solid #1a1a1a",
+                cursor: m.live ? "pointer" : "not-allowed",
+                opacity: m.live ? 1 : 0.4,
+                textAlign: "left",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    background: m.live ? "#00ff41" : "#333",
+                    display: "inline-block",
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ color: "#ccc", fontSize: 11, letterSpacing: "0.04em" }}>{m.name}</span>
+              </div>
+              <div style={{ paddingLeft: 14, fontSize: 10 }}>
+                {m.live ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ color: "#ccc" }}>${isLoading ? "-.--" : priceUsd.toFixed(2)}</span>
+                    <span style={{ color: changeColor }}>
+                      {isLoading ? "+0.0%" : `${positive ? "+" : ""}${pctChange.toFixed(1)}%`}
+                    </span>
+                    <span style={{ color: "#00ff41", fontSize: 9, border: "1px solid rgba(0,255,65,.3)", padding: "0 4px" }}>{m.badge}</span>
+                  </span>
+                ) : (
+                  <span style={{ color: "#555", fontSize: 10 }}>SOON</span>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -157,7 +285,6 @@ export function Header() {
 
   return (
     <>
-      {/* Main header bar */}
       <header
         style={{
           position: "sticky",
@@ -179,7 +306,7 @@ export function Header() {
             gap: 8,
           }}
         >
-          {/* Left: wordmark */}
+          {/* Left: logo */}
           <Link
             href="/"
             style={{
@@ -187,13 +314,10 @@ export function Header() {
               alignItems: "center",
               textDecoration: "none",
               flexShrink: 0,
-              letterSpacing: "0.08em",
-              fontSize: 13,
-              fontWeight: 700,
             }}
           >
-            <span style={{ color: "#ffffff" }}>POKE</span>
-            <span style={{ color: "#00ff41" }}>LIQUID</span>
+            <span className="hidden md:block"><Logo size={32} /></span>
+            <span className="block md:hidden"><Logo size={28} /></span>
           </Link>
 
           {/* Center: nav (hidden on mobile) */}
@@ -259,7 +383,6 @@ export function Header() {
           >
             <OracleDot />
 
-            {/* DEVNET badge */}
             <span
               className="hidden md:inline"
               style={{
@@ -280,8 +403,10 @@ export function Header() {
           </div>
         </div>
 
-        {/* Ticker bar */}
+        {/* Desktop: scrolling ticker bar */}
         <TickerBar />
+        {/* Mobile: compact market selector */}
+        <MobileMarketSelector />
       </header>
 
       {/* Bottom tab bar (mobile only) */}
@@ -293,10 +418,10 @@ export function Header() {
 // ─── Bottom Tab Bar (mobile) ─────────────────────────────────────────────────
 
 const MOBILE_TABS = [
-  { href: "/", label: "TRADE", icon: "\u26A1" },
-  { href: "/pool", label: "POOL", icon: "\uD83D\uDCA7" },
-  { href: "/stats", label: "STATS", icon: "\uD83D\uDCCA" },
-  { href: "/leaderboard", label: "BOARD", icon: "\uD83C\uDFC6" },
+  { href: "/", label: "TRADE", Icon: Zap },
+  { href: "/pool", label: "POOL", Icon: Droplets },
+  { href: "/stats", label: "STATS", Icon: BarChart2 },
+  { href: "/leaderboard", label: "BOARD", Icon: Trophy },
 ];
 
 function BottomTabBar({ pathname }: { pathname: string }) {
@@ -315,8 +440,9 @@ function BottomTabBar({ pathname }: { pathname: string }) {
         fontFamily: "'JetBrains Mono', 'Courier New', monospace",
       }}
     >
-      {MOBILE_TABS.map(({ href, label, icon }) => {
+      {MOBILE_TABS.map(({ href, label, Icon }) => {
         const active = pathname === href;
+        const color = active ? "#ffffff" : "#444444";
         return (
           <Link
             key={href}
@@ -327,18 +453,18 @@ function BottomTabBar({ pathname }: { pathname: string }) {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 2,
+              gap: 3,
               textDecoration: "none",
-              color: active ? "#00ff41" : "#555",
               transition: "color 0.15s",
             }}
           >
-            <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+            <Icon size={20} color={color} strokeWidth={active ? 2.5 : 1.5} />
             <span
               style={{
                 fontSize: 9,
                 letterSpacing: "0.06em",
                 fontWeight: active ? 700 : 400,
+                color: active ? "#00ff41" : "#444444",
               }}
             >
               {label}

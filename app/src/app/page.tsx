@@ -878,7 +878,7 @@ function OrderEntry({
       )}
 
       {/* Collateral bar */}
-      <div className="flex items-center justify-between text-[11px] border border-border p-2.5 bg-bg">
+      <div className="text-[11px] border border-border p-2.5 bg-bg space-y-2">
         <div className="flex items-center gap-3">
           <span className="text-secondary">Available:</span>
           <span className="text-long font-bold">${marginCollateralUsdc.toFixed(2)}</span>
@@ -892,12 +892,12 @@ function OrderEntry({
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => { setShowCollateral(!showCollateral); setCollMode("deposit"); }}
-            className="btn-outline text-[9px] py-1 px-2"
+            className="btn-outline text-[9px] py-1.5 px-2 flex-1 md:flex-none"
           >
             {showCollateral ? "Hide" : "Deposit/Withdraw"}
           </button>
-          <button onClick={handleMintUsdc} disabled={loading} className="btn-outline text-[9px] py-1 px-2">
-            {loading ? "..." : "Get USDC"}
+          <button onClick={handleMintUsdc} disabled={loading} className="btn-outline text-[9px] py-1.5 px-2 flex-1 md:flex-none">
+            {loading ? "..." : "Get Test USDC"}
           </button>
         </div>
       </div>
