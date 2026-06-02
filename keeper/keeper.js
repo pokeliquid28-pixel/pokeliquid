@@ -639,11 +639,16 @@ async function scrapeTcgplayer() {
 
     log(`INFO  Navigating to TCGPlayer product page…`);
     await page.goto(TCGPLAYER_URL, {
-      waitUntil: "domcontentloaded",
-      timeout:   20_000,
+      waitUntil: "networkidle",
+      timeout:   30_000,
     });
 
-    await page.waitForTimeout(3_000);
+    // Wait for price element to appear (up to 15s), fall back to 5s static wait
+    try {
+      await page.waitForSelector("span.price-points__upper__price", { timeout: 15_000 });
+    } catch {
+      await page.waitForTimeout(5_000);
+    }
 
     const result = await page.evaluate(() => {
       function parseUSD(text) {
