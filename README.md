@@ -308,18 +308,32 @@ The keeper runs four loops and an HTTP API:
 - Keeper falls back to secondary keypair after 3 primary failures
 - `check_and_pause`: permissionless, pauses protocol if oracle stale > 1 hour
 - `update_oracle` auto-unpauses protocol when new price pushed
-- Keeper sends Telegram alerts on: oracle stale >15min, liq fails 3x, RPC spikes
+
+### Monitoring & Alerts (Telegram)
+
+Alerts sent via `@pokeliquidbot` with level-based rate limiting:
+
+| Level | Triggers | Rate Limit |
+|-------|----------|------------|
+| CRITICAL | Oracle stale 15min+, RPC 3x fail, vault < $50, liq loop 3x fail, unhandled exceptions | 1 min |
+| WARN | Price deviation >10%, liquidation events, funding failures, scrape failures | 5 min |
+| INFO | Daily digest at midnight UTC (oracle updates, liquidations, volume, vault balance, errors) | none |
+
+Unhandled exceptions and promise rejections trigger CRITICAL alerts before exit. Keeper startup sends an INFO alert.
 
 ### API Endpoints (port 3001)
 
 ```
+GET /ping                       # { ok: true, timestamp } — uptime monitoring
+GET /health                     # Comprehensive health: oracle, liquidation, funding, solana, protocol
 GET /prices?limit=50            # Last N price records
 GET /prices?from=1234&to=5678   # Records in unix timestamp range
-GET /health                     # Keeper status, uptime, counters
 GET /stats                      # 24h/7d volume, trades, liquidations
 GET /trades?user=PUBKEY&limit=20 # Trade history for a user
 GET /events/recent              # Recent decoded program events
 ```
+
+Health status logic: `healthy` (all normal) → `degraded` (oracle >10min stale OR >5 RPC errors/hr) → `critical` (oracle >30min stale OR RPC down OR vault <$10)
 
 ---
 
