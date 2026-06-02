@@ -2,18 +2,30 @@
 app/.next/
 .next/
 
-# Local environment variables (API keys)
-app/.env.local
-.env.local
+# Environment variables
 .env
+.env.*
+!.env.example
+app/.env.local
+keeper/.env
+keeper/.env.local
 
-# Dependencies (if not already there)
+# Keypairs / secrets — NEVER commit these
+keeper/secondary.json
+keeper/admin.json
+**/id.json
+*.pem
+
+# Dependencies
 node_modules/
+
+# Build artifacts
 .anchor
-.DS_Store
 target
 **/*.rs.bk
-node_modules
 test-ledger
+
+# OS / editor
+.DS_Store
 .yarn
 .surfpool
