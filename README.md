@@ -218,7 +218,7 @@ Users authenticate with email + password. No external wallet extensions required
 ### Flow
 1. **New user** visits the site → sees **LandingAuth** landing page with login/signup/guest options
 2. **Sign up** → email + password (with confirmation) → generates Solana keypair → encrypts private key with AES-256-GCM → stores in Supabase Postgres → sets JWT session cookie
-3. **Log in** → verifies password (argon2id) → decrypts private key → restores to localStorage → sets JWT session cookie
+3. **Log in** → verifies password (bcrypt) → decrypts private key → restores to localStorage → sets JWT session cookie
 4. **Forgot password** → `/reset-password` page → enter email → receives reset link via Resend → click link → set new password (token-based, 1hr expiry, single-use)
 5. **Guest mode** → generates ephemeral keypair in localStorage (no persistence across devices)
 6. **Save account** → after trading as guest, header prompts to create account to save wallet
@@ -226,8 +226,8 @@ Users authenticate with email + password. No external wallet extensions required
 8. **Logout** → `POST /api/logout` clears session cookie + disconnects wallet
 
 ### Security
-- **Passwords hashed with argon2id** (64MB memory, time cost 3, parallelism 4) — memory-hard, resists GPU attacks
-- Legacy PBKDF2 hashes auto-migrated to argon2id on next successful login
+- **Passwords hashed with bcrypt** (12 rounds) — industry standard, works on all platforms
+- Legacy PBKDF2 hashes auto-migrated to bcrypt on next successful login
 - **JWT sessions** (HS256, 30-day expiry) stored as `HttpOnly; Secure; SameSite=Lax` cookies
 - Private key sent only once (at login/signup), then lives in localStorage — JWT cookie has no private key
 - Private keys encrypted with AES-256-GCM (key derived from `EMAIL_ENCRYPTION_SECRET`)
@@ -386,7 +386,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - **Insurance fund** — automatic 10% fee routing for protocol solvency
 - **LP pool** — users can provide liquidity and earn fees
 - **Persistent infrastructure** — Hetzner keeper (pm2 + systemd), Vercel frontend, Supabase Postgres
-- **Secure auth** — argon2id password hashing, AES-256-GCM key encryption, JWT sessions (HttpOnly cookies)
+- **Secure auth** — bcrypt password hashing, AES-256-GCM key encryption, JWT sessions (HttpOnly cookies)
 - **Password recovery** — email-based forgot password flow via Resend (token-based, 1hr expiry, single-use)
 
 ## Known Limitations & Roadmap
@@ -420,6 +420,6 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - Database uses `pg` package (not `@vercel/postgres`) — strips `sslmode` and `supa` params from connection string, sets `ssl: { rejectUnauthorized: false }` for Supabase
 - Only wallet adapter is `SessionWalletAdapter` — Phantom/Solflare removed
 - RELAYER_PRIVATE_KEY is base58 format (not JSON array)
-- Password hashing uses `argon2` npm package (native bindings) — legacy PBKDF2 hashes auto-migrate on login
+- Password hashing uses `bcryptjs` (pure JS, no native deps) — legacy PBKDF2 hashes auto-migrate on login
 - JWT sessions use `jose` package (HS256) — 30-day expiry, HttpOnly/Secure/SameSite=Lax cookies
 - Forgot-password emails sent via Resend API — reset tokens stored in `password_reset_tokens` table

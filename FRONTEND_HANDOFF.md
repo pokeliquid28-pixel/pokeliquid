@@ -81,8 +81,8 @@ These files are working correctly and battle-tested. Do not modify them without 
 
 | Route | Method | What it does |
 |-------|--------|-------------|
-| `signup/` | POST | Creates account: validates email, hashes password (argon2id), encrypts private key (AES-256-GCM), stores in Postgres, sets JWT session cookie |
-| `login/` | POST | Verifies password, decrypts private key, returns it to client, sets JWT cookie. Auto-migrates legacy PBKDF2 hashes to argon2id. |
+| `signup/` | POST | Creates account: validates email, hashes password (bcrypt), encrypts private key (AES-256-GCM), stores in Postgres, sets JWT session cookie |
+| `login/` | POST | Verifies password, decrypts private key, returns it to client, sets JWT cookie. Auto-migrates legacy PBKDF2 hashes to bcrypt. |
 | `logout/` | POST | Clears the session cookie |
 | `me/` | GET | Reads JWT from cookie, returns `{ userId, email, walletPubkey }` or 401 |
 | `forgot-password/` | POST | Generates reset token, sends email via Resend. Always returns success (prevents email enumeration). |
