@@ -36,7 +36,7 @@ function PriceTicker({ price, isLoading }: { price: number; isLoading: boolean }
 
   return (
     <div className={`inline-block rounded-sm ${flashClass}`}>
-      <span className="holo-text font-mono text-3xl md:text-4xl font-bold">
+      <span className="text-primary font-mono text-3xl md:text-4xl font-bold">
         ${rawToPrice(price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </span>
     </div>

@@ -146,7 +146,7 @@ function ResetPasswordInner() {
                   (mode === "request" && !email) ||
                   (mode === "reset" && (!newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword.length < 6))
                 }
-                className="w-full py-3 text-sm font-bold holo-bg text-black hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 text-sm btn-yellow disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "..." : mode === "request" ? "Send Reset Link" : "Reset Password"}
               </button>

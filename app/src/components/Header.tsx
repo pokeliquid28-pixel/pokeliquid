@@ -33,10 +33,10 @@ function Balances() {
 
   return (
     <div className="hidden md:flex items-center gap-4 text-xs font-mono">
-      <span className="text-secondary">
+      <span className="text-[#555]">
         <span className="text-primary">{formatSol(solLamports)}</span> SOL
       </span>
-      <span className="text-secondary">
+      <span className="text-[#555]">
         <span className="text-primary">{formatUsdc(usdcRaw)}</span> USDC
       </span>
     </div>
@@ -44,9 +44,9 @@ function Balances() {
 }
 
 const HEALTH_COLORS: Record<OracleHealth, string> = {
-  fresh: "bg-green-500",
-  degraded: "bg-yellow-500",
-  stale: "bg-red-500",
+  fresh: "bg-[#00ff88]",
+  degraded: "bg-[#ffe000]",
+  stale: "bg-[#ff3355]",
 };
 
 const HEALTH_LABELS: Record<OracleHealth, string> = {
@@ -61,10 +61,10 @@ function OracleIndicator() {
   if (isLoading) return null;
 
   return (
-    <div className="flex items-center gap-1.5 text-xs font-mono text-secondary" title={HEALTH_LABELS[health]}>
+    <div className="flex items-center gap-1.5 text-xs font-mono text-[#555]" title={HEALTH_LABELS[health]}>
       <span className={`inline-block w-2 h-2 rounded-full ${HEALTH_COLORS[health]}`} />
       {health === "stale" && (
-        <span className="hidden md:inline text-red-400">Oracle Stale</span>
+        <span className="hidden md:inline text-short">Oracle Stale</span>
       )}
     </div>
   );
@@ -82,7 +82,7 @@ export function Header() {
           <span className="md:hidden">Protocol paused</span>
         </div>
       )}
-      <header className="sticky top-0 z-40 border-b border-border bg-bg/90 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 border-b border-border bg-panel/90 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-3 md:px-6 h-12 md:h-14 flex items-center justify-between gap-2 md:gap-6">
           {/* Logo */}
           <Link href="/" className="shrink-0">
@@ -97,20 +97,11 @@ export function Header() {
                 <Link
                   key={href}
                   href={href}
-                  className={`px-2.5 md:px-4 py-1.5 text-sm font-medium transition-colors min-h-[44px] flex items-center ${
+                  className={`px-2.5 md:px-4 py-1.5 font-cond text-[13px] font-bold uppercase tracking-[1px] transition-colors min-h-[44px] flex items-center ${
                     active
-                      ? "holo-text border-b-2 border-transparent"
+                      ? "nav-tab-active"
                       : "text-secondary hover:text-primary"
                   }`}
-                  style={
-                    active
-                      ? {
-                          borderImage:
-                            "linear-gradient(135deg,#ff6ec7,#a78bfa,#38bdf8,#34d399) 1",
-                          borderBottom: "2px solid",
-                        }
-                      : {}
-                  }
                 >
                   <span className="md:hidden">{icon}</span>
                   <span className="hidden md:inline">{label}</span>

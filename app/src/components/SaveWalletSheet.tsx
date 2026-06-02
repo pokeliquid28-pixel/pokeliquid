@@ -60,7 +60,7 @@ export function SaveWalletSheet() {
           <div className="px-5 pb-5 flex gap-2">
             <button
               onClick={() => setShowAuth(true)}
-              className="flex-1 py-2.5 text-xs font-bold bg-[#a78bfa] text-white hover:opacity-90 transition-opacity"
+              className="flex-1 py-2.5 text-xs btn-yellow"
             >
               Create Account
             </button>

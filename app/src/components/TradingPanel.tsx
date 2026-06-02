@@ -440,12 +440,12 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh }: Props) {
       <button
         onClick={handleOpenPosition}
         disabled={!canOpen || loading}
-        className={`w-full py-3.5 md:py-3 text-sm font-bold tracking-wide transition-all ${
+        className={`w-full py-3.5 md:py-3 text-sm tracking-wide ${
           canOpen && !loading
             ? side === "Long"
-              ? "bg-long text-black hover:opacity-90"
-              : "bg-short text-white hover:opacity-90"
-            : "bg-border text-secondary cursor-not-allowed"
+              ? "btn-long"
+              : "btn-short"
+            : "bg-border text-secondary cursor-not-allowed font-bold"
         }`}
       >
         {loading ? "Confirming..." : `Open ${side}`}

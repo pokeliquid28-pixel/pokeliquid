@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
             subject: "Reset your Pokeliquid password",
             html: `
               <div style="font-family: monospace; max-width: 480px; margin: 0 auto; padding: 24px;">
-                <h2 style="color: #a78bfa;">Pokeliquid Password Reset</h2>
+                <h2 style="color: #00ff88;">Pokeliquid Password Reset</h2>
                 <p>Click the link below to reset your password. This link expires in 1 hour.</p>
-                <p><a href="${resetUrl}" style="color: #a78bfa; font-weight: bold;">Reset Password</a></p>
+                <p><a href="${resetUrl}" style="color: #00ff88; font-weight: bold;">Reset Password</a></p>
                 <p style="font-size: 12px; color: #888;">If you didn't request this, you can safely ignore this email.</p>
                 <p style="font-size: 10px; color: #666;">DEVNET ONLY — NOT REAL MONEY</p>
               </div>

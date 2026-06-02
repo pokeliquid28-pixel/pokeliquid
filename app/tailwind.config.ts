@@ -9,25 +9,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#080B10",
-        panel: "#0F1420",
-        border: "#1e2a3a",
-        primary: "#e2e8f0",
-        secondary: "#64748b",
-        long: "#22c55e",
-        short: "#ef4444",
+        bg: "#080808",
+        panel: "#0d0d0d",
+        border: "#1f1f1f",
+        "border2": "#2a2a2a",
+        primary: "#e8e8e8",
+        secondary: "#555",
+        muted: "#333",
+        long: "#00ff88",
+        short: "#ff3355",
+        accent: "#ffe000",
+        info: "#00d4ff",
       },
       fontFamily: {
-        mono: ["JetBrains Mono", "monospace"],
-        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["Share Tech Mono", "monospace"],
+        cond: ["Barlow Condensed", "sans-serif"],
       },
       keyframes: {
         flash: {
-          "0%": { backgroundColor: "rgba(34,197,94,0.25)" },
+          "0%": { backgroundColor: "rgba(0,255,136,0.2)" },
           "100%": { backgroundColor: "transparent" },
         },
         "flash-red": {
-          "0%": { backgroundColor: "rgba(239,68,68,0.25)" },
+          "0%": { backgroundColor: "rgba(255,51,85,0.2)" },
           "100%": { backgroundColor: "transparent" },
         },
         shimmer: {

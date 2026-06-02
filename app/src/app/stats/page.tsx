@@ -335,7 +335,7 @@ export default function StatsPage() {
   // Oracle status
   const oracleHealthy = oracle.health === "fresh";
   const oracleStatus = oracle.health === "fresh" ? "Healthy" : oracle.health === "degraded" ? "Degraded" : "Stale";
-  const oracleStatusColor = oracle.health === "fresh" ? "text-long" : oracle.health === "degraded" ? "text-yellow-400" : "text-short";
+  const oracleStatusColor = oracle.health === "fresh" ? "text-long" : oracle.health === "degraded" ? "text-accent" : "text-short";
 
   return (
     <div className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-8">
@@ -355,7 +355,7 @@ export default function StatsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-5">
               <div>
                 <div className="text-[10px] md:text-xs text-secondary mb-1">Current Price</div>
-                <div className="text-xl md:text-2xl font-mono font-bold holo-text">
+                <div className="text-xl md:text-2xl font-mono font-bold text-primary">
                   ${currentPrice.toFixed(2)}
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function StatsPage() {
               <div>
                 <div className="text-[10px] md:text-xs text-secondary mb-1">Oracle Status</div>
                 <div className={`text-xs md:text-sm font-bold ${oracleStatusColor} flex items-center gap-1.5`}>
-                  <span className={`inline-block w-2 h-2 rounded-full ${oracleHealthy ? "bg-long" : oracle.health === "degraded" ? "bg-yellow-400" : "bg-short"}`} />
+                  <span className={`inline-block w-2 h-2 rounded-full ${oracleHealthy ? "bg-long" : oracle.health === "degraded" ? "bg-accent" : "bg-short"}`} />
                   {oracleStatus}
                 </div>
                 <div className="text-[10px] text-secondary mt-0.5 hidden md:block">Smoothing: Adaptive EWMA</div>

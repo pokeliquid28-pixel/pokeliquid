@@ -119,14 +119,14 @@ export function LandingAuth() {
   const signupValid = email && password && confirmPassword && password.length >= 6 && password === confirmPassword;
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
+    <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ backgroundColor: "#080808" }}>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
             <Logo size={160} />
           </div>
-          <p className="text-sm text-secondary">
-            Pokemon card perpetual futures on Solana
+          <p className="text-sm" style={{ color: "#555" }}>
+            Pok&eacute;mon card perpetual futures on Solana
           </p>
         </div>
 
@@ -136,9 +136,10 @@ export function LandingAuth() {
             e.preventDefault();
             mode === "login" ? handleLogin() : handleSignup();
           }}
-          className="border border-border bg-panel p-6 space-y-4"
+          className="p-6 space-y-4"
+          style={{ backgroundColor: "#0d0d0d", border: "1px solid #1f1f1f" }}
         >
-          <h2 className="text-sm font-bold text-primary text-center">
+          <h2 className="font-cond text-center text-lg font-bold" style={{ color: "#e8e8e8" }}>
             {mode === "login" ? "Log In" : "Create Account"}
           </h2>
 
@@ -147,7 +148,7 @@ export function LandingAuth() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="email@example.com"
-            className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+            className="field-input w-full"
           />
 
           {mode === "login" && (
@@ -156,7 +157,7 @@ export function LandingAuth() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+              className="field-input w-full"
             />
           )}
 
@@ -167,23 +168,30 @@ export function LandingAuth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password (min 6 characters)"
-                className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+                className="field-input w-full"
               />
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm password"
-                className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
+                className="field-input w-full"
               />
               {password && confirmPassword && password !== confirmPassword && (
-                <div className="text-xs text-short">Passwords don't match</div>
+                <div className="text-xs" style={{ color: "#ff3355" }}>Passwords don&apos;t match</div>
               )}
             </>
           )}
 
           {error && (
-            <div className="text-xs text-short border border-short/30 bg-short/10 px-3 py-2">
+            <div
+              className="text-xs px-3 py-2"
+              style={{
+                color: "#ff3355",
+                border: "1px solid rgba(255,51,85,0.3)",
+                backgroundColor: "rgba(255,51,85,0.1)",
+              }}
+            >
               {error}
             </div>
           )}
@@ -195,7 +203,7 @@ export function LandingAuth() {
               (mode === "login" && (!email || !password)) ||
               (mode === "signup" && !signupValid)
             }
-            className="w-full py-3 text-sm font-bold holo-bg text-black hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-yellow w-full py-3 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
               ? "..."
@@ -210,14 +218,16 @@ export function LandingAuth() {
                 <button
                   type="button"
                   onClick={() => { setMode("signup"); clearFields(); }}
-                  className="text-xs text-secondary hover:text-primary transition-colors block w-full"
+                  className="text-xs block w-full transition-colors hover:opacity-80"
+                  style={{ color: "#555" }}
                 >
-                  Don't have an account? Sign up
+                  Don&apos;t have an account? Sign up
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/reset-password")}
-                  className="text-xs text-secondary/60 hover:text-primary transition-colors block w-full"
+                  className="text-xs block w-full transition-colors hover:opacity-80"
+                  style={{ color: "#555" }}
                 >
                   Forgot password?
                 </button>
@@ -227,7 +237,8 @@ export function LandingAuth() {
               <button
                 type="button"
                 onClick={() => { setMode("login"); clearFields(); }}
-                className="text-xs text-secondary hover:text-primary transition-colors"
+                className="text-xs transition-colors hover:opacity-80"
+                style={{ color: "#555" }}
               >
                 Already have an account? Log in
               </button>
@@ -238,13 +249,14 @@ export function LandingAuth() {
         <div className="text-center">
           <button
             onClick={handleGuest}
-            className="text-xs text-secondary hover:text-primary transition-colors underline underline-offset-2"
+            className="text-xs underline underline-offset-2 transition-colors hover:opacity-80"
+            style={{ color: "#555" }}
           >
             Continue as guest (no account)
           </button>
         </div>
 
-        <p className="text-[10px] text-secondary/50 text-center">
+        <p className="text-[10px] text-center" style={{ color: "#555" }}>
           DEVNET ONLY — NOT REAL MONEY — TESTNET ONLY
         </p>
       </div>

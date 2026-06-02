@@ -148,13 +148,13 @@ function PositionCard({
   const marginRatio = pos.notional > 0 ? (pos.collateral / pos.notional) * 100 : 100;
   const marginBarPct = Math.max(0, Math.min(marginRatio, 100));
   const marginColor =
-    marginRatio < 15 ? "bg-short" : marginRatio < 30 ? "bg-yellow-400" : "bg-long";
+    marginRatio < 15 ? "bg-short" : marginRatio < 30 ? "bg-accent" : "bg-long";
   const marginLabel =
-    marginRatio < 15 ? "text-short" : marginRatio < 30 ? "text-yellow-400" : "text-long";
+    marginRatio < 15 ? "text-short" : marginRatio < 30 ? "text-accent" : "text-long";
   const safetyLabel =
     marginRatio < 15 ? "Danger" : marginRatio < 30 ? "Warning" : "Safe";
   const safetyDot =
-    marginRatio < 15 ? "bg-short" : marginRatio < 30 ? "bg-yellow-400" : "bg-long";
+    marginRatio < 15 ? "bg-short" : marginRatio < 30 ? "bg-accent" : "bg-long";
 
   // ── Funding ─────────────────────────────────────────────────────────────
   const nowSec = Math.floor(Date.now() / 1000);
@@ -567,14 +567,14 @@ function PositionCard({
               <span>
                 <span className="text-primary">{marginRatio.toFixed(1)}%</span>
                 <span className="mx-1">→</span>
-                <span className={newMarginRatio < 15 ? "text-short" : newMarginRatio < 20 ? "text-yellow-400" : "text-long"}>
+                <span className={newMarginRatio < 15 ? "text-short" : newMarginRatio < 20 ? "text-accent" : "text-long"}>
                   {newMarginRatio.toFixed(1)}%
                 </span>
               </span>
             </div>
           )}
           {removeMarginWarning && (
-            <div className="text-[10px] text-yellow-400 border border-yellow-500/30 bg-yellow-500/10 px-2 py-1.5">
+            <div className="text-[10px] text-accent border border-accent/30 bg-accent/10 px-2 py-1.5">
               Warning: Margin ratio will drop below 20%
             </div>
           )}

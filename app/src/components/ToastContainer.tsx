@@ -3,9 +3,9 @@
 import { useToasts, Toast, NotifLevel } from "@/providers/NotificationProvider";
 
 const LEVEL_STYLES: Record<NotifLevel, string> = {
-  info: "border-blue-500/50 bg-blue-500/10 text-blue-300",
+  info: "border-info/50 bg-info/10 text-info",
   success: "border-long/50 bg-long/10 text-long",
-  warning: "border-yellow-500/50 bg-yellow-500/10 text-yellow-300",
+  warning: "border-accent/50 bg-accent/10 text-accent",
   error: "border-short/50 bg-short/10 text-short",
 };
 

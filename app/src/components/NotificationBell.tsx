@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { useNotifications, NotifLevel } from "@/providers/NotificationProvider";
 
 const LEVEL_DOT: Record<NotifLevel, string> = {
-  info: "bg-blue-400",
-  success: "bg-green-400",
-  warning: "bg-yellow-400",
-  error: "bg-red-400",
+  info: "bg-info",
+  success: "bg-long",
+  warning: "bg-accent",
+  error: "bg-short",
 };
 
 function formatTime(ts: number) {

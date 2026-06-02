@@ -76,7 +76,7 @@ export function OracleChart({ readings, height = 120 }: Props) {
   }
 
   const trending = lastPrice >= firstPrice;
-  const strokeColor = trending ? "#22c55e" : "#ef4444";
+  const strokeColor = trending ? "#00ff88" : "#ff3355";
 
   return (
     <div ref={containerRef} className="relative w-full">

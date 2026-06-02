@@ -47,7 +47,7 @@ function formatTimeShort(ts: number) {
 function actionBadge(action: string, reason: string | null) {
   if (action === "open") return { label: "OPEN", color: "bg-long/20 text-long border-long/30" };
   if (action === "liquidate") return { label: "LIQUIDATED", color: "bg-short/20 text-short border-short/30" };
-  if (action === "sl" || reason === "stop_loss") return { label: "SL", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" };
+  if (action === "sl" || reason === "stop_loss") return { label: "SL", color: "bg-accent/20 text-accent border-accent/30" };
   if (action === "tp" || reason === "take_profit") return { label: "TP", color: "bg-long/20 text-long border-long/30" };
   return { label: "MANUAL", color: "bg-border text-secondary border-border" };
 }

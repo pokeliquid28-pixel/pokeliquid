@@ -188,7 +188,7 @@ export function AuthModal({
                   (mode === "login" && (!email || !password)) ||
                   (mode === "signup" && !signupValid)
                 }
-                className="w-full py-2.5 text-xs font-bold bg-[#a78bfa] text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 text-xs btn-yellow disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading
                   ? "..."
