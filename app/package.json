@@ -17,7 +17,7 @@
     "@solana/wallet-adapter-wallets": "^0.19.32",
     "@solana/web3.js": "^1.95.0",
     "@vercel/postgres": "^0.10.0",
-    "argon2": "^0.44.0",
+    "bcryptjs": "^3.0.3",
     "bn.js": "^5.2.1",
     "jose": "^6.2.3",
     "next": "14.2.29",
@@ -31,6 +31,7 @@
     "@types/react-dom": "18.2.25"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/bn.js": "^5.1.0",
     "@types/node": "^20",
     "@types/react": "18.2.79",

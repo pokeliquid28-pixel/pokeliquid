@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    // Migrate legacy PBKDF2 hash to argon2id on successful login
+    // Migrate legacy hash to bcrypt on successful login
     if (isLegacyHash(account.passwordHash)) {
       const newHash = await hashPassword(password);
       await updatePasswordHash(account.id, newHash);

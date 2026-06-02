@@ -1,29 +1,32 @@
-import argon2 from "argon2";
+import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { SignJWT, jwtVerify } from "jose";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-// ── Argon2id password hashing ───────────────────────────────────────────────
+// ── Bcrypt password hashing ─────────────────────────────────────────────────
+
+const BCRYPT_ROUNDS = 12;
 
 export async function hashPassword(password: string): Promise<string> {
-  return argon2.hash(password, {
-    type: argon2.argon2id,
-    memoryCost: 65536, // 64MB
-    timeCost: 3,
-    parallelism: 4,
-  });
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
 export async function verifyPassword(
   storedHash: string,
   password: string
 ): Promise<boolean> {
-  // Legacy PBKDF2 hashes are "hex:hex" format, argon2 hashes start with "$argon2"
-  if (storedHash.startsWith("$argon2")) {
-    return argon2.verify(storedHash, password);
+  // Bcrypt hashes start with "$2a$" or "$2b$"
+  if (storedHash.startsWith("$2")) {
+    return bcrypt.compare(password, storedHash);
   }
 
-  // Legacy PBKDF2-SHA512 migration path
+  // Argon2 hashes (from previous deployment) — can't verify without native module,
+  // user must reset password
+  if (storedHash.startsWith("$argon2")) {
+    return false;
+  }
+
+  // Legacy PBKDF2-SHA512 migration path (format: "hash:salt")
   const parts = storedHash.split(":");
   if (parts.length !== 2) return false;
   const [hash, salt] = parts;
@@ -36,9 +39,9 @@ export async function verifyPassword(
   );
 }
 
-/** Returns true if the hash is legacy PBKDF2 and should be re-hashed with argon2 */
+/** Returns true if the hash is not bcrypt and should be re-hashed */
 export function isLegacyHash(storedHash: string): boolean {
-  return !storedHash.startsWith("$argon2");
+  return !storedHash.startsWith("$2");
 }
 
 // ── JWT session tokens ──────────────────────────────────────────────────────
