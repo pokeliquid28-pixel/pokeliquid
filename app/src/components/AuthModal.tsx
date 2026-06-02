@@ -131,7 +131,14 @@ export function AuthModal({
         </div>
 
         {/* Body */}
-        <div className="px-5 pb-5 space-y-3">
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            mode === "login" ? handleLogin() : handleSignup();
+          }}
+          className="px-5 pb-5 space-y-3"
+        >
           {success ? (
             <div className="border border-long bg-long/10 p-4 text-center space-y-1">
               <div className="text-sm font-bold text-long">{success}</div>
@@ -151,7 +158,6 @@ export function AuthModal({
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={mode === "signup" ? "Password (min 6 characters)" : "Password"}
                 className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                onKeyDown={(e) => e.key === "Enter" && mode === "login" && handleLogin()}
               />
 
               {mode === "signup" && (
@@ -162,7 +168,6 @@ export function AuthModal({
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm password"
                     className="w-full bg-transparent border border-border px-3 py-2.5 text-sm font-mono text-primary outline-none placeholder:text-secondary/40 focus:border-secondary"
-                    onKeyDown={(e) => e.key === "Enter" && handleSignup()}
                   />
                   {password && confirmPassword && password !== confirmPassword && (
                     <div className="text-xs text-short">Passwords don't match</div>
@@ -177,7 +182,7 @@ export function AuthModal({
               )}
 
               <button
-                onClick={mode === "login" ? handleLogin : handleSignup}
+                type="submit"
                 disabled={
                   loading ||
                   (mode === "login" && (!email || !password)) ||
@@ -194,6 +199,7 @@ export function AuthModal({
 
               <div className="text-center">
                 <button
+                  type="button"
                   onClick={() => {
                     setMode(mode === "login" ? "signup" : "login");
                     clearFields();
@@ -211,7 +217,7 @@ export function AuthModal({
               </p>
             </>
           )}
-        </div>
+        </form>
       </div>
     </div>
   );
