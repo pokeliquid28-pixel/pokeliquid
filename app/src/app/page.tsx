@@ -209,24 +209,32 @@ export default function TradePage() {
                     : "border-l-2 border-l-transparent hover:bg-white/[.02]"
                 } ${!m.live ? "opacity-40 cursor-not-allowed" : ""}`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-bold text-primary">{m.name}</span>
-                  {!m.live && (
-                    <span className="text-[8px] px-1.5 py-0.5 border border-secondary text-secondary uppercase">Soon</span>
+                <div className="flex items-center gap-2 mb-1">
+                  {m.image && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={m.image} alt={m.name} width={40} height={40} className="object-contain flex-shrink-0" style={{ imageRendering: "auto" }} />
                   )}
-                  {m.badge && m.live && (
-                    <span className="text-[8px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{m.badge}</span>
-                  )}
-                </div>
-                <div className="text-[9px] text-secondary">{m.subtitle}</div>
-                {m.live && (
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-[11px] font-bold text-primary">${currentPrice.toFixed(2)}</span>
-                    <span className={`text-[10px] font-bold ${change24h >= 0 ? "text-long" : "text-short"}`}>
-                      {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}%
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-primary truncate">{m.name}</span>
+                      {!m.live && (
+                        <span className="text-[8px] px-1.5 py-0.5 border border-secondary text-secondary uppercase flex-shrink-0 ml-1">Soon</span>
+                      )}
+                      {m.badge && m.live && (
+                        <span className="text-[8px] px-1.5 py-0.5 border border-long/40 text-long uppercase flex-shrink-0 ml-1">{m.badge}</span>
+                      )}
+                    </div>
+                    <div className="text-[9px] text-secondary truncate">{m.subtitle}</div>
+                    {m.live && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] font-bold text-primary">${currentPrice.toFixed(2)}</span>
+                        <span className={`text-[10px] font-bold ${change24h >= 0 ? "text-long" : "text-short"}`}>
+                          {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}%
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </button>
             ))}
           </div>
@@ -420,15 +428,59 @@ export default function TradePage() {
 // CHART SECTION
 // ═════════════════════════════════════════════════════════════════════════════
 
+type ChartPoint = { timestamp: number; price: number };
+type Timeframe = "1h" | "1d";
+
+const TF_CONFIG: Record<Timeframe, { limit: number; labelInterval: number }> = {
+  "1h": { limit: 12, labelInterval: 2 },
+  "1d": { limit: 288, labelInterval: 48 },
+};
+
 function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [timeframe, setTimeframe] = useState("5m");
+  const [timeframe, setTimeframe] = useState<Timeframe>("1h");
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [insufficient, setInsufficient] = useState(false);
 
+  // Fetch price data from keeper API
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      setChartLoading(true);
+      const { limit } = TF_CONFIG[timeframe];
+      fetch(`${API_BASE}/prices?limit=${limit}`)
+        .then((r) => r.json())
+        .then((data: { timestamp: number; raw_price: number }[]) => {
+          if (cancelled) return;
+          const points: ChartPoint[] = data.map((d) => ({
+            timestamp: d.timestamp,
+            price: d.raw_price,
+          }));
+          // Sort by timestamp ascending
+          points.sort((a, b) => a.timestamp - b.timestamp);
+          setChartData(points);
+          setInsufficient(points.length < TF_CONFIG[timeframe].limit * 0.5);
+          setChartLoading(false);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setChartData([]);
+            setChartLoading(false);
+          }
+        });
+    };
+    load();
+    const id = setInterval(load, 5 * 60 * 1000); // refresh every 5 min
+    return () => { cancelled = true; clearInterval(id); };
+  }, [timeframe]);
+
+  // Draw chart
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
-    if (!canvas || !container || oracle.readings.length < 2) return;
+    if (!canvas || !container || chartData.length < 2) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -441,11 +493,11 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
 
     const w = rect.width;
     const h = rect.height;
-    const pad = { top: 16, right: 60, bottom: 24, left: 8 };
+    const pad = { top: 16, right: 60, bottom: 28, left: 8 };
     const cw = w - pad.left - pad.right;
     const ch = h - pad.top - pad.bottom;
 
-    const prices = oracle.readings.map((r) => rawToPrice(r.price));
+    const prices = chartData.map((p) => p.price);
     const minP = Math.min(...prices) * 0.998;
     const maxP = Math.max(...prices) * 1.002;
     const range = maxP - minP || 1;
@@ -453,7 +505,7 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Grid lines
+    // Grid lines + price axis
     ctx.strokeStyle = "rgba(255,255,255,0.04)";
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
@@ -469,6 +521,22 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
       ctx.textAlign = "left";
       ctx.fillText(`$${priceVal.toFixed(2)}`, w - pad.right + 6, y + 3);
     }
+
+    // X-axis time labels
+    const { labelInterval } = TF_CONFIG[timeframe];
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.font = "9px 'JetBrains Mono', monospace";
+    ctx.textAlign = "center";
+    for (let i = 0; i < chartData.length; i += labelInterval) {
+      const x = pad.left + (i / (chartData.length - 1)) * cw;
+      const d = new Date(chartData[i].timestamp * 1000);
+      const label = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+      ctx.fillText(label, x, h - 4);
+    }
+    // Always show last label
+    const lastX = pad.left + cw;
+    const lastD = new Date(chartData[chartData.length - 1].timestamp * 1000);
+    ctx.fillText(`${lastD.getHours().toString().padStart(2, "0")}:${lastD.getMinutes().toString().padStart(2, "0")}`, lastX, h - 4);
 
     // Fill area
     const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
@@ -516,9 +584,9 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
     ctx.arc(pad.left + cw, curY, 3, 0, Math.PI * 2);
     ctx.fillStyle = "#00ff41";
     ctx.fill();
-  }, [oracle.readings, timeframe]);
+  }, [chartData, timeframe]);
 
-  const timeframes = ["1m", "5m", "1h", "4h", "1d"];
+  const timeframes: Timeframe[] = ["1h", "1d"];
 
   return (
     <div>
@@ -537,13 +605,24 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
           </button>
         ))}
       </div>
-      <div ref={containerRef} className="h-[200px] md:h-[280px]">
-        {oracle.readings.length < 2 ? (
+      <div ref={containerRef} className="h-[200px] md:h-[280px] relative">
+        {chartLoading ? (
+          <div className="flex items-center justify-center h-full text-[11px] text-secondary">
+            Loading chart...
+          </div>
+        ) : chartData.length < 2 ? (
           <div className="flex items-center justify-center h-full text-[11px] text-secondary">
             Collecting price history...
           </div>
         ) : (
-          <canvas ref={canvasRef} className="w-full h-full" />
+          <>
+            <canvas ref={canvasRef} className="w-full h-full" />
+            {insufficient && (
+              <div className="absolute bottom-2 left-4 text-[9px] text-secondary/60">
+                Collecting price history...
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
