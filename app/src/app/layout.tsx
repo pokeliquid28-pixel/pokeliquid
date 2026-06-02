@@ -24,11 +24,13 @@ export const metadata: Metadata = {
     title: "Pokeliquid | PRISMATIC-ETB-PERP",
     description: "Pokémon card perpetual futures on Solana",
     siteName: "Pokeliquid",
+    images: [{ url: "/logo-512.png", width: 512, height: 512 }],
   },
   twitter: {
     card: "summary",
     title: "Pokeliquid | PRISMATIC-ETB-PERP",
     description: "Pokémon card perpetual futures on Solana",
+    images: ["/logo-512.png"],
   },
 };
 

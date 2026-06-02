@@ -86,7 +86,7 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-3 md:px-6 h-12 md:h-14 flex items-center justify-between gap-2 md:gap-6">
           {/* Logo */}
           <Link href="/" className="shrink-0">
-            <Logo size={36} />
+            <Logo size={80} />
           </Link>
 
           {/* Nav */}
