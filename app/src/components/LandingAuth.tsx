@@ -16,16 +16,37 @@ import { Logo } from "./Logo";
 
 type Mode = "login" | "signup";
 
-const CARD_IMAGES = [
-  "https://product-images.tcgplayer.com/fit-in/400x400/593355.jpg",
-  "https://product-images.tcgplayer.com/fit-in/400x400/662184.jpg",
-  "https://product-images.tcgplayer.com/fit-in/400x400/684462.jpg",
-  "https://product-images.tcgplayer.com/fit-in/400x400/676088.jpg",
-  "https://product-images.tcgplayer.com/fit-in/400x400/659612.jpg",
+const LANDING_CARDS = [
+  {
+    id: "charizard-promo",
+    name: "Shadowless Charizard",
+    image: "https://product-images.tcgplayer.com/fit-in/400x400/106999.jpg",
+  },
+  {
+    id: "mega-charizard-x",
+    name: "Mega Charizard X ex",
+    image: "https://product-images.tcgplayer.com/fit-in/400x400/662184.jpg",
+  },
+  {
+    id: "charmander-promo",
+    name: "Charmander #038",
+    image: "https://product-images.tcgplayer.com/fit-in/400x400/684462.jpg",
+  },
+  {
+    id: "pikachu-ex",
+    name: "Pikachu ex",
+    image: "https://product-images.tcgplayer.com/fit-in/400x400/676088.jpg",
+  },
+  {
+    id: "mega-charizard-promo",
+    name: "Mega Charizard X ex",
+    image: "https://product-images.tcgplayer.com/fit-in/400x400/659612.jpg",
+  },
 ];
 
-const CARD_ROTATIONS = [-16, -8, 0, 8, 16];
-const CARD_OFFSETS_Y = [12, 4, 0, 4, 12];
+const CARD_ROTATIONS = [-20, -10, 0, 10, 20];
+const CARD_OFFSETS_Y = [16, 6, -4, 6, 16];
+const CARD_SCALES = [1, 1, 1.15, 1, 1];
 
 export function LandingAuth() {
   const { select } = useWallet();
@@ -36,6 +57,7 @@ export function LandingAuth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
 
   // Animation state
@@ -143,12 +165,13 @@ export function LandingAuth() {
   }
 
   function handleStartTrading() {
-    // Check if already logged in
+    setChecking(true);
+    // Check auth state on click only — no auto-redirect on page load
     fetch("/api/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.email) {
-          // Already logged in, just connect
+          // Already logged in, connect and reload into trade view
           select(SessionWalletName);
           window.location.reload();
         } else {
@@ -157,6 +180,9 @@ export function LandingAuth() {
       })
       .catch(() => {
         setShowAuth(true);
+      })
+      .finally(() => {
+        setChecking(false);
       });
   }
 
@@ -343,33 +369,37 @@ export function LandingAuth() {
           maxWidth: 600,
         }}
       >
-        {CARD_IMAGES.map((src, i) => (
-          <div
-            key={i}
-            className="absolute transition-all duration-700 ease-out"
-            style={{
-              opacity: cardsVisible ? 1 : 0,
-              transform: cardsVisible
-                ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i]}px)`
-                : `rotate(0deg) translateY(60px)`,
-              transitionDelay: `${i * 100}ms`,
-              left: `${12 + i * 16}%`,
-              bottom: 0,
-              width: "clamp(90px, 16vw, 140px)",
-              zIndex: i === 2 ? 10 : 5 - Math.abs(i - 2),
-            }}
-          >
-            <img
-              src={src}
-              alt={`Card ${i + 1}`}
-              className="w-full h-auto transition-transform duration-200 hover:-translate-y-2"
+        {LANDING_CARDS.map((card, i) => {
+          const isCenter = i === 2;
+          return (
+            <div
+              key={card.id}
+              className="absolute transition-all duration-700 ease-out"
               style={{
-                filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))",
+                opacity: cardsVisible ? 1 : 0,
+                transform: cardsVisible
+                  ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i]}px) scale(${CARD_SCALES[i]})`
+                  : `rotate(0deg) translateY(60px) scale(1)`,
+                transitionDelay: `${i * 100}ms`,
+                left: `${10 + i * 16}%`,
+                bottom: 0,
+                width: "clamp(90px, 16vw, 140px)",
+                zIndex: isCenter ? 10 : 5 - Math.abs(i - 2),
+                transformOrigin: "bottom center",
               }}
-              draggable={false}
-            />
-          </div>
-        ))}
+            >
+              <img
+                src={card.image}
+                alt={card.name}
+                className="w-full h-auto transition-transform duration-200 hover:-translate-y-3"
+                style={{
+                  filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))",
+                }}
+                draggable={false}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Tagline */}
@@ -413,7 +443,7 @@ export function LandingAuth() {
           e.currentTarget.style.transform = "translate(0, 0)";
         }}
       >
-        Start Trading
+        {checking ? "Checking..." : "Start Trading"}
       </button>
 
       {/* DEVNET notice */}

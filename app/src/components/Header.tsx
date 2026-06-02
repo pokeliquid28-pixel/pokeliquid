@@ -112,12 +112,12 @@ function TickerBar() {
         }
       `}</style>
       <div
-        className="hidden md:flex"
         style={{
           background: "#111111",
           borderBottom: "1px solid #1a1a1a",
           height: 28,
           overflow: "hidden",
+          display: "flex",
           alignItems: "center",
           fontFamily: "'JetBrains Mono', 'Courier New', monospace",
           fontSize: 11,

@@ -454,17 +454,25 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
         .then((r) => r.json())
         .then((data: { timestamp: number; raw_price: number }[]) => {
           if (cancelled) return;
+          if (!Array.isArray(data) || data.length === 0) {
+            console.warn("[Chart] No data from API");
+            setChartData([]);
+            setChartLoading(false);
+            return;
+          }
           const points: ChartPoint[] = data.map((d) => ({
             timestamp: d.timestamp,
-            price: d.raw_price,
+            price: d.raw_price, // Already in USD (e.g. 161.68)
           }));
           // Sort by timestamp ascending
           points.sort((a, b) => a.timestamp - b.timestamp);
+          console.log(`[Chart ${timeframe}] ${points.length} points, first:`, points[0], "last:", points[points.length - 1]);
           setChartData(points);
           setInsufficient(points.length < TF_CONFIG[timeframe].limit * 0.5);
           setChartLoading(false);
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error("[Chart] Fetch error:", err);
           if (!cancelled) {
             setChartData([]);
             setChartLoading(false);
@@ -498,10 +506,13 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
     const ch = h - pad.top - pad.bottom;
 
     const prices = chartData.map((p) => p.price);
-    const minP = Math.min(...prices) * 0.998;
-    const maxP = Math.max(...prices) * 1.002;
+    // Live oracle price for dashed line (oracle stores u64 scaled by 1e6)
+    const livePrice = oracle.price / 1_000_000;
+    // Include live price in min/max so dashed line is always visible
+    const allPrices = [...prices, livePrice];
+    const minP = Math.min(...allPrices) * 0.998;
+    const maxP = Math.max(...allPrices) * 1.002;
     const range = maxP - minP || 1;
-    const currentPrice = prices[prices.length - 1];
 
     ctx.clearRect(0, 0, w, h);
 
@@ -568,8 +579,8 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Current price dashed line
-    const curY = pad.top + ch - ((currentPrice - minP) / range) * ch;
+    // Live oracle price dashed line
+    const curY = pad.top + ch - ((livePrice - minP) / range) * ch;
     ctx.setLineDash([4, 4]);
     ctx.strokeStyle = "rgba(0,255,65,0.4)";
     ctx.lineWidth = 1;
@@ -584,7 +595,7 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
     ctx.arc(pad.left + cw, curY, 3, 0, Math.PI * 2);
     ctx.fillStyle = "#00ff41";
     ctx.fill();
-  }, [chartData, timeframe]);
+  }, [chartData, timeframe, oracle.price]);
 
   const timeframes: Timeframe[] = ["1h", "1d"];
 
