@@ -159,7 +159,21 @@ export default function TradePage() {
 
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  if (!connected) return <LandingAuth />;
+  // Always show landing page on first load / refresh.
+  // sessionStorage flag is set after user clicks "Start Trading" and passes auth.
+  const [passedLanding, setPassedLanding] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("pokeliquid_passed_landing") === "1") {
+      setPassedLanding(true);
+    }
+  }, []);
+
+  const handlePassLanding = useCallback(() => {
+    sessionStorage.setItem("pokeliquid_passed_landing", "1");
+    setPassedLanding(true);
+  }, []);
+
+  if (!passedLanding) return <LandingAuth onPass={handlePassLanding} />;
 
   const currentPrice = rawToPrice(oracle.price);
   const totalOI = protocol.totalLongExposure + protocol.totalShortExposure;

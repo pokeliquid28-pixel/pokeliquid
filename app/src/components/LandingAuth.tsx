@@ -48,8 +48,8 @@ const CARD_ROTATIONS = [-20, -10, 0, 10, 20];
 const CARD_OFFSETS_Y = [16, 6, -4, 6, 16];
 const CARD_SCALES = [1, 1, 1.15, 1, 1];
 
-export function LandingAuth() {
-  const { select } = useWallet();
+export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
+  const { select, connected } = useWallet();
   const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
@@ -100,7 +100,7 @@ export function LandingAuth() {
       saveSessionKeypair(kp);
 
       select(SessionWalletName);
-      window.location.reload();
+      onPass?.();
     } catch (e: any) {
       setError(e?.message ?? "Login failed");
     } finally {
@@ -152,7 +152,7 @@ export function LandingAuth() {
       } catch {}
 
       select(SessionWalletName);
-      window.location.reload();
+      onPass?.();
     } catch (e: any) {
       setError(e?.message ?? "Signup failed");
     } finally {
@@ -162,24 +162,34 @@ export function LandingAuth() {
 
   function handleGuest() {
     select(SessionWalletName);
+    onPass?.();
   }
 
   function handleStartTrading() {
     setChecking(true);
     // Check auth state on click only — no auto-redirect on page load
+    // Check both server session AND localStorage wallet
+    const hasLocalWallet = typeof window !== "undefined" && !!localStorage.getItem("pokeliquid_session_wallet");
+
     fetch("/api/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.email) {
-          // Already logged in, connect and reload into trade view
-          select(SessionWalletName);
-          window.location.reload();
+        if (data?.email || hasLocalWallet) {
+          // Already logged in or has a session wallet — go to trading
+          if (!connected) select(SessionWalletName);
+          onPass?.();
         } else {
           setShowAuth(true);
         }
       })
       .catch(() => {
-        setShowAuth(true);
+        // API error — if we have a local wallet, let them through
+        if (hasLocalWallet) {
+          if (!connected) select(SessionWalletName);
+          onPass?.();
+        } else {
+          setShowAuth(true);
+        }
       })
       .finally(() => {
         setChecking(false);
