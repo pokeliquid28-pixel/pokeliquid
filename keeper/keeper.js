@@ -10,6 +10,7 @@ const Database = require("better-sqlite3");
 const { Connection, Keypair, PublicKey, Transaction, TransactionInstruction } = require("@solana/web3.js");
 const { createAssociatedTokenAccountInstruction, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } = require("@solana/spl-token");
 const { chromium } = require("playwright");
+const { sendAlert, sendDailyDigest } = require("./telegram");
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -218,58 +219,49 @@ let totalUpdates         = 0;
 let totalErrors          = 0;
 let lastUpdateTime       = null;
 let oracleUpdates1h      = 0;
+let oracleUpdates24h     = 0;
 let liquidationChecks1h  = 0;
+let liquidations24h      = 0;
 let fundingSettlements24h = 0;
+let fundingErrors24h     = 0;
+let scrapeErrors24h      = 0;
 let consecutiveLiqFails  = 0;
+let consecutiveRpcFails  = 0;
+let rpcErrors1h          = [];
 let rpcErrors10m         = [];
 let lastTelegramAlert    = 0;
+let accountsMonitored    = 0;
+let lastLiqCheck         = null;
+let lastFundingSettlement = null;
+let errors24h            = 0;
 
-// ─── Telegram alerts ────────────────────────────────────────────────────
-
-function sendTelegramAlert(message) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-
-  // Rate-limit: no more than 1 alert per 5 minutes
-  const now = Date.now();
-  if (now - lastTelegramAlert < 5 * 60 * 1000) return;
-  lastTelegramAlert = now;
-
-  const body = JSON.stringify({
-    chat_id: TELEGRAM_CHAT_ID,
-    text: message,
-    parse_mode: "HTML",
-  });
-
-  const req = https.request({
-    hostname: "api.telegram.org",
-    path: `/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) },
-  }, (res) => {
-    if (res.statusCode !== 200) {
-      log(`WARN  Telegram alert failed: HTTP ${res.statusCode}`);
-    }
-  });
-  req.on("error", (err) => log(`WARN  Telegram error: ${err.message}`));
-  req.write(body);
-  req.end();
-
-  log(`INFO  Telegram alert sent`);
-}
+// ─── RPC error tracking ─────────────────────────────────────────────────
 
 function trackRpcError() {
   const now = Date.now();
   rpcErrors10m.push(now);
-  // Keep only last 10 minutes
-  rpcErrors10m = rpcErrors10m.filter(t => now - t < 10 * 60 * 1000);
+  rpcErrors1h.push(now);
+  consecutiveRpcFails++;
 
-  if (rpcErrors10m.length > 5) {
-    sendTelegramAlert(
-      `🚨 <b>Pokeliquid Keeper Alert</b>\n` +
-      `Issue: RPC errors spiking (${rpcErrors10m.length} in 10min)\n` +
-      `Action needed: Check Solana RPC endpoint`
-    );
+  rpcErrors10m = rpcErrors10m.filter(t => now - t < 10 * 60 * 1000);
+  rpcErrors1h  = rpcErrors1h.filter(t => now - t < 60 * 60 * 1000);
+
+  if (consecutiveRpcFails >= 3) {
+    sendAlert("CRITICAL", "Solana RPC connection failed 3x in a row", {
+      "Consecutive failures": consecutiveRpcFails,
+      "Errors in 10min": rpcErrors10m.length,
+      "RPC URL": RPC_URL,
+    });
+  } else if (rpcErrors1h.length > 5) {
+    sendAlert("WARN", `RPC errors elevated: ${rpcErrors1h.length} in last hour`, {
+      "Errors 10min": rpcErrors10m.length,
+      "Errors 1h": rpcErrors1h.length,
+    });
   }
+}
+
+function resetRpcFailStreak() {
+  consecutiveRpcFails = 0;
 }
 
 // ─── HTTP API for price history + health ─────────────────────────────────
@@ -277,7 +269,7 @@ function trackRpcError() {
 const API_PORT = parseInt(process.env.API_PORT || "3001", 10);
 
 function startApiServer() {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET");
     res.setHeader("Content-Type", "application/json");
@@ -286,25 +278,115 @@ function startApiServer() {
 
     const url = new URL(req.url, `http://localhost:${API_PORT}`);
 
+    if (url.pathname === "/ping") {
+      res.writeHead(200);
+      res.end(JSON.stringify({ ok: true, timestamp: new Date().toISOString() }));
+      return;
+    }
+
     if (url.pathname === "/health") {
       const nowMs = Date.now();
       const lastUpdateTs = lastUpdateTime ? Math.floor(lastUpdateTime.getTime() / 1000) : 0;
       const secondsSince = lastUpdateTs > 0 ? Math.floor(nowMs / 1000) - lastUpdateTs : -1;
 
+      // Status logic
       let status = "healthy";
-      if (secondsSince < 0 || secondsSince > 15 * 60) status = "stale";
-      else if (secondsSince > 5 * 60) status = "degraded";
+      if (secondsSince < 0 || secondsSince > 30 * 60 || consecutiveRpcFails >= 3) {
+        status = "critical";
+      } else if (secondsSince > 10 * 60 || rpcErrors1h.length > 5) {
+        status = "degraded";
+      }
+
+      // Fetch live on-chain data (best-effort, don't block)
+      let solanaData = { rpc_url: RPC_URL, slot: null, rpc_latency_ms: null, relayer_sol_balance: null };
+      let protocolData = { vault_balance: null, insurance_fund: null, total_long_oi: null, total_short_oi: null, open_positions: null };
+
+      try {
+        const conn = new Connection(RPC_URL, "confirmed");
+        const rpcStart = Date.now();
+        const slot = await conn.getSlot();
+        solanaData.rpc_latency_ms = Date.now() - rpcStart;
+        solanaData.slot = slot;
+
+        // Relayer SOL balance
+        const adminKp = loadKeypair(ADMIN_KEYPAIR_PATH);
+        const balance = await conn.getBalance(adminKp.publicKey);
+        solanaData.relayer_sol_balance = balance / 1e9;
+
+        // Vault balance
+        try {
+          const vaultAta = getAtaAddress(FEE_VAULT_PUBKEY, USDC_MINT_PUBKEY);
+          const vaultInfo = await conn.getTokenAccountBalance(vaultAta);
+          if (vaultInfo?.value) protocolData.vault_balance = parseFloat(vaultInfo.value.uiAmountString || "0");
+        } catch {}
+
+        // Insurance fund balance
+        try {
+          const insAta = getAtaAddress(INS_FUND_PUBKEY, USDC_MINT_PUBKEY);
+          const insInfo = await conn.getTokenAccountBalance(insAta);
+          if (insInfo?.value) protocolData.insurance_fund = parseFloat(insInfo.value.uiAmountString || "0");
+        } catch {}
+
+        // Protocol state for OI
+        try {
+          const stateInfo = await conn.getAccountInfo(PROTOCOL_STATE_PUBKEY);
+          if (stateInfo && stateInfo.data.length >= 200) {
+            // total_long_oi at offset 8+32+32+8+8+8+8+8+8+1 = varies, read from known offsets
+            // These are approximate — adjust if layout changes
+          }
+        } catch {}
+
+        // Count open positions
+        try {
+          const marginAccounts = await conn.getProgramAccounts(PROGRAM_ID, {
+            filters: [{ dataSize: MARGIN_ACCOUNT_SIZE }],
+          });
+          accountsMonitored = marginAccounts.length;
+          let openPos = 0;
+          for (const { account } of marginAccounts) {
+            const decoded = decodeMarginAccount(account.data);
+            if (decoded) openPos += decoded.positions.length;
+          }
+          protocolData.open_positions = openPos;
+        } catch {}
+
+      } catch (err) {
+        log(`WARN  Health endpoint on-chain fetch failed: ${err.message}`);
+      }
 
       res.writeHead(200);
       res.end(JSON.stringify({
         status,
-        last_update: lastUpdateTs,
-        seconds_since_update: secondsSince,
-        ewma,
-        keeper_uptime_minutes: Math.floor((nowMs - uptimeStart) / 60000),
-        oracle_updates_1h: oracleUpdates1h,
-        liquidation_checks_1h: liquidationChecks1h,
-        funding_settlements_24h: fundingSettlements24h,
+        timestamp: new Date().toISOString(),
+        oracle: {
+          last_update: lastUpdateTime ? lastUpdateTime.toISOString() : null,
+          seconds_since_update: secondsSince,
+          current_price: ewma,
+          ewma,
+          updates_1h: oracleUpdates1h,
+          updates_24h: oracleUpdates24h,
+          scrape_errors_24h: scrapeErrors24h,
+        },
+        liquidation: {
+          checks_1h: liquidationChecks1h,
+          liquidations_24h: liquidations24h,
+          accounts_monitored: accountsMonitored,
+          last_check: lastLiqCheck ? lastLiqCheck.toISOString() : null,
+          errors_1h: consecutiveLiqFails,
+        },
+        funding: {
+          settlements_24h: fundingSettlements24h,
+          last_settlement: lastFundingSettlement ? lastFundingSettlement.toISOString() : null,
+          errors_24h: fundingErrors24h,
+        },
+        solana: solanaData,
+        protocol: protocolData,
+        keeper: {
+          uptime_minutes: Math.floor((nowMs - uptimeStart) / 60000),
+          total_updates: totalUpdates,
+          total_errors: totalErrors,
+          errors_24h: errors24h,
+        },
       }));
       return;
     }
@@ -408,7 +490,7 @@ function startApiServer() {
   });
 
   server.listen(API_PORT, () => {
-    log(`INFO  API listening on http://localhost:${API_PORT} (/prices, /health, /trades, /stats)`);
+    log(`INFO  API listening on http://localhost:${API_PORT} (/ping, /health, /prices, /trades, /stats)`);
   });
 }
 
@@ -795,17 +877,19 @@ async function runLiquidationCheck(connection, payer) {
     trackRpcError();
     consecutiveLiqFails++;
     if (consecutiveLiqFails >= 3) {
-      sendTelegramAlert(
-        `🚨 <b>Pokeliquid Keeper Alert</b>\n` +
-        `Issue: Liquidation loop failed ${consecutiveLiqFails} times consecutively\n` +
-        `Action needed: Check RPC and keeper process`
-      );
+      sendAlert("CRITICAL", "Liquidation loop failed 3x consecutively", {
+        "Consecutive failures": consecutiveLiqFails,
+        "Error": err.message,
+      });
     }
     return;
   }
 
   consecutiveLiqFails = 0;
+  resetRpcFailStreak();
   liquidationChecks1h++;
+  lastLiqCheck = new Date();
+  accountsMonitored = accounts.length;
 
   accounts = accounts.filter(({ account }) => {
     const raw = account.data;
@@ -924,12 +1008,19 @@ async function runLiquidationCheck(connection, payer) {
         await connection.confirmTransaction(sig, "confirmed");
 
         const rewardUsd = (collateral * 0.01) / 1e6;
+        liquidations24h++;
         log(
           `LIQUIDATED user=${decoded.owner.toBase58().slice(0, 8)}… slot=${pos.index} ` +
           `margin_ratio=${(marginRatio * 100).toFixed(2)}% ` +
           `collateral_lost=${formatUSD(collateralUsd)} reward=${formatUSD(rewardUsd)} ` +
           `tx=${sig}`
         );
+        sendAlert("WARN", "Position liquidated", {
+          "User": decoded.owner.toBase58().slice(0, 8) + "...",
+          "Direction": pos.direction,
+          "Margin ratio": (marginRatio * 100).toFixed(2) + "%",
+          "Collateral lost": formatUSD(collateralUsd),
+        });
       } catch (err) {
         log(`ERROR [LIQ] Liquidation TX failed for ${decoded.owner.toBase58().slice(0, 8)}… slot=${pos.index}: ${err.message}`);
       }
@@ -1017,13 +1108,19 @@ async function runFundingSettlement(connection, payer) {
 
       settledCount++;
       fundingSettlements24h++;
+      lastFundingSettlement = new Date();
       log(
         `INFO  [FUNDING] Settled funding for user=${decoded.owner.toBase58().slice(0, 8)}… ` +
         `positions=${decoded.positions.length} tx=${sig}`
       );
     } catch (err) {
       if (!err.message.includes("custom program error")) {
+        fundingErrors24h++;
         log(`ERROR [FUNDING] Settlement TX failed for ${decoded.owner.toBase58().slice(0, 8)}…: ${err.message}`);
+        sendAlert("WARN", "Funding settlement failed", {
+          "User": decoded.owner.toBase58().slice(0, 8) + "...",
+          "Error": err.message.slice(0, 100),
+        });
       }
     }
   }
@@ -1102,13 +1199,17 @@ function checkOracleStaleness() {
   if (!lastUpdateTime) return;
   const minutesSinceUpdate = (Date.now() - lastUpdateTime.getTime()) / 60000;
 
-  if (minutesSinceUpdate > 15) {
-    sendTelegramAlert(
-      `🚨 <b>Pokeliquid Keeper Alert</b>\n` +
-      `Issue: Oracle stale for ${Math.floor(minutesSinceUpdate)} minutes\n` +
-      `Last price: ${formatUSD(ewma)}\n` +
-      `Action needed: Check keeper process`
-    );
+  if (minutesSinceUpdate > 30) {
+    sendAlert("CRITICAL", "Oracle hasn't updated in 30+ minutes", {
+      "Minutes stale": Math.floor(minutesSinceUpdate),
+      "Last price": formatUSD(ewma),
+      "Action": "Check keeper process immediately",
+    });
+  } else if (minutesSinceUpdate > 15) {
+    sendAlert("CRITICAL", "Oracle hasn't updated in 15+ minutes", {
+      "Minutes stale": Math.floor(minutesSinceUpdate),
+      "Last price": formatUSD(ewma),
+    });
   }
 }
 
@@ -1350,7 +1451,12 @@ async function runCycle(connection, payer) {
     rawPrice = await fetchPriceWithRetry();
   } catch (err) {
     totalErrors++;
+    errors24h++;
+    scrapeErrors24h++;
     log(`ERROR TCGPlayer scrape failed: ${err.message}`);
+    sendAlert("WARN", "TCGPlayer scrape failed after retries", {
+      "Error": err.message.slice(0, 100),
+    });
   }
 
   let ewmaMode = null;
@@ -1375,8 +1481,19 @@ async function runCycle(connection, payer) {
 
     if (rejected) {
       totalErrors++;
+      errors24h++;
       log(`CRITICAL EWMA update rejected: ${reason}. Holding ewma=${formatUSD(ewma)}`);
     } else {
+      // Alert on >10% price deviation in single cycle
+      if (ewmaDeviation > 10) {
+        sendAlert("WARN", "Price deviation > 10% in single cycle", {
+          "Raw price": formatUSD(rawPrice),
+          "Previous EWMA": formatUSD(ewma),
+          "New EWMA": formatUSD(newEwma),
+          "Deviation": ewmaDeviation.toFixed(2) + "%",
+          "Mode": mode,
+        });
+      }
       ewma = newEwma;
     }
   }
@@ -1388,6 +1505,7 @@ async function runCycle(connection, payer) {
     sig = await submitUpdateOracle(connection, payer, onChainPrice);
   } catch (err) {
     totalErrors++;
+    errors24h++;
     log(`ERROR Solana TX failed after retries: ${err.message}. Skipping cycle.`);
     return;
   }
@@ -1408,7 +1526,9 @@ async function runCycle(connection, payer) {
   totalUpdates++;
   hourUpdates++;
   oracleUpdates1h++;
+  oracleUpdates24h++;
   lastUpdateTime = new Date();
+  resetRpcFailStreak();
 
   const rawStr  = rawPrice !== null ? formatUSD(rawPrice) : "n/a";
   const devStr  = rawPrice !== null
@@ -1440,6 +1560,80 @@ function logHealth() {
   hourRawCount   = 0;
   oracleUpdates1h = 0;
   liquidationChecks1h = 0;
+  rpcErrors1h = [];
+}
+
+// ─── Daily digest ─────────────────────────────────────────────────────────
+
+async function sendDailyDigestReport(connection, payer) {
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  // Get trade stats from DB
+  let stats24;
+  try {
+    stats24 = queryStats24h.get(nowSec - 86400);
+  } catch {
+    stats24 = { total_volume: 0, total_trades: 0, total_liquidations: 0, unique_traders: 0 };
+  }
+
+  // Get vault balance
+  let vaultBalance = 0;
+  let relayerSol = 0;
+  try {
+    const conn = connection || new Connection(RPC_URL, "confirmed");
+    const balance = await conn.getBalance(payer.publicKey);
+    relayerSol = balance / 1e9;
+
+    const vaultAta = getAtaAddress(FEE_VAULT_PUBKEY, USDC_MINT_PUBKEY);
+    const vaultInfo = await conn.getTokenAccountBalance(vaultAta);
+    if (vaultInfo?.value) vaultBalance = parseFloat(vaultInfo.value.uiAmountString || "0");
+  } catch {}
+
+  await sendDailyDigest({
+    oracleUpdates: oracleUpdates24h,
+    liquidations: liquidations24h,
+    fundingSettlements: fundingSettlements24h,
+    uniqueTraders: stats24.unique_traders || 0,
+    totalVolume: stats24.total_volume || 0,
+    vaultBalance,
+    relayerSol,
+    errors: errors24h,
+    uptimeHours: (Date.now() - uptimeStart) / 3600000,
+  });
+
+  // Reset 24h counters
+  oracleUpdates24h = 0;
+  liquidations24h = 0;
+  fundingSettlements24h = 0;
+  fundingErrors24h = 0;
+  scrapeErrors24h = 0;
+  errors24h = 0;
+
+  log("INFO  Daily digest sent to Telegram");
+}
+
+// ─── Vault balance monitor ────────────────────────────────────────────────
+
+async function checkVaultBalance(connection) {
+  try {
+    const vaultAta = getAtaAddress(FEE_VAULT_PUBKEY, USDC_MINT_PUBKEY);
+    const vaultInfo = await connection.getTokenAccountBalance(vaultAta);
+    if (!vaultInfo?.value) return;
+
+    const balance = parseFloat(vaultInfo.value.uiAmountString || "0");
+    if (balance < 10) {
+      sendAlert("CRITICAL", "Vault balance critically low", {
+        "Balance": formatUSD(balance),
+        "Threshold": "$10",
+        "Action": "Add USDC to vault immediately",
+      });
+    } else if (balance < 50) {
+      sendAlert("WARN", "Vault balance low", {
+        "Balance": formatUSD(balance),
+        "Threshold": "$50",
+      });
+    }
+  } catch {}
 }
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
@@ -1542,13 +1736,59 @@ async function main() {
   setInterval(() => {
     logHealth();
     checkOracleStaleness();
+    checkVaultBalance(connection);
   }, 60 * 60 * 1_000);
 
   // Check staleness every 5 minutes
   setInterval(checkOracleStaleness, 5 * 60 * 1_000);
+
+  // Daily digest at midnight UTC
+  function scheduleDailyDigest() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setUTCHours(24, 0, 0, 0); // next midnight UTC
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+
+    setTimeout(() => {
+      sendDailyDigestReport(connection, payer);
+      // Then repeat every 24h
+      setInterval(() => sendDailyDigestReport(connection, payer), 24 * 60 * 60 * 1000);
+    }, msUntilMidnight);
+
+    log(`INFO  Daily digest scheduled in ${Math.floor(msUntilMidnight / 60000)} minutes (midnight UTC)`);
+  }
+  scheduleDailyDigest();
+
+  // Startup alert
+  sendAlert("INFO", "Keeper started", {
+    "EWMA": formatUSD(ewma),
+    "RPC": RPC_URL,
+    "Admin": payer.publicKey.toBase58().slice(0, 8) + "...",
+  });
 }
+
+// ─── Unhandled exception / rejection handlers ──────────────────────────────
+
+process.on("uncaughtException", (err) => {
+  console.error("FATAL uncaughtException:", err);
+  sendAlert("CRITICAL", "Unhandled exception in keeper", {
+    "Error": err.message,
+    "Stack": (err.stack || "").split("\n").slice(0, 3).join(" | "),
+  });
+  // Give telegram time to send, then exit
+  setTimeout(() => process.exit(1), 3000);
+});
+
+process.on("unhandledRejection", (reason) => {
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  console.error("FATAL unhandledRejection:", reason);
+  sendAlert("CRITICAL", "Unhandled promise rejection in keeper", {
+    "Reason": msg.slice(0, 200),
+  });
+});
 
 main().catch((err) => {
   console.error("FATAL:", err);
-  process.exit(1);
+  sendAlert("CRITICAL", "Keeper crashed on startup", { "Error": err.message });
+  setTimeout(() => process.exit(1), 3000);
 });

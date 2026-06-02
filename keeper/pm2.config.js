@@ -14,6 +14,9 @@ module.exports = {
       restart_delay: 5000,
       exp_backoff_restart_delay: 100,
 
+      // Memory limit: restart if > 500MB
+      max_memory_restart: "500M",
+
       // Log config
       out_file: "./logs/keeper-out.log",
       error_file: "./logs/keeper-err.log",
