@@ -349,27 +349,14 @@ function MobileMenu({
 
 export function Header() {
   const pathname = usePathname();
-  const { connected, publicKey } = useWallet();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
-
-  useEffect(() => {
-    setEmail(getSavedEmail());
-  }, [connected]);
+  const { price, isLoading: oracleLoading } = useOracle();
+  const mobilePriceUsd = price / 1_000_000;
 
   // Close menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
-
-  const addr = publicKey ? publicKey.toBase58() : null;
-
-  // Truncate email for mobile display
-  const truncEmail = email
-    ? email.length > 12
-      ? email.slice(0, 6) + "..." + email.slice(email.indexOf("@"))
-      : email
-    : null;
 
   return (
     <>
@@ -387,23 +374,22 @@ export function Header() {
         <div
           className="flex md:hidden"
           style={{
-            height: 44,
+            height: 56,
             alignItems: "center",
             justifyContent: "space-between",
-            paddingLeft: 12,
-            paddingRight: 12,
-            gap: 8,
+            paddingLeft: 16,
+            paddingRight: 16,
           }}
         >
           {/* Left: hamburger */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 6, flexShrink: 0 }}
           >
-            <Menu size={22} color="#fff" />
+            <Menu size={24} color="#fff" />
           </button>
 
-          {/* Center: logo */}
+          {/* Center: logo (big and dominant) */}
           <Link
             href="/"
             style={{
@@ -415,18 +401,15 @@ export function Header() {
               transform: "translateX(-50%)",
             }}
           >
-            <Logo size={28} />
+            <Logo size={44} />
           </Link>
 
-          {/* Right: oracle dot + wallet info */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {/* Right: oracle dot + price only */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <OracleDot />
-            {connected && (
-              <span style={{ fontSize: 10, color: "#888", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {truncEmail || (addr ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : "")}
-              </span>
-            )}
-            {!connected && <WalletButton />}
+            <span style={{ fontSize: 11, color: "#888", fontFamily: "'JetBrains Mono', monospace" }}>
+              {oracleLoading ? "-.--" : `$${mobilePriceUsd.toFixed(2)}`}
+            </span>
           </div>
         </div>
 
