@@ -42,7 +42,7 @@ export default function RootLayout({
       <body className="overflow-x-hidden bg-bg">
         <AppProviders>
           <Header />
-          <main>{children}</main>
+          <main className="pb-[60px] md:pb-0">{children}</main>
           <SaveWalletSheet />
         </AppProviders>
       </body>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WalletButton } from "./WalletButton";
@@ -155,12 +154,6 @@ function TickerBar() {
 
 export function Header() {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   return (
     <>
@@ -268,6 +261,7 @@ export function Header() {
 
             {/* DEVNET badge */}
             <span
+              className="hidden md:inline"
               style={{
                 fontSize: 9,
                 fontFamily: "'JetBrains Mono', 'Courier New', monospace",
@@ -283,95 +277,75 @@ export function Header() {
 
             <NotificationBell />
             <WalletButton />
-
-            {/* Hamburger (mobile only) */}
-            <button
-              className="flex md:hidden"
-              onClick={() => setMobileOpen((v) => !v)}
-              aria-label="Toggle navigation"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 4,
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <span
-                style={{
-                  display: "block",
-                  width: 18,
-                  height: 1,
-                  background: mobileOpen ? "#00ff41" : "#888",
-                  transition: "background 0.15s",
-                }}
-              />
-              <span
-                style={{
-                  display: "block",
-                  width: 18,
-                  height: 1,
-                  background: mobileOpen ? "#00ff41" : "#888",
-                  transition: "background 0.15s",
-                }}
-              />
-              <span
-                style={{
-                  display: "block",
-                  width: 18,
-                  height: 1,
-                  background: mobileOpen ? "#00ff41" : "#888",
-                  transition: "background 0.15s",
-                }}
-              />
-            </button>
           </div>
         </div>
-
-        {/* Mobile nav dropdown */}
-        {mobileOpen && (
-          <nav
-            className="flex md:hidden"
-            style={{
-              flexDirection: "column",
-              background: "#0a0a0a",
-              borderTop: "1px solid #1a1a1a",
-            }}
-          >
-            {NAV.map(({ href, label }) => {
-              const active = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    textDecoration: "none",
-                    padding: "12px 20px",
-                    color: active ? "#00ff41" : "#666",
-                    borderLeft: active
-                      ? "2px solid #00ff41"
-                      : "2px solid transparent",
-                    background: active ? "#0d1a0d" : "transparent",
-                  }}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
 
         {/* Ticker bar */}
         <TickerBar />
       </header>
+
+      {/* Bottom tab bar (mobile only) */}
+      <BottomTabBar pathname={pathname} />
     </>
+  );
+}
+
+// ─── Bottom Tab Bar (mobile) ─────────────────────────────────────────────────
+
+const MOBILE_TABS = [
+  { href: "/", label: "TRADE", icon: "\u26A1" },
+  { href: "/pool", label: "POOL", icon: "\uD83D\uDCA7" },
+  { href: "/stats", label: "STATS", icon: "\uD83D\uDCCA" },
+  { href: "/leaderboard", label: "BOARD", icon: "\uD83C\uDFC6" },
+];
+
+function BottomTabBar({ pathname }: { pathname: string }) {
+  return (
+    <nav
+      className="flex md:hidden"
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        height: 56,
+        background: "#111111",
+        borderTop: "1px solid #1a1a1a",
+        fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+      }}
+    >
+      {MOBILE_TABS.map(({ href, label, icon }) => {
+        const active = pathname === href;
+        return (
+          <Link
+            key={href}
+            href={href}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+              textDecoration: "none",
+              color: active ? "#00ff41" : "#555",
+              transition: "color 0.15s",
+            }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+            <span
+              style={{
+                fontSize: 9,
+                letterSpacing: "0.06em",
+                fontWeight: active ? 700 : 400,
+              }}
+            >
+              {label}
+            </span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
