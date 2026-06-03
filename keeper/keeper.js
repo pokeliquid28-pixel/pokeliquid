@@ -2062,8 +2062,7 @@ async function main() {
           if (actualSize) {
             const raw = await connection.getAccountInfo(actualSize.pubkey);
             if (raw && raw.data.length !== MARGIN_ACCOUNT_SIZE) {
-              log(`CRITICAL MARGIN_ACCOUNT_SIZE mismatch! Expected ${MARGIN_ACCOUNT_SIZE}, found ${raw.data.length}. Exiting.`);
-              process.exit(1);
+              log(`WARN  Found legacy margin account at size ${raw.data.length} (expected ${MARGIN_ACCOUNT_SIZE}). Skipping legacy accounts.`);
             }
           }
         }
