@@ -378,7 +378,7 @@ Short PnL = notional * (entry_price - exit_price) / entry_price`}</Code>
             <P>
               Set SL/TP on any open position via <code>set_sl_tp</code>. The keeper monitors prices and
               calls <code>execute_sl_tp</code> permissionlessly when conditions are met. The executor
-              (keeper) receives no reward for SL/TP execution — it&rsquo;s a public good crank.
+              receives a <strong>0.1% reward</strong> (10 bps of position collateral) for executing the order.
             </P>
             <P>
               For longs: SL must be below entry price, TP must be above. For shorts: SL must be above entry price,
