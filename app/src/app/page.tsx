@@ -35,10 +35,20 @@ import {
   FEE_VAULT,
   INSURANCE_FUND,
   USDC_MINT,
+  MARKET_SEED,
+  PROGRAM_ID,
   getMarginAccountPDA,
 } from "@/lib/addresses";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
+
+function getMarketStatePDA(marketId: string): PublicKey {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [MARKET_SEED, Buffer.from(marketId)],
+    PROGRAM_ID
+  );
+  return pda;
+}
 
 // Module-level flag: resets on page reload, persists across in-app navigation
 let _passedLanding = false;
@@ -400,6 +410,7 @@ export default function TradePage() {
               walletUsdc={walletUsdc}
               onRefresh={handleRefresh}
               oracleAddress={selectedMarket.oracleAddress}
+              marketId={selectedMarket.priceApiMarket}
             />
           </div>
         </div>
@@ -488,6 +499,7 @@ export default function TradePage() {
           margin={margin}
           onRefresh={handleRefresh}
           oracleAddress={selectedMarket.oracleAddress}
+          marketId={selectedMarket.priceApiMarket}
         />
       )}
     </div>
@@ -721,6 +733,7 @@ function OrderEntry({
   walletUsdc,
   onRefresh,
   oracleAddress,
+  marketId,
 }: {
   oracle: ReturnType<typeof useOracle>;
   protocol: ReturnType<typeof useProtocolState>;
@@ -728,6 +741,7 @@ function OrderEntry({
   walletUsdc: number | null;
   onRefresh: () => void;
   oracleAddress?: string;
+  marketId?: string;
 }) {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
@@ -790,8 +804,10 @@ function OrderEntry({
           protocolState: PROTOCOL_STATE,
           marginAccount: marginPda,
           oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
+          marketState: marketId ? getMarketStatePDA(marketId) : getMarketStatePDA("ETB"),
           feeVault: FEE_VAULT,
           insuranceFund: INSURANCE_FUND,
+          liquidityPool: PublicKey.findProgramAddressSync([Buffer.from("liquidity_pool")], PROGRAM_ID)[0],
           tokenProgram: TOKEN_PROGRAM_ID,
         })
         .rpc();
@@ -1223,6 +1239,7 @@ function PositionsTable({
   margin,
   onRefresh,
   oracleAddress,
+  marketId,
 }: {
   positions: Position[];
   oracle: ReturnType<typeof useOracle>;
@@ -1230,6 +1247,7 @@ function PositionsTable({
   margin: ReturnType<typeof useMarginAccount>;
   onRefresh: () => void;
   oracleAddress?: string;
+  marketId?: string;
 }) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
@@ -1255,10 +1273,15 @@ function PositionsTable({
       let needsCreate = false;
       try { await getAccount(connection, ata); } catch { needsCreate = true; }
 
+      const oracleKey = oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT;
       const txBuilder = (program.methods as any).closePosition(pos.index).accounts({
         user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
-        oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT, feeVault: FEE_VAULT, insuranceFund: INSURANCE_FUND,
+        oracle: oracleKey,
+        marketState: getMarketStatePDA(marketId || "ETB"),
+        feeVault: FEE_VAULT, insuranceFund: INSURANCE_FUND,
         userTokenAccount: ata, tokenProgram: TOKEN_PROGRAM_ID,
+        liquidityPool: PublicKey.findProgramAddressSync([Buffer.from("liquidity_pool")], PROGRAM_ID)[0],
+        lpVault: PublicKey.findProgramAddressSync([Buffer.from("lp_vault")], PROGRAM_ID)[0],
       });
       if (needsCreate) {
         const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
