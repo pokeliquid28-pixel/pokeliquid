@@ -357,24 +357,20 @@ export function Header() {
   const { price, isLoading: oracleLoading } = useOracle();
   const mobilePriceUsd = price / 1_000_000;
 
-  // Check if we should hide all nav (landing page before auth, or reset-password)
-  const [hideNav, setHideNav] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return pathname === "/" || pathname === "/reset-password";
-  });
-
-  // Track whether the landing event has fired so Header never double-shows
+  // Start hidden to avoid SSR flash — useEffect will show when appropriate
+  const [hideNav, setHideNav] = useState(true);
   const landingPassedRef = useRef(false);
 
   useEffect(() => {
-    const noNavRoutes = ["/reset-password"];
-    if (noNavRoutes.includes(pathname)) {
-      setHideNav(true);
-    } else if (pathname === "/") {
-      // Only hide on "/" if landing hasn't been passed yet
-      if (!landingPassedRef.current) {
+    const noNavRoutes = ["/", "/reset-password"];
+    if (pathname === "/") {
+      if (landingPassedRef.current) {
+        setHideNav(false);
+      } else {
         setHideNav(true);
       }
+    } else if (noNavRoutes.includes(pathname)) {
+      setHideNav(true);
     } else {
       setHideNav(false);
     }
