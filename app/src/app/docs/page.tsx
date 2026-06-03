@@ -583,7 +583,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <H3>Deployed Addresses</H3>
             <Addr label="Program" address="7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ" desc="Pokeliquid program" />
             <Addr label="ProtocolState" address="8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK" desc="Global protocol configuration PDA" />
-            <Addr label="Oracle (ETB)" address="2euE9eMGTNwyW7jqG63JvRZfHeo7psKZgBCizfNMjW12" desc="PRISMATIC-ETB-PERP price feed" />
+            <Addr label="Oracle (ETB)" address="4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH" desc="PRISMATIC-ETB-PERP price feed" />
             <Addr label="Oracle (Charizard X)" address="8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg" desc="CHARIZARD-X-PERP price feed" />
             <Addr label="Oracle (Charmander)" address="6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD" desc="CHARMANDER-PERP price feed" />
             <Addr label="Oracle (Pikachu)" address="B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs" desc="PIKACHU-PERP price feed" />

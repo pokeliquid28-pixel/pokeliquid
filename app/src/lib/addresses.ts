@@ -9,7 +9,7 @@ export const PROTOCOL_STATE = new PublicKey(
 );
 
 export const ORACLE_ACCOUNT = new PublicKey(
-  process.env.NEXT_PUBLIC_ORACLE_ACCOUNT ?? "2euE9eMGTNwyW7jqG63JvRZfHeo7psKZgBCizfNMjW12"
+  process.env.NEXT_PUBLIC_ORACLE_ACCOUNT ?? "4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH"
 );
 
 export const FEE_VAULT = new PublicKey(
@@ -31,6 +31,7 @@ export const MARGIN_SEED = Buffer.from("margin");
 export const FEE_VAULT_SEED = Buffer.from("fee_vault");
 export const INSURANCE_FUND_SEED = Buffer.from("insurance_fund");
 export const USDC_MINT_SEED = Buffer.from("usdc_mint");
+export const MARKET_SEED = Buffer.from("market");
 export const LP_SEED = Buffer.from("lp");
 export const LP_POOL_SEED = Buffer.from("liquidity_pool");
 export const LP_VAULT_SEED = Buffer.from("lp_vault");

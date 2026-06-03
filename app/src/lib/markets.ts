@@ -19,7 +19,7 @@ export const MARKETS: Market[] = [
     subtitle: "Prismatic Evolutions ETB \u00B7 Sealed",
     badge: "HOLO",
     live: true,
-    oracleAddress: "2euE9eMGTNwyW7jqG63JvRZfHeo7psKZgBCizfNMjW12",
+    oracleAddress: "4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH",
     programId: "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ",
     tcgplayerId: 593355,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/593355.jpg",

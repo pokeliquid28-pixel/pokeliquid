@@ -17,7 +17,7 @@ const { sendAlert, sendDailyDigest } = require("./telegram");
 const ADMIN_KEYPAIR_PATH    = process.env.ADMIN_KEYPAIR_PATH || "/Users/ethangriffin/.config/solana/id.json";
 const SECONDARY_KEYPAIR_PATH = process.env.SECONDARY_KEYPAIR_PATH || "./secondary.json";
 const PROGRAM_ID            = new PublicKey(process.env.PROGRAM_ID || "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ");
-const ORACLE_PUBKEY         = new PublicKey(process.env.ORACLE_PUBKEY || "2euE9eMGTNwyW7jqG63JvRZfHeo7psKZgBCizfNMjW12");
+const ORACLE_PUBKEY         = new PublicKey(process.env.ORACLE_PUBKEY || "4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH");
 const PROTOCOL_STATE_PUBKEY = new PublicKey(process.env.PROTOCOL_STATE_PUBKEY || "8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK");
 const RPC_URL               = process.env.RPC_URL || "https://api.devnet.solana.com";
 const UPDATE_INTERVAL_MS    = parseInt(process.env.UPDATE_INTERVAL_MS || "300000", 10);
@@ -44,8 +44,8 @@ const MARKET_CONFIGS = [
     oraclePubkey: ORACLE_PUBKEY,
     seedPrice: SEED_PRICE_USD,
     priceFloor: PRICE_MIN_USD,
-    useDefaultOracle: true, // uses update_oracle (original instruction)
-    marketIdOnChain: null,  // not needed for default oracle
+    useDefaultOracle: false, // now uses market-specific oracle like all others
+    marketIdOnChain: "ETB",
   },
   {
     id: "CHARIZARD-X",
@@ -116,6 +116,35 @@ const LP_POOL_PUBKEY = PublicKey.findProgramAddressSync(
 const LP_VAULT_PUBKEY = PublicKey.findProgramAddressSync(
   [Buffer.from("lp_vault")], PROGRAM_ID
 )[0];
+
+// Precompute MarketState PDAs for each market
+const MARKET_STATE_PDAS = {};
+for (const mc of MARKET_CONFIGS) {
+  if (mc.marketIdOnChain) {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("market"), Buffer.from(mc.marketIdOnChain)],
+      PROGRAM_ID
+    );
+    MARKET_STATE_PDAS[mc.id] = pda;
+  }
+}
+
+// Helper: find MarketState PDA by oracle pubkey
+function getMarketStatePdaForOracle(oraclePubkey) {
+  const oracleStr = oraclePubkey.toBase58();
+  for (const mc of MARKET_CONFIGS) {
+    if (mc.oraclePubkey.toBase58() === oracleStr && MARKET_STATE_PDAS[mc.id]) {
+      return MARKET_STATE_PDAS[mc.id];
+    }
+  }
+  return null;
+}
+
+// Helper: find oracle pubkey by market ID
+function getOracleForMarket(marketId) {
+  const mc = MARKET_CONFIGS.find(m => m.id === marketId);
+  return mc ? mc.oraclePubkey : ORACLE_PUBKEY;
+}
 
 // Anchor discriminators
 const UPDATE_ORACLE_DISCRIMINATOR = (() => {
@@ -996,9 +1025,9 @@ function getAtaAddress(owner, mint) {
 }
 
 const MAX_POSITIONS = 5;
-const POSITION_BYTES = 60;
+const POSITION_BYTES = 92; // 32 oracle + 60 old layout
 const POSITION_SLOT_BYTES = 1 + POSITION_BYTES;
-const MARGIN_ACCOUNT_SIZE = 386; // Exact value from MarginAccount::SPACE in Rust
+const MARGIN_ACCOUNT_SIZE = 546; // MarginAccount::SPACE in Rust (updated with oracle in Position)
 
 const EXECUTE_SL_TP_DISCRIMINATOR = (() => {
   const hash = createHash("sha256").update("global:execute_sl_tp").digest();
@@ -1020,22 +1049,25 @@ function decodeMarginAccount(data) {
     if (tag !== 1) continue;
 
     const base = offset + 1;
-    // Position layout (60 bytes):
-    //   direction(1) + collateral(8) + notional(8) + leverage(1) + entry_price(8) +
+    // Position layout (92 bytes):
+    //   oracle(32) + direction(1) + collateral(8) + notional(8) + leverage(1) + entry_price(8) +
     //   open_timestamp(8) + last_funding_timestamp(8) + sl_price(Option<u64> = 9) + tp_price(Option<u64> = 9)
-    const slTag = data[base + 34];
-    const slPrice = slTag === 1 ? data.readBigUInt64LE(base + 35) : null;
-    const tpTag = data[base + 43];
-    const tpPrice = tpTag === 1 ? data.readBigUInt64LE(base + 44) : null;
+    const oracle = new PublicKey(data.slice(base, base + 32));
+    const pBase = base + 32; // offset past oracle pubkey
+    const slTag = data[pBase + 34];
+    const slPrice = slTag === 1 ? data.readBigUInt64LE(pBase + 35) : null;
+    const tpTag = data[pBase + 43];
+    const tpPrice = tpTag === 1 ? data.readBigUInt64LE(pBase + 44) : null;
 
     positions.push({
       index: i,
-      direction:     data[base] === 0 ? "Long" : "Short",
-      collateral:    data.readBigUInt64LE(base + 1),
-      notional:      data.readBigUInt64LE(base + 9),
-      leverage:      data[base + 17],
-      entryPrice:    data.readBigUInt64LE(base + 18),
-      openTimestamp: data.readBigInt64LE(base + 26),
+      oracle,
+      direction:     data[pBase] === 0 ? "Long" : "Short",
+      collateral:    data.readBigUInt64LE(pBase + 1),
+      notional:      data.readBigUInt64LE(pBase + 9),
+      leverage:      data[pBase + 17],
+      entryPrice:    data.readBigUInt64LE(pBase + 18),
+      openTimestamp: data.readBigInt64LE(pBase + 26),
       slPrice,
       tpPrice,
     });
@@ -1044,7 +1076,7 @@ function decodeMarginAccount(data) {
   return { owner, collateral, positions };
 }
 
-function buildLiquidateIx(liquidatorPubkey, userPubkey, liquidatorAta, positionIndex) {
+function buildLiquidateIx(liquidatorPubkey, userPubkey, liquidatorAta, positionIndex, oraclePubkey, marketStatePda) {
   const marginPda = (() => {
     const [pda] = PublicKey.findProgramAddressSync(
       [Buffer.from("margin"), userPubkey.toBuffer()],
@@ -1063,7 +1095,8 @@ function buildLiquidateIx(liquidatorPubkey, userPubkey, liquidatorAta, positionI
       { pubkey: userPubkey,            isSigner: false, isWritable: false },
       { pubkey: PROTOCOL_STATE_PUBKEY, isSigner: false, isWritable: true  },
       { pubkey: marginPda,             isSigner: false, isWritable: true  },
-      { pubkey: ORACLE_PUBKEY,         isSigner: false, isWritable: false },
+      { pubkey: oraclePubkey,          isSigner: false, isWritable: false },
+      { pubkey: marketStatePda,        isSigner: false, isWritable: true  },
       { pubkey: FEE_VAULT_PUBKEY,      isSigner: false, isWritable: true  },
       { pubkey: INS_FUND_PUBKEY,       isSigner: false, isWritable: true  },
       { pubkey: liquidatorAta,         isSigner: false, isWritable: true  },
@@ -1073,7 +1106,7 @@ function buildLiquidateIx(liquidatorPubkey, userPubkey, liquidatorAta, positionI
   });
 }
 
-function buildExecuteSlTpIx(callerPubkey, callerAta, userPubkey, positionIndex) {
+function buildExecuteSlTpIx(callerPubkey, callerAta, userPubkey, positionIndex, oraclePubkey, marketStatePda) {
   const marginPda = PublicKey.findProgramAddressSync(
     [Buffer.from("margin"), userPubkey.toBuffer()],
     PROGRAM_ID
@@ -1089,7 +1122,8 @@ function buildExecuteSlTpIx(callerPubkey, callerAta, userPubkey, positionIndex) 
       { pubkey: userPubkey,            isSigner: false, isWritable: false },
       { pubkey: PROTOCOL_STATE_PUBKEY, isSigner: false, isWritable: true  },
       { pubkey: marginPda,             isSigner: false, isWritable: true  },
-      { pubkey: ORACLE_PUBKEY,         isSigner: false, isWritable: false },
+      { pubkey: oraclePubkey,          isSigner: false, isWritable: false },
+      { pubkey: marketStatePda,        isSigner: false, isWritable: true  },
       { pubkey: FEE_VAULT_PUBKEY,      isSigner: false, isWritable: true  },
       { pubkey: INS_FUND_PUBKEY,       isSigner: false, isWritable: true  },
       { pubkey: callerAta,             isSigner: false, isWritable: true  },
@@ -1155,17 +1189,24 @@ async function runLiquidationCheck(connection, payer) {
     return raw.length >= 8 && MARGIN_ACCOUNT_DISCRIMINATOR.every((b, i) => raw[i] === b);
   });
 
-  let oraclePrice;
-  try {
-    const oracleInfo = await connection.getAccountInfo(ORACLE_PUBKEY);
-    if (!oracleInfo) throw new Error("Oracle account not found");
-    oraclePrice = oracleInfo.data.readBigUInt64LE(8);
-  } catch (err) {
-    log(`ERROR [LIQ] Failed to fetch oracle price: ${err.message}`);
+  // Fetch oracle prices for all markets
+  const oraclePrices = {};
+  for (const mc of MARKET_CONFIGS) {
+    try {
+      const oracleInfo = await connection.getAccountInfo(mc.oraclePubkey);
+      if (oracleInfo) {
+        oraclePrices[mc.oraclePubkey.toBase58()] = Number(oracleInfo.data.readBigUInt64LE(8));
+      }
+    } catch (err) {
+      log(`WARN  [LIQ] Failed to fetch oracle price for ${mc.id}: ${err.message}`);
+    }
+  }
+
+  if (Object.keys(oraclePrices).length === 0) {
+    log(`ERROR [LIQ] No oracle prices available`);
     return;
   }
 
-  const currentPrice = Number(oraclePrice);
   let underwaterCount = 0;
   let slTpTriggered = 0;
   const liquidatorAta = getAtaAddress(payer.publicKey, USDC_MINT_PUBKEY);
@@ -1188,6 +1229,11 @@ async function runLiquidationCheck(connection, payer) {
       const collateral = Number(pos.collateral);
 
       if (entryPrice === 0 || notional === 0) continue;
+
+      // Get price for this position's oracle
+      const posOracleStr = pos.oracle ? pos.oracle.toBase58() : ORACLE_PUBKEY.toBase58();
+      const currentPrice = oraclePrices[posOracleStr];
+      if (!currentPrice) continue; // skip if no price for this oracle
 
       const pnl = pos.direction === "Long"
         ? ((currentPrice - entryPrice) / entryPrice) * notional
@@ -1219,7 +1265,10 @@ async function runLiquidationCheck(connection, payer) {
         );
 
         try {
-          const ix = buildExecuteSlTpIx(payer.publicKey, liquidatorAta, decoded.owner, pos.index);
+          const posOracle = pos.oracle || ORACLE_PUBKEY;
+          const posMarketState = getMarketStatePdaForOracle(posOracle);
+          if (!posMarketState) { log(`WARN  [SL/TP] No MarketState for oracle ${posOracle.toBase58()}`); continue; }
+          const ix = buildExecuteSlTpIx(payer.publicKey, liquidatorAta, decoded.owner, pos.index, posOracle, posMarketState);
           const tx = new Transaction().add(ix);
           const { blockhash } = await connection.getLatestBlockhash("confirmed");
           tx.recentBlockhash = blockhash;
@@ -1253,7 +1302,10 @@ async function runLiquidationCheck(connection, payer) {
       );
 
       try {
-        const ix = buildLiquidateIx(payer.publicKey, decoded.owner, liquidatorAta, pos.index);
+        const posOracle = pos.oracle || ORACLE_PUBKEY;
+        const posMarketState = getMarketStatePdaForOracle(posOracle);
+        if (!posMarketState) { log(`WARN  [LIQ] No MarketState for oracle ${posOracle.toBase58()}`); continue; }
+        const ix = buildLiquidateIx(payer.publicKey, decoded.owner, liquidatorAta, pos.index, posOracle, posMarketState);
         const tx = new Transaction().add(ix);
         const { blockhash } = await connection.getLatestBlockhash("confirmed");
         tx.recentBlockhash = blockhash;
@@ -1294,7 +1346,7 @@ async function runLiquidationCheck(connection, payer) {
 
 // ─── Funding settlement ──────────────────────────────────────────────────────
 
-function buildSettleFundingIx(crankerPubkey, marginAccountPubkey) {
+function buildSettleFundingIx(crankerPubkey, marginAccountPubkey, oraclePubkey, marketStatePda) {
   const data = Buffer.from(SETTLE_FUNDING_DISCRIMINATOR);
 
   return new TransactionInstruction({
@@ -1302,7 +1354,8 @@ function buildSettleFundingIx(crankerPubkey, marginAccountPubkey) {
     keys: [
       { pubkey: crankerPubkey,           isSigner: true,  isWritable: false },
       { pubkey: PROTOCOL_STATE_PUBKEY,   isSigner: false, isWritable: true  },
-      { pubkey: ORACLE_PUBKEY,           isSigner: false, isWritable: false },
+      { pubkey: oraclePubkey,            isSigner: false, isWritable: false },
+      { pubkey: marketStatePda,          isSigner: false, isWritable: true  },
       { pubkey: marginAccountPubkey,     isSigner: false, isWritable: true  },
       { pubkey: FEE_VAULT_PUBKEY,        isSigner: false, isWritable: true  },
       { pubkey: INS_FUND_PUBKEY,         isSigner: false, isWritable: true  },
@@ -1342,17 +1395,29 @@ async function runFundingSettlement(connection, payer) {
     if (!decoded || decoded.positions.length === 0) continue;
 
     const nowSec = Math.floor(Date.now() / 1000);
-    const hasSettleable = decoded.positions.some((pos) => {
-      const lastFundTs = Number(account.data.readBigInt64LE(
-        48 + pos.index * POSITION_SLOT_BYTES + 1 + 26
-      ));
-      return (nowSec - lastFundTs) >= 3600;
-    });
 
-    if (!hasSettleable) continue;
+    // Group positions by oracle and check if any are settleable
+    const oraclesNeedingSettlement = new Set();
+    for (const pos of decoded.positions) {
+      // Read last_funding_timestamp: offset = posStart + slot*(1+92) + 1 + 32 + 26
+      const lastFundTs = Number(account.data.readBigInt64LE(
+        48 + pos.index * POSITION_SLOT_BYTES + 1 + 32 + 26
+      ));
+      if ((nowSec - lastFundTs) >= 3600 && pos.oracle) {
+        oraclesNeedingSettlement.add(pos.oracle.toBase58());
+      }
+    }
+
+    if (oraclesNeedingSettlement.size === 0) continue;
+
+    // Settle funding for each market that has settleable positions
+    for (const oracleStr of oraclesNeedingSettlement) {
+      const oraclePk = new PublicKey(oracleStr);
+      const msPda = getMarketStatePdaForOracle(oraclePk);
+      if (!msPda) { log(`WARN  [FUNDING] No MarketState for oracle ${oracleStr.slice(0, 8)}…`); continue; }
 
     try {
-      const ix = buildSettleFundingIx(payer.publicKey, pubkey);
+      const ix = buildSettleFundingIx(payer.publicKey, pubkey, oraclePk, msPda);
       const tx = new Transaction().add(ix);
       const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
@@ -1382,6 +1447,7 @@ async function runFundingSettlement(connection, payer) {
         });
       }
     }
+    } // end per-oracle loop
   }
 
   log(
