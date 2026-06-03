@@ -883,6 +883,18 @@ function OrderEntry({
     try {
       const program = getProgram(connection, anchorWallet);
       const marginPda = getMarginAccountPDA(publicKey);
+
+      // Check if old-size margin account exists and needs migration
+      const existingAcct = await connection.getAccountInfo(marginPda);
+      if (existingAcct && existingAcct.data.length < 546) {
+        setTxStatus({ type: "success", msg: "Migrating account to new format..." });
+        await (program.methods as any).closeMarginAccount().accounts({
+          user: publicKey, marginAccount: marginPda, systemProgram: SystemProgram.programId,
+        }).rpc();
+        // Wait for the close to finalize
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
       const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
       let needsCreate = false;
       try { await getAccount(connection, ata); } catch { needsCreate = true; }
