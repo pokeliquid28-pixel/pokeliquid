@@ -202,7 +202,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
   // Auth modal overlay
   if (showAuth) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ backgroundColor: "#0a0a0a" }}>
+      <div className="h-[100dvh] flex items-center justify-center px-4 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-3">
             <div className="flex justify-center">
@@ -362,12 +362,12 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
   // Landing page with card fan
   return (
     <div
-      className="min-h-[80vh] flex flex-col items-center justify-center px-4 py-8"
+      className="h-[100dvh] flex flex-col items-center justify-center px-4 overflow-hidden"
       style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* Logo */}
       <div
-        className="mb-8 transition-all duration-700"
+        className="mb-4 md:mb-6 transition-all duration-700"
         style={{
           opacity: logoVisible ? 1 : 0,
           transform: logoVisible ? "translateY(0)" : "translateY(-20px)",
@@ -384,9 +384,9 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
 
       {/* Card fan */}
       <div
-        className="relative mb-10 flex items-end justify-center"
+        className="relative mb-4 md:mb-6 flex items-end justify-center"
         style={{
-          height: "clamp(200px, 35vw, 340px)",
+          height: "clamp(160px, 30vw, 300px)",
           width: "100%",
           maxWidth: 600,
         }}
@@ -426,7 +426,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
 
       {/* Tagline */}
       <p
-        className="text-center mb-8 font-mono transition-all duration-700"
+        className="text-center mb-4 md:mb-6 font-mono transition-all duration-700"
         style={{
           color: "#666",
           fontSize: "clamp(12px, 2vw, 14px)",
@@ -471,7 +471,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       {/* Read Docs link */}
       <Link
         href="/docs"
-        className="mt-6 text-xs font-mono transition-all duration-700 underline underline-offset-2"
+        className="mt-4 text-xs font-mono transition-all duration-700 underline underline-offset-2"
         style={{
           color: "#666",
           opacity: ctaVisible ? 1 : 0,
@@ -483,7 +483,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
 
       {/* DEVNET notice */}
       <p
-        className="mt-4 text-[10px] text-center font-mono transition-all duration-700"
+        className="mt-2 text-[10px] text-center font-mono transition-all duration-700"
         style={{
           color: "#444",
           opacity: ctaVisible ? 1 : 0,
