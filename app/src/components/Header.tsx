@@ -353,10 +353,37 @@ export function Header() {
   const { price, isLoading: oracleLoading } = useOracle();
   const mobilePriceUsd = price / 1_000_000;
 
+  // Check if we should hide all nav (landing page before auth, or reset-password)
+  const [hideNav, setHideNav] = useState(false);
+  useEffect(() => {
+    const noNavRoutes = ["/reset-password"];
+    if (noNavRoutes.includes(pathname)) {
+      setHideNav(true);
+    } else if (pathname === "/") {
+      // On root, hide nav if user hasn't passed the landing page yet
+      const passed = typeof window !== "undefined" && sessionStorage.getItem("pokeliquid_passed_landing") === "1";
+      setHideNav(!passed);
+    } else {
+      setHideNav(false);
+    }
+  }, [pathname]);
+
+  // Listen for sessionStorage changes (when user passes landing within same page)
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const interval = setInterval(() => {
+      const passed = sessionStorage.getItem("pokeliquid_passed_landing") === "1";
+      setHideNav(!passed);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [pathname]);
+
   // Close menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  if (hideNav) return null;
 
   return (
     <>
@@ -401,7 +428,7 @@ export function Header() {
               transform: "translateX(-50%)",
             }}
           >
-            <Logo size={44} />
+            <Logo width={160} maxHeight={48} />
           </Link>
 
           {/* Right: oracle dot + price only */}
@@ -435,7 +462,7 @@ export function Header() {
               flexShrink: 0,
             }}
           >
-            <Logo size={32} />
+            <Logo width={200} maxHeight={38} />
           </Link>
 
           {/* Center: nav */}

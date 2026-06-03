@@ -205,7 +205,12 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-3">
             <div className="flex justify-center">
-              <Logo size={160} />
+              <div className="block md:hidden">
+                <Logo width={240} />
+              </div>
+              <div className="hidden md:block">
+                <Logo width={320} />
+              </div>
             </div>
             <p className="text-sm" style={{ color: "#666" }}>
               Pok&eacute;mon card perpetual futures on Solana
@@ -367,7 +372,13 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           transform: logoVisible ? "translateY(0)" : "translateY(-20px)",
         }}
       >
-        <Logo size={120} />
+        {/* Mobile: 120px, Desktop: 400px */}
+        <div className="block md:hidden">
+          <Logo size={120} />
+        </div>
+        <div className="hidden md:block">
+          <Logo width={400} />
+        </div>
       </div>
 
       {/* Card fan */}
