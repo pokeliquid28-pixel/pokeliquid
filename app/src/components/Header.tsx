@@ -363,7 +363,11 @@ export function Header() {
   const landingPassedRef = useRef(false);
 
   useEffect(() => {
-    const noNavRoutes = ["/", "/reset-password"];
+    // If user has a session wallet, they've passed the landing
+    const hasLocalWallet = typeof window !== "undefined" && !!localStorage.getItem("pokeliquid_session_wallet");
+    if (hasLocalWallet) landingPassedRef.current = true;
+
+    const noNavRoutes = ["/reset-password"];
     if (pathname === "/") {
       if (landingPassedRef.current) {
         setHideNav(false);
@@ -373,6 +377,8 @@ export function Header() {
     } else if (noNavRoutes.includes(pathname)) {
       setHideNav(true);
     } else {
+      // On any non-landing route, mark as passed and show nav
+      landingPassedRef.current = true;
       setHideNav(false);
     }
   }, [pathname]);

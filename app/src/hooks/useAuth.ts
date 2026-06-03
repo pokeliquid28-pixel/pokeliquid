@@ -20,6 +20,9 @@ export function useAuth(): AuthState {
   useEffect(() => {
     let cancelled = false;
 
+    // Check both server session AND localStorage wallet (for guest users)
+    const hasLocalWallet = typeof window !== "undefined" && !!localStorage.getItem("pokeliquid_session_wallet");
+
     const check = async () => {
       try {
         const res = await fetch("/api/me");
@@ -31,7 +34,8 @@ export function useAuth(): AuthState {
         setWalletPubkey(data.walletPubkey ?? null);
       } catch {
         if (cancelled) return;
-        setIsAuthenticated(false);
+        // Guest users with a local session wallet are still authenticated
+        setIsAuthenticated(hasLocalWallet || connected);
         setEmail(null);
         setWalletPubkey(null);
       } finally {
