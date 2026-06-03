@@ -324,8 +324,25 @@ export default function TradePage() {
         <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
           {/* Market header bar */}
           <div className="flex items-center gap-4 md:gap-6 px-4 py-3 border-b border-border bg-panel flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-primary">{selectedMarket.name}</span>
+            {/* Mobile: market selector dropdown */}
+            <div className="relative flex items-center gap-2">
+              <select
+                value={selectedMarket.id}
+                onChange={(e) => {
+                  const m = markets.find((mk) => mk.id === e.target.value);
+                  if (m && m.live) setSelectedMarket(m);
+                }}
+                className="lg:hidden appearance-none bg-transparent text-sm font-bold text-primary pr-5 cursor-pointer outline-none"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                {markets.filter((m) => m.live).map((m) => (
+                  <option key={m.id} value={m.id} style={{ background: "#111", color: "#fff" }}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+              <span className="lg:hidden text-secondary text-xs pointer-events-none absolute right-0">&#9662;</span>
+              <span className="hidden lg:inline text-sm font-bold text-primary">{selectedMarket.name}</span>
               <span className="text-[9px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{selectedMarket.badge}</span>
             </div>
             <div>
