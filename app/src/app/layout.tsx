@@ -3,6 +3,7 @@ import "./globals.css";
 import { AppProviders } from "@/providers/AppProviders";
 import { Header } from "@/components/Header";
 import { SaveWalletSheet } from "@/components/SaveWalletSheet";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -42,7 +43,9 @@ export default function RootLayout({
       <body className="overflow-x-hidden bg-bg">
         <AppProviders>
           <Header />
-          <main className="pb-[60px] md:pb-0">{children}</main>
+          <main className="pb-[60px] md:pb-0">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </main>
           <SaveWalletSheet />
         </AppProviders>
       </body>

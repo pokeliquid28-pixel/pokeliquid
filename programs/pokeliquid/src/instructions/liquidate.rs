@@ -33,10 +33,6 @@ pub struct Liquidate<'info> {
     )]
     pub margin_account: Box<Account<'info, MarginAccount>>,
 
-    #[account(
-        seeds = [ORACLE_SEED],
-        bump = oracle.bump,
-    )]
     pub oracle: Box<Account<'info, OracleAccount>>,
 
     #[account(

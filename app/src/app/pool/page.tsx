@@ -21,6 +21,7 @@ import { useLiquidityPool } from "@/hooks/useLiquidityPool";
 import { useLpPosition } from "@/hooks/useLpPosition";
 import { useWalletBalances } from "@/hooks/useWalletBalances";
 import { Skeleton } from "@/components/Skeleton";
+import { AuthGuard } from "@/components/AuthGuard";
 
 async function ensureAta(connection: any, payer: PublicKey, mint: PublicKey, owner: PublicKey) {
   const ata = await getAssociatedTokenAddress(mint, owner);
@@ -53,6 +54,10 @@ function StatRow({ label, value, mono }: { label: string; value: string; mono?: 
 }
 
 export default function PoolPage() {
+  return <AuthGuard><PoolContent /></AuthGuard>;
+}
+
+function PoolContent() {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
   const anchorWallet = useAnchorWallet();

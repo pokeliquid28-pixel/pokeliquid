@@ -34,9 +34,10 @@ type Props = {
   margin: MarginAccountData;
   protocol: ProtocolStateData;
   onRefresh: () => void;
+  oracleAddress?: string;
 };
 
-export function PositionPanel({ oracle, margin, protocol, onRefresh }: Props) {
+export function PositionPanel({ oracle, margin, protocol, onRefresh, oracleAddress }: Props) {
   const { connected } = useWallet();
 
   if (margin.positions.length === 0) {
@@ -61,6 +62,7 @@ export function PositionPanel({ oracle, margin, protocol, onRefresh }: Props) {
           protocol={protocol}
           freeCollateral={margin.collateral}
           onRefresh={onRefresh}
+          oracleAddress={oracleAddress}
         />
       ))}
     </div>
@@ -93,12 +95,14 @@ function PositionCard({
   protocol,
   freeCollateral,
   onRefresh,
+  oracleAddress,
 }: {
   pos: Position;
   oracle: OracleData;
   protocol: ProtocolStateData;
   freeCollateral: number;
   onRefresh: () => void;
+  oracleAddress?: string;
 }) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
@@ -223,7 +227,7 @@ function PositionCard({
         user: publicKey,
         protocolState: PROTOCOL_STATE,
         marginAccount: marginPda,
-        oracle: ORACLE_ACCOUNT,
+        oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
         feeVault: FEE_VAULT,
         insuranceFund: INSURANCE_FUND,
         userTokenAccount: ata,
@@ -273,7 +277,7 @@ function PositionCard({
           user: publicKey,
           protocolState: PROTOCOL_STATE,
           marginAccount: marginPda,
-          oracle: ORACLE_ACCOUNT,
+          oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
         })
         .rpc();
 
@@ -333,7 +337,7 @@ function PositionCard({
           user: publicKey,
           protocolState: PROTOCOL_STATE,
           marginAccount: marginPda,
-          oracle: ORACLE_ACCOUNT,
+          oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
         })
         .rpc();
       setTxStatus({ type: "success", msg: `-$${amt.toFixed(2)} margin removed` });

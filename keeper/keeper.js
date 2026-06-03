@@ -33,6 +33,67 @@ const USER_AGENT =
 
 const PRICES_FILE = path.join(__dirname, "prices.json");
 
+// ─── Multi-market config ──────────────────────────────────────────────────────
+
+const MARKET_CONFIGS = [
+  {
+    id: "ETB",
+    label: "PRISMATIC-ETB",
+    tcgplayerProductId: 593355,
+    tcgplayerUrl: "https://www.tcgplayer.com/product/593355/Pokemon-SV%20Prismatic%20Evolutions-Prismatic%20Evolutions%20Elite%20Trainer%20Box?Language=English",
+    oraclePubkey: ORACLE_PUBKEY,
+    seedPrice: SEED_PRICE_USD,
+    priceFloor: PRICE_MIN_USD,
+    useDefaultOracle: true, // uses update_oracle (original instruction)
+    marketIdOnChain: null,  // not needed for default oracle
+  },
+  {
+    id: "CHARIZARD-X",
+    label: "MEGA-CHARIZARD-X",
+    tcgplayerProductId: 662184,
+    tcgplayerUrl: "https://www.tcgplayer.com/product/662184",
+    oraclePubkey: new PublicKey(process.env.ORACLE_CHARIZARD_X || "8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg"),
+    seedPrice: 884,
+    priceFloor: 200,
+    useDefaultOracle: false,
+    marketIdOnChain: "CHARIZARD-X",
+  },
+  {
+    id: "CHARMANDER",
+    label: "CHARMANDER-PROMO",
+    tcgplayerProductId: 684462,
+    tcgplayerUrl: "https://www.tcgplayer.com/product/684462",
+    oraclePubkey: new PublicKey(process.env.ORACLE_CHARMANDER || "6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD"),
+    seedPrice: 20,
+    priceFloor: 1,
+    useDefaultOracle: false,
+    marketIdOnChain: "CHARMANDER",
+  },
+  {
+    id: "PIKACHU",
+    label: "PIKACHU-EX",
+    tcgplayerProductId: 676088,
+    tcgplayerUrl: "https://www.tcgplayer.com/product/676088",
+    oraclePubkey: new PublicKey(process.env.ORACLE_PIKACHU || "B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs"),
+    seedPrice: 150,
+    priceFloor: 10,
+    useDefaultOracle: false,
+    marketIdOnChain: "PIKACHU",
+  },
+];
+
+// Per-market runtime state
+const marketState = {};
+for (const mc of MARKET_CONFIGS) {
+  marketState[mc.id] = {
+    ewma: mc.seedPrice,
+    rawHistory: Array(RAW_HISTORY_SIZE).fill(mc.seedPrice),
+    lastUpdateTime: null,
+    pricesFile: path.join(__dirname, `prices-${mc.id.toLowerCase()}.json`),
+    dbTable: `price_history_${mc.id.toLowerCase().replace(/-/g, "_")}`,
+  };
+}
+
 const LIQUIDATION_INTERVAL_MS = parseInt(process.env.LIQUIDATION_INTERVAL_MS || "10000", 10);
 const LIQUIDATION_THRESHOLD   = 0.05; // 5% margin ratio → liquidatable
 const FUNDING_RATE_SCALE      = 100_000n;
@@ -59,6 +120,11 @@ const LP_VAULT_PUBKEY = PublicKey.findProgramAddressSync(
 // Anchor discriminators
 const UPDATE_ORACLE_DISCRIMINATOR = (() => {
   const hash = createHash("sha256").update("global:update_oracle").digest();
+  return hash.slice(0, 8);
+})();
+
+const UPDATE_MARKET_ORACLE_DISCRIMINATOR = (() => {
+  const hash = createHash("sha256").update("global:update_market_oracle").digest();
   return hash.slice(0, 8);
 })();
 
@@ -105,6 +171,42 @@ db.exec(`
 `);
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_ph_timestamp ON price_history(timestamp)`);
+
+// Per-market price history tables
+for (const mc of MARKET_CONFIGS) {
+  if (mc.id === "ETB") continue; // ETB uses the existing price_history table
+  const tbl = marketState[mc.id].dbTable;
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ${tbl} (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp INTEGER NOT NULL,
+      raw_price REAL NOT NULL,
+      ewma REAL NOT NULL,
+      deviation REAL NOT NULL,
+      alpha REAL NOT NULL,
+      tx_signature TEXT NOT NULL
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_${tbl}_ts ON ${tbl}(timestamp)`);
+}
+
+// Prepared statements for per-market tables
+const marketInsertPrice = {};
+const marketQueryLastN = {};
+const marketQueryRange = {};
+for (const mc of MARKET_CONFIGS) {
+  const tbl = mc.id === "ETB" ? "price_history" : marketState[mc.id].dbTable;
+  marketInsertPrice[mc.id] = db.prepare(`
+    INSERT INTO ${tbl} (timestamp, raw_price, ewma, deviation, alpha, tx_signature)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  marketQueryLastN[mc.id] = db.prepare(`
+    SELECT * FROM ${tbl} ORDER BY id DESC LIMIT ?
+  `);
+  marketQueryRange[mc.id] = db.prepare(`
+    SELECT * FROM ${tbl} WHERE timestamp >= ? AND timestamp <= ? ORDER BY id ASC
+  `);
+}
 
 // ─── Trades table ────────────────────────────────────────────────────────
 db.exec(`
@@ -354,6 +456,21 @@ function startApiServer() {
         log(`WARN  Health endpoint on-chain fetch failed: ${err.message}`);
       }
 
+      // Per-market oracle status
+      const markets = {};
+      for (const mc of MARKET_CONFIGS) {
+        const ms = marketState[mc.id];
+        const mLastUpdate = ms.lastUpdateTime;
+        const mSecSince = mLastUpdate ? Math.floor(nowMs / 1000) - Math.floor(mLastUpdate.getTime() / 1000) : -1;
+        markets[mc.id] = {
+          label: mc.label,
+          oracle: mc.oraclePubkey.toBase58(),
+          ewma: ms.ewma,
+          last_update: mLastUpdate ? mLastUpdate.toISOString() : null,
+          seconds_since_update: mSecSince,
+        };
+      }
+
       res.writeHead(200);
       res.end(JSON.stringify({
         status,
@@ -367,6 +484,7 @@ function startApiServer() {
           updates_24h: oracleUpdates24h,
           scrape_errors_24h: scrapeErrors24h,
         },
+        markets,
         liquidation: {
           checks_1h: liquidationChecks1h,
           liquidations_24h: liquidations24h,
@@ -393,15 +511,24 @@ function startApiServer() {
 
     if (url.pathname === "/prices") {
       try {
+        const mktParam = (url.searchParams.get("market") || "ETB").toUpperCase();
         const from  = url.searchParams.get("from");
         const to    = url.searchParams.get("to");
         const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 500);
 
+        const qLastN = marketQueryLastN[mktParam];
+        const qRange = marketQueryRange[mktParam];
+        if (!qLastN || !qRange) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: `Unknown market: ${mktParam}` }));
+          return;
+        }
+
         let rows;
         if (from && to) {
-          rows = queryRange.all(parseInt(from, 10), parseInt(to, 10));
+          rows = qRange.all(parseInt(from, 10), parseInt(to, 10));
         } else {
-          rows = queryLastN.all(limit).reverse(); // oldest-first
+          rows = qLastN.all(limit).reverse(); // oldest-first
         }
 
         res.writeHead(200);
@@ -497,42 +624,72 @@ function startApiServer() {
 // ─── State persistence ────────────────────────────────────────────────────────
 
 function loadState() {
+  // Load ETB state from legacy prices.json (backwards compat)
   try {
     const raw = fs.readFileSync(PRICES_FILE, "utf-8");
     const state = JSON.parse(raw);
-
     if (typeof state.ewma === "number" && isFinite(state.ewma) && state.ewma > 0) {
       ewma = state.ewma;
+      marketState["ETB"].ewma = state.ewma;
     }
     if (Array.isArray(state.rawHistory) && state.rawHistory.length > 0) {
       const h = state.rawHistory.filter((v) => typeof v === "number" && isFinite(v) && v > 0);
       if (h.length > 0) {
         rawHistory = h.slice(-RAW_HISTORY_SIZE);
         while (rawHistory.length < RAW_HISTORY_SIZE) rawHistory.unshift(rawHistory[0]);
+        marketState["ETB"].rawHistory = [...rawHistory];
       }
     }
-    const drift = Math.abs(ewma - SEED_PRICE_USD) / SEED_PRICE_USD;
-    if (drift > 0.50) {
-      log(`WARN  Stored EWMA ${formatUSD(ewma)} drifts ${(drift * 100).toFixed(0)}% from seed ${formatUSD(SEED_PRICE_USD)} — resetting to seed`);
-      ewma       = SEED_PRICE_USD;
-      rawHistory = Array(RAW_HISTORY_SIZE).fill(SEED_PRICE_USD);
-    } else {
-      log(`INFO  Restored state from prices.json: ewma=${formatUSD(ewma)} history[${rawHistory.length}]`);
-    }
+    log(`INFO  Restored ETB state: ewma=${formatUSD(marketState["ETB"].ewma)}`);
   } catch {
-    log(`INFO  prices.json not found or corrupt — using seed values`);
-    ewma       = SEED_PRICE_USD;
-    rawHistory = Array(RAW_HISTORY_SIZE).fill(SEED_PRICE_USD);
+    log(`INFO  prices.json not found — using seed values for ETB`);
+  }
+
+  // Load state for other markets
+  for (const mc of MARKET_CONFIGS) {
+    if (mc.id === "ETB") continue;
+    const ms = marketState[mc.id];
+    try {
+      const raw = fs.readFileSync(ms.pricesFile, "utf-8");
+      const state = JSON.parse(raw);
+      if (typeof state.ewma === "number" && isFinite(state.ewma) && state.ewma > 0) {
+        ms.ewma = state.ewma;
+      }
+      if (Array.isArray(state.rawHistory) && state.rawHistory.length > 0) {
+        const h = state.rawHistory.filter((v) => typeof v === "number" && isFinite(v) && v > 0);
+        if (h.length > 0) {
+          ms.rawHistory = h.slice(-RAW_HISTORY_SIZE);
+          while (ms.rawHistory.length < RAW_HISTORY_SIZE) ms.rawHistory.unshift(ms.rawHistory[0]);
+        }
+      }
+      log(`INFO  Restored ${mc.id} state: ewma=${formatUSD(ms.ewma)}`);
+    } catch {
+      log(`INFO  No state file for ${mc.id} — using seed price ${formatUSD(mc.seedPrice)}`);
+    }
   }
 }
 
 function saveState() {
-  const state = {
-    ewma,
-    rawHistory,
+  // Save ETB to legacy file (backwards compat)
+  const etb = marketState["ETB"];
+  ewma = etb.ewma;
+  rawHistory = etb.rawHistory;
+  fs.writeFileSync(PRICES_FILE, JSON.stringify({
+    ewma: etb.ewma,
+    rawHistory: etb.rawHistory,
     lastUpdated: new Date().toISOString(),
-  };
-  fs.writeFileSync(PRICES_FILE, JSON.stringify(state, null, 2), "utf-8");
+  }, null, 2), "utf-8");
+
+  // Save other markets
+  for (const mc of MARKET_CONFIGS) {
+    if (mc.id === "ETB") continue;
+    const ms = marketState[mc.id];
+    fs.writeFileSync(ms.pricesFile, JSON.stringify({
+      ewma: ms.ewma,
+      rawHistory: ms.rawHistory,
+      lastUpdated: new Date().toISOString(),
+    }, null, 2), "utf-8");
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -565,6 +722,23 @@ function buildUpdateOracleIx(authorityPubkey, price) {
   });
 }
 
+function buildUpdateMarketOracleIx(authorityPubkey, oraclePubkey, marketId, price) {
+  // Borsh: String = [4-byte LE length][UTF-8 bytes], u64 = [8 bytes LE]
+  const marketIdBytes = Buffer.from(marketId, "utf-8");
+  const lenBuf = Buffer.alloc(4);
+  lenBuf.writeUInt32LE(marketIdBytes.length, 0);
+  const data = Buffer.concat([UPDATE_MARKET_ORACLE_DISCRIMINATOR, lenBuf, marketIdBytes, u64ToLeBytes(price)]);
+  return new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: authorityPubkey,         isSigner: true,  isWritable: false },
+      { pubkey: PROTOCOL_STATE_PUBKEY,   isSigner: false, isWritable: true  },
+      { pubkey: oraclePubkey,            isSigner: false, isWritable: true  },
+    ],
+    data,
+  });
+}
+
 function formatUSD(n) { return `$${n.toFixed(2)}`; }
 function now()        { return new Date().toISOString(); }
 function log(msg)     { console.log(`[${now()}] ${msg}`); }
@@ -583,8 +757,9 @@ function avg(arr) {
 
 // ─── Adaptive EWMA ────────────────────────────────────────────────────────────
 
-function applyEwma(rawPrice) {
-  const prevEwma     = ewma;
+function applyEwmaForMarket(rawPrice, mktId) {
+  const ms = marketState[mktId];
+  const prevEwma     = ms.ewma;
   const deviation    = Math.abs(rawPrice - prevEwma) / prevEwma;
   const deviationPct = (deviation * 100).toFixed(2);
   const sign         = rawPrice >= prevEwma ? "+" : "-";
@@ -614,11 +789,13 @@ function applyEwma(rawPrice) {
     log(`WARN  SPIKE DETECTED deviation=${sign}${deviationPct}% alpha=0.01`);
   }
 
-  if (candidate < PRICE_MIN_USD) {
+  const mc = MARKET_CONFIGS.find(m => m.id === mktId);
+  const floor = mc ? mc.priceFloor : PRICE_MIN_USD;
+  if (candidate < floor) {
     return {
       newEwma: prevEwma, alpha, mode, deviationPct,
       rejected: true,
-      reason: `EWMA candidate ${formatUSD(candidate)} below floor ${formatUSD(PRICE_MIN_USD)}`,
+      reason: `EWMA candidate ${formatUSD(candidate)} below floor ${formatUSD(floor)}`,
     };
   }
 
@@ -716,6 +893,83 @@ async function scrapeTcgplayer() {
   } finally {
     await browser.close();
   }
+}
+
+// ─── Multi-market scraper ──────────────────────────────────────────────────
+
+async function scrapeAllMarkets() {
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  });
+
+  const results = {};
+  try {
+    const context = await browser.newContext({ userAgent: USER_AGENT });
+
+    await Promise.all(MARKET_CONFIGS.map(async (mc) => {
+      try {
+        const page = await context.newPage();
+        log(`[${mc.id}] Navigating to TCGPlayer product page…`);
+        await page.goto(mc.tcgplayerUrl, { waitUntil: "networkidle", timeout: 30_000 });
+
+        try {
+          await page.waitForSelector("span.price-points__upper__price", { timeout: 15_000 });
+        } catch {
+          await page.waitForTimeout(5_000);
+        }
+
+        const price = await page.evaluate(() => {
+          const spans = document.querySelectorAll("span.price-points__upper__price");
+          if (spans.length === 0) return null;
+          const text = spans[0].textContent;
+          if (!text) return null;
+          const m = text.match(/\$([\d,]+(?:\.\d{1,2})?)/);
+          if (!m) return null;
+          const v = parseFloat(m[1].replace(/,/g, ""));
+          return isNaN(v) || v <= 0 ? null : v;
+        });
+
+        await page.close();
+
+        if (price === null) {
+          log(`[${mc.id}] Market Price not found`);
+          results[mc.id] = null;
+        } else {
+          log(`[${mc.id}] Raw Market Price: ${formatUSD(price)}`);
+          results[mc.id] = price;
+        }
+      } catch (err) {
+        log(`[${mc.id}] Scrape error: ${err.message}`);
+        results[mc.id] = null;
+      }
+    }));
+  } finally {
+    await browser.close();
+  }
+
+  return results;
+}
+
+async function scrapeAllMarketsWithRetry() {
+  const delays = [10_000, 30_000];
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      const results = await scrapeAllMarkets();
+      // Check if at least one market succeeded
+      if (Object.values(results).some(v => v !== null)) return results;
+      throw new Error("All market scrapes returned null");
+    } catch (err) {
+      if (attempt < delays.length) {
+        log(`WARN  Scrape error (attempt ${attempt + 1}/${delays.length + 1}): ${err.message}. Retrying in ${delays[attempt] / 1000}s…`);
+        await sleep(delays[attempt]);
+      } else {
+        log(`ERROR All scrape attempts failed: ${err.message}`);
+        return {};
+      }
+    }
+  }
+  return {};
 }
 
 async function fetchPriceWithRetry() {
@@ -1166,6 +1420,24 @@ async function submitOracleTx(connection, signer, onChainPrice) {
   return sig;
 }
 
+async function submitMarketOracleTx(connection, signer, mc, onChainPrice) {
+  const ix = mc.useDefaultOracle
+    ? buildUpdateOracleIx(signer.publicKey, onChainPrice)
+    : buildUpdateMarketOracleIx(signer.publicKey, mc.oraclePubkey, mc.marketIdOnChain, onChainPrice);
+  const tx = new Transaction().add(ix);
+  const { blockhash } = await connection.getLatestBlockhash("confirmed");
+  tx.recentBlockhash = blockhash;
+  tx.feePayer        = signer.publicKey;
+  tx.sign(signer);
+
+  const sig = await connection.sendRawTransaction(tx.serialize(), {
+    skipPreflight: false,
+    preflightCommitment: "confirmed",
+  });
+  await connection.confirmTransaction(sig, "confirmed");
+  return sig;
+}
+
 async function submitUpdateOracle(connection, payer, onChainPrice) {
   const delays = [5_000, 15_000, 45_000];
   let primaryFails = 0;
@@ -1448,12 +1720,13 @@ async function validateEventDecoder(connection, txSig) {
   }
 }
 
-// ─── Main cycle ───────────────────────────────────────────────────────────────
+// ─── Main cycle (multi-market) ────────────────────────────────────────────────
 
 async function runCycle(connection, payer) {
-  let rawPrice = null;
+  // 1. Scrape all markets in parallel
+  let scrapedPrices = {};
   try {
-    rawPrice = await fetchPriceWithRetry();
+    scrapedPrices = await scrapeAllMarketsWithRetry();
   } catch (err) {
     totalErrors++;
     errors24h++;
@@ -1464,68 +1737,122 @@ async function runCycle(connection, payer) {
     });
   }
 
-  let ewmaMode = null;
-  let ewmaAlpha = 0;
-  let ewmaDeviation = 0;
+  let firstSig = null;
 
-  if (rawPrice === null) {
-    log(`WARN  No raw price — skipping EWMA update, re-pushing last ewma=${formatUSD(ewma)}`);
-  } else {
-    rawHistory.push(rawPrice);
-    if (rawHistory.length > RAW_HISTORY_SIZE) rawHistory.shift();
+  // 2. For each market: apply EWMA, push oracle, record price
+  for (const mc of MARKET_CONFIGS) {
+    const ms = marketState[mc.id];
+    const rawPrice = scrapedPrices[mc.id] ?? null;
 
-    hourRawMin    = Math.min(hourRawMin, rawPrice);
-    hourRawMax    = Math.max(hourRawMax, rawPrice);
-    hourRawSum   += rawPrice;
-    hourRawCount++;
+    let ewmaMode = null;
+    let ewmaAlpha = 0;
+    let ewmaDeviation = 0;
 
-    const { newEwma, alpha, mode, deviationPct, rejected, reason } = applyEwma(rawPrice);
-    ewmaMode = mode;
-    ewmaAlpha = alpha;
-    ewmaDeviation = parseFloat(deviationPct);
+    if (rawPrice === null) {
+      log(`[${mc.id}] WARN  No raw price — re-pushing last ewma=${formatUSD(ms.ewma)}`);
+    } else {
+      ms.rawHistory.push(rawPrice);
+      if (ms.rawHistory.length > RAW_HISTORY_SIZE) ms.rawHistory.shift();
 
-    if (rejected) {
+      // Update global hourly stats (ETB only for backwards compat)
+      if (mc.id === "ETB") {
+        hourRawMin    = Math.min(hourRawMin, rawPrice);
+        hourRawMax    = Math.max(hourRawMax, rawPrice);
+        hourRawSum   += rawPrice;
+        hourRawCount++;
+      }
+
+      const { newEwma, alpha, mode, deviationPct, rejected, reason } = applyEwmaForMarket(rawPrice, mc.id);
+      ewmaMode = mode;
+      ewmaAlpha = alpha;
+      ewmaDeviation = parseFloat(deviationPct);
+
+      if (rejected) {
+        totalErrors++;
+        errors24h++;
+        log(`[${mc.id}] CRITICAL EWMA update rejected: ${reason}. Holding ewma=${formatUSD(ms.ewma)}`);
+      } else {
+        if (ewmaDeviation > 10) {
+          sendAlert("WARN", `${mc.id} price deviation > 10%`, {
+            "Raw price": formatUSD(rawPrice),
+            "Previous EWMA": formatUSD(ms.ewma),
+            "New EWMA": formatUSD(newEwma),
+            "Deviation": ewmaDeviation.toFixed(2) + "%",
+            "Mode": mode,
+          });
+        }
+        ms.ewma = newEwma;
+        // Keep global ewma in sync for ETB (backwards compat)
+        if (mc.id === "ETB") ewma = newEwma;
+      }
+    }
+
+    const onChainPrice = scalePrice(ms.ewma);
+
+    let sig;
+    try {
+      // Use retry with secondary keypair fallback
+      const delays = [5_000, 15_000, 45_000];
+      let primaryFails = 0;
+
+      for (let attempt = 0; attempt <= delays.length; attempt++) {
+        try {
+          sig = await submitMarketOracleTx(connection, payer, mc, onChainPrice);
+          break;
+        } catch (err) {
+          primaryFails++;
+          trackRpcError();
+          if (attempt < delays.length) {
+            log(`[${mc.id}] ERROR Oracle TX error (attempt ${attempt + 1}/3): ${err.message}. Retrying in ${delays[attempt] / 1000}s…`);
+            await sleep(delays[attempt]);
+          }
+        }
+      }
+
+      if (!sig && secondaryPayer) {
+        log(`[${mc.id}] WARN  Primary failed ${primaryFails}x, trying secondary keypair`);
+        try {
+          sig = await submitMarketOracleTx(connection, secondaryPayer, mc, onChainPrice);
+        } catch (err) {
+          log(`[${mc.id}] ERROR Secondary oracle push also failed: ${err.message}`);
+        }
+      }
+
+      if (!sig) {
+        totalErrors++;
+        errors24h++;
+        log(`[${mc.id}] ERROR Oracle push failed after retries. Skipping.`);
+        continue;
+      }
+    } catch (err) {
       totalErrors++;
       errors24h++;
-      log(`CRITICAL EWMA update rejected: ${reason}. Holding ewma=${formatUSD(ewma)}`);
-    } else {
-      // Alert on >10% price deviation in single cycle
-      if (ewmaDeviation > 10) {
-        sendAlert("WARN", "Price deviation > 10% in single cycle", {
-          "Raw price": formatUSD(rawPrice),
-          "Previous EWMA": formatUSD(ewma),
-          "New EWMA": formatUSD(newEwma),
-          "Deviation": ewmaDeviation.toFixed(2) + "%",
-          "Mode": mode,
-        });
-      }
-      ewma = newEwma;
+      log(`[${mc.id}] ERROR Unexpected oracle TX error: ${err.message}`);
+      continue;
     }
+
+    // Record price in per-market DB table
+    if (rawPrice !== null) {
+      const ts = Math.floor(Date.now() / 1000);
+      marketInsertPrice[mc.id].run(ts, rawPrice, ms.ewma, ewmaDeviation, ewmaAlpha, sig);
+    }
+
+    ms.lastUpdateTime = new Date();
+    if (!firstSig) firstSig = sig;
+
+    const rawStr = rawPrice !== null ? formatUSD(rawPrice) : "n/a";
+    log(`[${mc.id}] ewma=${formatUSD(ms.ewma)} raw=${rawStr} mode=${ewmaMode ?? "n/a"} on_chain=${onChainPrice} tx=${sig}`);
   }
 
-  const onChainPrice = scalePrice(ewma);
-
-  let sig;
-  try {
-    sig = await submitUpdateOracle(connection, payer, onChainPrice);
-  } catch (err) {
-    totalErrors++;
-    errors24h++;
-    log(`ERROR Solana TX failed after retries: ${err.message}. Skipping cycle.`);
-    return;
-  }
-
+  // 3. Save all market state
   saveState();
-  if (rawPrice !== null) {
-    recordPrice(rawPrice, ewma, ewmaDeviation, ewmaAlpha, sig);
+
+  // 4. Validate event decoder on first successful oracle update
+  if (!eventDecoderValidated && firstSig) {
+    await validateEventDecoder(connection, firstSig);
   }
 
-  // Validate event decoder on first successful oracle update
-  if (!eventDecoderValidated) {
-    await validateEventDecoder(connection, sig);
-  }
-
-  // Parse trade events from recent transactions
+  // 5. Parse trade events from recent transactions
   await parseRecentTrades(connection);
 
   totalUpdates++;
@@ -1534,13 +1861,6 @@ async function runCycle(connection, payer) {
   oracleUpdates24h++;
   lastUpdateTime = new Date();
   resetRpcFailStreak();
-
-  const rawStr  = rawPrice !== null ? formatUSD(rawPrice) : "n/a";
-  const devStr  = rawPrice !== null
-    ? `${rawPrice >= ewma ? "+" : ""}${(((rawPrice - ewma) / ewma) * 100).toFixed(2)}%`
-    : "n/a";
-
-  log(`raw=${rawStr} ewma=${formatUSD(ewma)} deviation=${devStr} mode=${ewmaMode ?? "n/a"} on_chain=${onChainPrice} tx=${sig}`);
 }
 
 // ─── Health summary ───────────────────────────────────────────────────────────
@@ -1687,13 +2007,11 @@ async function main() {
     log(`WARN  Margin account size verification failed: ${err.message} — continuing anyway`);
   }
 
-  log(`PRISMATIC-ETB-PERP keeper starting (adaptive EWMA)`);
-  log(`  Product:     Prismatic Evolutions Elite Trainer Box`);
-  log(`  Source:      TCGPlayer (product 593355)`);
+  log(`pokeliquid multi-market keeper starting (adaptive EWMA)`);
+  log(`  Markets:     ${MARKET_CONFIGS.map(m => m.id).join(", ")}`);
   log(`  Smoothing:   Adaptive EWMA (alpha=0.05 normal, 0.01 on >5% spike)`);
-  log(`  History:     last ${RAW_HISTORY_SIZE} raw prices (~1 hour)`);
+  log(`  History:     last ${RAW_HISTORY_SIZE} raw prices (~1 hour) per market`);
   log(`  Program:     ${PROGRAM_ID.toBase58()}`);
-  log(`  Oracle:      ${ORACLE_PUBKEY.toBase58()}`);
   log(`  Admin:       ${payer.publicKey.toBase58()}`);
   log(`  Secondary:   ${secondaryPayer ? secondaryPayer.publicKey.toBase58() : "none"}`);
   log(`  RPC:         ${RPC_URL}`);
@@ -1701,9 +2019,11 @@ async function main() {
   log(`  Liq interval:    ${LIQUIDATION_INTERVAL_MS / 1000}s`);
   log(`  Liq threshold:   margin_ratio < ${LIQUIDATION_THRESHOLD * 100}%`);
   log(`  Funding interval: ${FUNDING_INTERVAL_MS / 1000}s`);
-  log(`  Floor:           ${formatUSD(PRICE_MIN_USD)} (no upper cap)`);
-  log(`  Initial EWMA:    ${formatUSD(ewma)}`);
   log(`  Telegram alerts: ${TELEGRAM_BOT_TOKEN ? "enabled" : "disabled"}`);
+  for (const mc of MARKET_CONFIGS) {
+    const ms = marketState[mc.id];
+    log(`  [${mc.id}] oracle=${mc.oraclePubkey.toBase58()} seed=${formatUSD(mc.seedPrice)} floor=${formatUSD(mc.priceFloor)} ewma=${formatUSD(ms.ewma)}`);
+  }
 
   await runCycle(connection, payer);
 

@@ -18,11 +18,7 @@ pub struct UpdateProtocolParams<'info> {
     )]
     pub protocol_state: Account<'info, ProtocolState>,
 
-    #[account(
-        mut,
-        seeds = [ORACLE_SEED],
-        bump = oracle.bump,
-    )]
+    #[account(mut)]
     pub oracle: Account<'info, OracleAccount>,
 }
 

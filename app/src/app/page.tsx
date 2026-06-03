@@ -148,10 +148,10 @@ export default function TradePage() {
   const { connected, publicKey } = useWallet();
   const { connection } = useConnection();
   const anchorWallet = useAnchorWallet();
-  const oracle = useOracle();
+  const { markets, selectedMarket, setSelectedMarket } = useMarket();
+  const oracle = useOracle(selectedMarket.oracleAddress, selectedMarket.priceApiMarket);
   const protocol = useProtocolState();
   const margin = useMarginAccount();
-  const { markets, selectedMarket, setSelectedMarket } = useMarket();
   const { asks, bids } = useOrderBook(selectedMarket.id);
   const stats = useStats();
   const { trades: recentTrades, loading: tradesLoading } = useRecentTrades(selectedMarket.id);
@@ -322,7 +322,7 @@ export default function TradePage() {
 
           {/* Chart */}
           <div className="border-b border-border bg-panel">
-            <ChartSection oracle={oracle} />
+            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} />
           </div>
 
           {/* OI Bar */}
@@ -351,6 +351,7 @@ export default function TradePage() {
               margin={margin}
               walletUsdc={walletUsdc}
               onRefresh={handleRefresh}
+              oracleAddress={selectedMarket.oracleAddress}
             />
           </div>
         </div>
@@ -438,6 +439,7 @@ export default function TradePage() {
           protocol={protocol}
           margin={margin}
           onRefresh={handleRefresh}
+          oracleAddress={selectedMarket.oracleAddress}
         />
       )}
     </div>
@@ -456,10 +458,10 @@ const TF_CONFIG: Record<Timeframe, { limit: number; labelInterval: number }> = {
   "1d": { limit: 288, labelInterval: 48 },
 };
 
-function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
+function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [timeframe, setTimeframe] = useState<Timeframe>("1h");
+  const [timeframe, setTimeframe] = useState<Timeframe>("1d");
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [insufficient, setInsufficient] = useState(false);
@@ -470,7 +472,7 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
     const load = () => {
       setChartLoading(true);
       const { limit } = TF_CONFIG[timeframe];
-      fetch(`${API_BASE}/prices?limit=${limit}`)
+      fetch(`${API_BASE}/prices?market=${priceApiMarket}&limit=${limit}`)
         .then((r) => r.json())
         .then((data: { timestamp: number; raw_price: number }[]) => {
           if (cancelled) return;
@@ -502,7 +504,7 @@ function ChartSection({ oracle }: { oracle: ReturnType<typeof useOracle> }) {
     load();
     const id = setInterval(load, 5 * 60 * 1000); // refresh every 5 min
     return () => { cancelled = true; clearInterval(id); };
-  }, [timeframe]);
+  }, [timeframe, priceApiMarket]);
 
   // Draw chart
   useEffect(() => {
@@ -670,12 +672,14 @@ function OrderEntry({
   margin,
   walletUsdc,
   onRefresh,
+  oracleAddress,
 }: {
   oracle: ReturnType<typeof useOracle>;
   protocol: ReturnType<typeof useProtocolState>;
   margin: ReturnType<typeof useMarginAccount>;
   walletUsdc: number | null;
   onRefresh: () => void;
+  oracleAddress?: string;
 }) {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
@@ -737,7 +741,7 @@ function OrderEntry({
           user: publicKey,
           protocolState: PROTOCOL_STATE,
           marginAccount: marginPda,
-          oracle: ORACLE_ACCOUNT,
+          oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
           feeVault: FEE_VAULT,
           insuranceFund: INSURANCE_FUND,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -1170,12 +1174,14 @@ function PositionsTable({
   protocol,
   margin,
   onRefresh,
+  oracleAddress,
 }: {
   positions: Position[];
   oracle: ReturnType<typeof useOracle>;
   protocol: ReturnType<typeof useProtocolState>;
   margin: ReturnType<typeof useMarginAccount>;
   onRefresh: () => void;
+  oracleAddress?: string;
 }) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
@@ -1203,7 +1209,7 @@ function PositionsTable({
 
       const txBuilder = (program.methods as any).closePosition(pos.index).accounts({
         user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
-        oracle: ORACLE_ACCOUNT, feeVault: FEE_VAULT, insuranceFund: INSURANCE_FUND,
+        oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT, feeVault: FEE_VAULT, insuranceFund: INSURANCE_FUND,
         userTokenAccount: ata, tokenProgram: TOKEN_PROGRAM_ID,
       });
       if (needsCreate) {
@@ -1233,7 +1239,7 @@ function PositionsTable({
       const tpBn = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
 
       await (program.methods as any).setSlTp(pos.index, slBn, tpBn).accounts({
-        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: ORACLE_ACCOUNT,
+        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
       }).rpc();
       addNotification("success", `SL/TP Updated — #${pos.index}`, `SL: ${slInput || "none"} / TP: ${tpInput || "none"}`);
       setExpandedIdx(null);
@@ -1276,7 +1282,7 @@ function PositionsTable({
       const program = getProgram(connection, anchorWallet);
       const marginPda = getMarginAccountPDA(publicKey);
       await (program.methods as any).removeMargin(pos.index, new BN(Math.round(amt * 1e6))).accounts({
-        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: ORACLE_ACCOUNT,
+        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
       }).rpc();
       addNotification("info", `Margin Removed — #${pos.index}`, `-$${amt.toFixed(2)}`);
       setMarginMode("idle");

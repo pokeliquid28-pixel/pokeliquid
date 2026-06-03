@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useConnection } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 import { getReadonlyProgram } from "@/lib/program";
 import { ORACLE_ACCOUNT } from "@/lib/addresses";
 
@@ -26,7 +27,10 @@ export type OracleData = {
 
 const PRICE_API = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
-export function useOracle(): OracleData {
+export function useOracle(
+  oracleAddress?: string,
+  priceApiMarket?: string
+): OracleData {
   const { connection } = useConnection();
   const [price, setPrice] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(0);
@@ -35,6 +39,19 @@ export function useOracle(): OracleData {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const oraclePubkey = oracleAddress
+    ? new PublicKey(oracleAddress)
+    : ORACLE_ACCOUNT;
+  const marketParam = priceApiMarket || "ETB";
+
+  // Reset state when oracle address changes so stale data doesn't linger
+  useEffect(() => {
+    setPrice(0);
+    setIsLoading(true);
+    setError(null);
+    setReadings([]);
+  }, [oracleAddress]);
+
   // Poll on-chain oracle for current price
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +59,7 @@ export function useOracle(): OracleData {
     const fetchOracle = async () => {
       try {
         const program = getReadonlyProgram(connection);
-        const oracle = await (program.account as any).oracleAccount.fetch(ORACLE_ACCOUNT);
+        const oracle = await (program.account as any).oracleAccount.fetch(oraclePubkey);
         if (cancelled) return;
 
         setPrice(oracle.price.toNumber());
@@ -61,7 +78,7 @@ export function useOracle(): OracleData {
     fetchOracle();
     const id = setInterval(fetchOracle, 10_000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [connection]);
+  }, [connection, oracleAddress]);
 
   // Poll keeper API for historical price chart data
   useEffect(() => {
@@ -69,7 +86,7 @@ export function useOracle(): OracleData {
 
     const fetchHistory = async () => {
       try {
-        const res = await fetch(`${PRICE_API}/prices?limit=50`);
+        const res = await fetch(`${PRICE_API}/prices?market=${marketParam}&limit=50`);
         if (!res.ok) return;
         const rows: { ewma: number; timestamp: number }[] = await res.json();
         if (cancelled) return;
@@ -87,7 +104,7 @@ export function useOracle(): OracleData {
     fetchHistory();
     const id = setInterval(fetchHistory, 10_000);
     return () => { cancelled = true; clearInterval(id); };
-  }, []);
+  }, [marketParam]);
 
   const secondsSinceUpdate = lastUpdated > 0 ? Math.floor(Date.now() / 1000 - lastUpdated) : -1;
   const isStale = secondsSinceUpdate > stalenessThreshold;

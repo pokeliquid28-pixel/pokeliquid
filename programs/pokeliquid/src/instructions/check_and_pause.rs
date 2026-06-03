@@ -18,10 +18,6 @@ pub struct CheckAndPause<'info> {
     )]
     pub protocol_state: Account<'info, ProtocolState>,
 
-    #[account(
-        seeds = [ORACLE_SEED],
-        bump = oracle.bump,
-    )]
     pub oracle: Account<'info, OracleAccount>,
 }
 

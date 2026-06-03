@@ -20,10 +20,6 @@ pub struct SettleFunding<'info> {
     )]
     pub protocol_state: Box<Account<'info, ProtocolState>>,
 
-    #[account(
-        seeds = [ORACLE_SEED],
-        bump = oracle.bump,
-    )]
     pub oracle: Box<Account<'info, OracleAccount>>,
 
     #[account(mut)]

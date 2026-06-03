@@ -28,10 +28,6 @@ pub struct OpenPosition<'info> {
     )]
     pub margin_account: Box<Account<'info, MarginAccount>>,
 
-    #[account(
-        seeds = [ORACLE_SEED],
-        bump = oracle.bump,
-    )]
     pub oracle: Account<'info, OracleAccount>,
 
     #[account(

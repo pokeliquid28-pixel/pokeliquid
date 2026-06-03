@@ -37,6 +37,7 @@ type Props = {
   protocol: ProtocolStateData;
   margin: MarginAccountData;
   onRefresh: () => void;
+  oracleAddress?: string;
 };
 
 type Side = "Long" | "Short";
@@ -56,7 +57,7 @@ async function ensureAta(
   }
 }
 
-export function TradingPanel({ oracle, protocol, margin, onRefresh }: Props) {
+export function TradingPanel({ oracle, protocol, margin, onRefresh, oracleAddress }: Props) {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
   const anchorWallet = useAnchorWallet();
@@ -228,7 +229,7 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh }: Props) {
           user: publicKey,
           protocolState: PROTOCOL_STATE,
           marginAccount: marginPda,
-          oracle: ORACLE_ACCOUNT,
+          oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
           feeVault: FEE_VAULT,
           insuranceFund: INSURANCE_FUND,
           tokenProgram: TOKEN_PROGRAM_ID,

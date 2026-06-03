@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
@@ -91,7 +92,7 @@ function useLeaderboard() {
 
   useEffect(() => {
     const load = () => {
-      fetch(`${API_BASE}/trades?limit=1000`)
+      fetch(`${API_BASE}/trades/recent?limit=200`)
         .then((r) => r.json())
         .then((data: TradesResponse) => {
           setRows(aggregateTrades(data.trades ?? []));
@@ -111,6 +112,10 @@ function useLeaderboard() {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
+  return <AuthGuard><LeaderboardContent /></AuthGuard>;
+}
+
+function LeaderboardContent() {
   const { rows, loading } = useLeaderboard();
 
   return (

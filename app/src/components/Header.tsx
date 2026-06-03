@@ -65,33 +65,37 @@ function OracleDot() {
   );
 }
 
-// ─── Desktop Ticker Bar ─────────────────────────────────────────────────────────
+// ─── Single market ticker item ────────────────────────────────────────────────
 
-function TickerBar() {
-  const { price, readings, isLoading } = useOracle();
-
+function useTickerItem(m: typeof MARKETS[0]) {
+  const { price, readings, isLoading } = useOracle(m.oracleAddress, m.priceApiMarket);
   const priceUsd = price / 1_000_000;
 
   let pctChange = 0;
   if (readings.length >= 2) {
     const oldest = readings[0].price / 1_000_000;
-    if (oldest > 0) {
-      pctChange = ((priceUsd - oldest) / oldest) * 100;
-    }
+    if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
   }
 
   const positive = pctChange >= 0;
-  const changeColor = positive ? "#00ff41" : "#ff3333";
-  const changePrefix = positive ? "+" : "";
-
-  const items = MARKETS.map((m) => ({
+  return {
     id: m.id,
     name: m.name,
     price: isLoading ? "-.--" : priceUsd.toFixed(2),
-    change: isLoading ? "+0.00%" : `${changePrefix}${pctChange.toFixed(1)}%`,
-    color: isLoading ? "#666" : changeColor,
+    change: isLoading ? "+0.00%" : `${positive ? "+" : ""}${pctChange.toFixed(1)}%`,
+    color: isLoading ? "#666" : positive ? "#00ff41" : "#ff3333",
     live: m.live,
-  }));
+  };
+}
+
+// ─── Desktop Ticker Bar ─────────────────────────────────────────────────────────
+
+function TickerBar() {
+  const item0 = useTickerItem(MARKETS[0]);
+  const item1 = useTickerItem(MARKETS[1]);
+  const item2 = useTickerItem(MARKETS[2]);
+  const item3 = useTickerItem(MARKETS[3]);
+  const items = [item0, item1, item2, item3];
 
   const copies = Math.max(6, Math.ceil(12 / items.length));
   const repeated = Array.from({ length: copies }, () => items).flat();
@@ -359,12 +363,18 @@ export function Header() {
     return pathname === "/" || pathname === "/reset-password";
   });
 
+  // Track whether the landing event has fired so Header never double-shows
+  const landingPassedRef = useRef(false);
+
   useEffect(() => {
     const noNavRoutes = ["/reset-password"];
     if (noNavRoutes.includes(pathname)) {
       setHideNav(true);
     } else if (pathname === "/") {
-      setHideNav(true); // hidden until landing is passed
+      // Only hide on "/" if landing hasn't been passed yet
+      if (!landingPassedRef.current) {
+        setHideNav(true);
+      }
     } else {
       setHideNav(false);
     }
@@ -372,7 +382,10 @@ export function Header() {
 
   // Listen for custom event when user passes the landing page
   useEffect(() => {
-    const handler = () => setHideNav(false);
+    const handler = () => {
+      landingPassedRef.current = true;
+      setHideNav(false);
+    };
     window.addEventListener("pokeliquid:passed-landing", handler);
     return () => window.removeEventListener("pokeliquid:passed-landing", handler);
   }, []);

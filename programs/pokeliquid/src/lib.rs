@@ -114,9 +114,19 @@ pub mod pokeliquid {
         claim_fees::handler(ctx)
     }
 
-    /// Admin: push a new oracle price.
+    /// Admin: push a new oracle price (default market).
     pub fn update_oracle(ctx: Context<UpdateOracle>, price: u64) -> Result<()> {
         update_oracle::handler(ctx, price)
+    }
+
+    /// Admin: initialize a market-specific oracle account.
+    pub fn init_market_oracle(ctx: Context<InitMarketOracle>, market_id: String) -> Result<()> {
+        init_market_oracle::handler(ctx, market_id)
+    }
+
+    /// Admin: push a price to a market-specific oracle.
+    pub fn update_market_oracle(ctx: Context<UpdateMarketOracle>, market_id: String, price: u64) -> Result<()> {
+        update_market_oracle::handler(ctx, market_id, price)
     }
 
     /// Admin: update protocol parameters.

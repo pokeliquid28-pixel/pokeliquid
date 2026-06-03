@@ -5,6 +5,7 @@ import { useOracle } from "@/hooks/useOracle";
 import { useProtocolState } from "@/hooks/useProtocolState";
 import { useLiquidityPool } from "@/hooks/useLiquidityPool";
 import { Skeleton } from "@/components/Skeleton";
+import { AuthGuard } from "@/components/AuthGuard";
 import {
   rawToPrice,
   rawToUsdc,
@@ -304,6 +305,10 @@ const ROADMAP = [
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StatsPage() {
+  return <AuthGuard><StatsContent /></AuthGuard>;
+}
+
+function StatsContent() {
   const oracle = useOracle();
   const protocol = useProtocolState();
   const pool = useLiquidityPool();
