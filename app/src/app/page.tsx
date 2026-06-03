@@ -11,6 +11,7 @@ import { useProtocolState } from "@/hooks/useProtocolState";
 import { useMarginAccount, Position } from "@/hooks/useMarginAccount";
 import { useMarket } from "@/hooks/useMarket";
 import { useOrderBook } from "@/hooks/useOrderBook";
+import { useMarketState } from "@/hooks/useMarketState";
 import { useNotifications } from "@/providers/NotificationProvider";
 import { incrementTradeCount } from "@/components/SaveWalletSheet";
 import { getProgram } from "@/lib/program";
@@ -223,6 +224,7 @@ export default function TradePage() {
   const { markets, selectedMarket, setSelectedMarket } = useMarket();
   const oracle = useOracle(selectedMarket.oracleAddress, selectedMarket.priceApiMarket);
   const protocol = useProtocolState();
+  const marketState = useMarketState(selectedMarket.priceApiMarket);
   const margin = useMarginAccount();
   const { asks, bids } = useOrderBook(selectedMarket.id);
   const stats = useStats();
@@ -254,7 +256,7 @@ export default function TradePage() {
   if (!passedLanding) return <LandingAuth onPass={handlePassLanding} />;
 
   const currentPrice = rawToPrice(oracle.price);
-  const totalOI = protocol.totalLongExposure + protocol.totalShortExposure;
+  const totalOI = marketState.longOi + marketState.shortOi;
 
   // 24h change from readings
   const readings = oracle.readings;
@@ -389,16 +391,16 @@ export default function TradePage() {
             <div className="flex-1 flex h-1.5 bg-border overflow-hidden">
               {totalOI > 0 ? (
                 <>
-                  <div className="bg-long transition-all" style={{ width: `${(protocol.totalLongExposure / totalOI) * 100}%` }} />
-                  <div className="bg-short transition-all" style={{ width: `${(protocol.totalShortExposure / totalOI) * 100}%` }} />
+                  <div className="bg-long transition-all" style={{ width: `${(marketState.longOi / totalOI) * 100}%` }} />
+                  <div className="bg-short transition-all" style={{ width: `${(marketState.shortOi / totalOI) * 100}%` }} />
                 </>
               ) : (
                 <div className="bg-border w-full" />
               )}
             </div>
-            <span className="text-long">${rawToUsdc(protocol.totalLongExposure).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            <span className="text-long">${rawToUsdc(marketState.longOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
             <span className="text-secondary">/</span>
-            <span className="text-short">${rawToUsdc(protocol.totalShortExposure).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            <span className="text-short">${rawToUsdc(marketState.shortOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
           </div>
 
           {/* Order Entry */}
@@ -500,6 +502,8 @@ export default function TradePage() {
           onRefresh={handleRefresh}
           oracleAddress={selectedMarket.oracleAddress}
           marketId={selectedMarket.priceApiMarket}
+          marketLongOi={marketState.longOi}
+          marketShortOi={marketState.shortOi}
         />
       )}
     </div>
@@ -1240,6 +1244,8 @@ function PositionsTable({
   onRefresh,
   oracleAddress,
   marketId,
+  marketLongOi,
+  marketShortOi,
 }: {
   positions: Position[];
   oracle: ReturnType<typeof useOracle>;
@@ -1248,6 +1254,8 @@ function PositionsTable({
   onRefresh: () => void;
   oracleAddress?: string;
   marketId?: string;
+  marketLongOi: number;
+  marketShortOi: number;
 }) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
@@ -1397,9 +1405,9 @@ function PositionsTable({
             : calcLiqPriceShort(pos.entryPrice, pos.leverage);
           const nowSec = Math.floor(Date.now() / 1000);
           const hoursOpen = Math.max(0, Math.floor((nowSec - pos.openTimestamp) / 3600));
-          const totalOI = protocol.totalLongExposure + protocol.totalShortExposure;
-          const skewRate = totalOI > 0 ? Math.floor(Math.abs(protocol.totalLongExposure - protocol.totalShortExposure) * protocol.skewFactor / totalOI) : 0;
-          const onMajority = pos.direction === "Long" ? protocol.totalLongExposure >= protocol.totalShortExposure : protocol.totalShortExposure >= protocol.totalLongExposure;
+          const totalOI = marketLongOi + marketShortOi;
+          const skewRate = totalOI > 0 ? Math.floor(Math.abs(marketLongOi - marketShortOi) * protocol.skewFactor / totalOI) : 0;
+          const onMajority = pos.direction === "Long" ? marketLongOi >= marketShortOi : marketShortOi >= marketLongOi;
           const hourlyRate = onMajority ? protocol.baseFundingRatePerHour + skewRate : Math.max(0, protocol.baseFundingRatePerHour - skewRate);
           const fundingAccrued = rawToUsdc(Math.floor(pos.notional * hourlyRate * hoursOpen / FUNDING_RATE_SCALE));
           const isExpanded = expandedIdx === pos.index;
