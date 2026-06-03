@@ -40,6 +40,9 @@ import {
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
+// Module-level flag: resets on page reload, persists across in-app navigation
+let _passedLanding = false;
+
 type Side = "Long" | "Short";
 type OrderType = "MARKET" | "LIMIT" | "STOP";
 
@@ -160,17 +163,20 @@ export default function TradePage() {
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   // Always show landing page on first load / refresh.
-  // sessionStorage flag is set after user clicks "Start Trading" and passes auth.
-  const [passedLanding, setPassedLanding] = useState(false);
+  // Module-level flag resets on page reload but persists across in-app navigation.
+  const [passedLanding, setPassedLanding] = useState(_passedLanding);
+
+  // If already passed (navigating back to /), tell Header to show nav
   useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem("pokeliquid_passed_landing") === "1") {
-      setPassedLanding(true);
+    if (_passedLanding) {
+      window.dispatchEvent(new Event("pokeliquid:passed-landing"));
     }
   }, []);
 
   const handlePassLanding = useCallback(() => {
-    sessionStorage.setItem("pokeliquid_passed_landing", "1");
+    _passedLanding = true;
     setPassedLanding(true);
+    window.dispatchEvent(new Event("pokeliquid:passed-landing"));
   }, []);
 
   if (!passedLanding) return <LandingAuth onPass={handlePassLanding} />;
@@ -193,7 +199,7 @@ export default function TradePage() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-72px)]">
+    <div className="flex flex-col h-[calc(100dvh-56px-56px)] md:h-[calc(100dvh-72px)]">
       {/* 3-column layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* ── LEFT COLUMN: Markets ──────────────────────────────────── */}

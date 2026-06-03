@@ -354,29 +354,28 @@ export function Header() {
   const mobilePriceUsd = price / 1_000_000;
 
   // Check if we should hide all nav (landing page before auth, or reset-password)
-  const [hideNav, setHideNav] = useState(false);
+  const [hideNav, setHideNav] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return pathname === "/" || pathname === "/reset-password";
+  });
+
   useEffect(() => {
     const noNavRoutes = ["/reset-password"];
     if (noNavRoutes.includes(pathname)) {
       setHideNav(true);
     } else if (pathname === "/") {
-      // On root, hide nav if user hasn't passed the landing page yet
-      const passed = typeof window !== "undefined" && sessionStorage.getItem("pokeliquid_passed_landing") === "1";
-      setHideNav(!passed);
+      setHideNav(true); // hidden until landing is passed
     } else {
       setHideNav(false);
     }
   }, [pathname]);
 
-  // Listen for sessionStorage changes (when user passes landing within same page)
+  // Listen for custom event when user passes the landing page
   useEffect(() => {
-    if (pathname !== "/") return;
-    const interval = setInterval(() => {
-      const passed = sessionStorage.getItem("pokeliquid_passed_landing") === "1";
-      setHideNav(!passed);
-    }, 200);
-    return () => clearInterval(interval);
-  }, [pathname]);
+    const handler = () => setHideNav(false);
+    window.addEventListener("pokeliquid:passed-landing", handler);
+    return () => window.removeEventListener("pokeliquid:passed-landing", handler);
+  }, []);
 
   // Close menu on route change
   useEffect(() => {
