@@ -74,7 +74,16 @@ function useHealthData() {
     const load = () =>
       fetch(`${API_BASE}/health`)
         .then((r) => r.json())
-        .then((data) => setHealth(data))
+        .then((data) => setHealth({
+          status: data.status,
+          last_update: data.oracle?.seconds_since_update ? Math.floor(Date.now() / 1000) - data.oracle.seconds_since_update : 0,
+          seconds_since_update: data.oracle?.seconds_since_update ?? 0,
+          ewma: data.oracle?.ewma ?? 0,
+          keeper_uptime_minutes: data.keeper?.uptime_minutes ?? 0,
+          oracle_updates_1h: data.oracle?.updates_1h ?? 0,
+          liquidation_checks_1h: data.liquidation?.checks_1h ?? 0,
+          funding_settlements_24h: data.funding?.settlements_24h ?? 0,
+        }))
         .catch(() => {});
 
     load();
@@ -420,7 +429,11 @@ function StatsContent() {
               <div className="bg-bg border border-border p-2 md:p-3">
                 <div className="text-[10px] md:text-xs text-secondary mb-1">Keeper Uptime</div>
                 <div className="text-xs md:text-sm font-mono font-semibold text-primary">
-                  {healthData ? `${healthData.keeper_uptime_minutes}m` : "—"}
+                  {healthData
+                    ? healthData.keeper_uptime_minutes >= 60
+                      ? `${(healthData.keeper_uptime_minutes / 60).toFixed(1)}h`
+                      : `${healthData.keeper_uptime_minutes}m`
+                    : "—"}
                 </div>
               </div>
             </div>
