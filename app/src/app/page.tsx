@@ -96,7 +96,7 @@ function useRecentTrades(marketId: string) {
   useEffect(() => {
     let cancelled = false;
     const load = () =>
-      fetch(`${API_BASE}/trades?limit=20`)
+      fetch(`${API_BASE}/trades/recent?limit=20`)
         .then((r) => r.json())
         .then((data) => {
           if (!cancelled) {
@@ -138,6 +138,68 @@ function useWalletUsdc() {
   }, [connection, publicKey]);
 
   return balance;
+}
+
+// ── Sidebar market item with its own oracle ─────────────────────────────────
+
+function MarketListItem({
+  m,
+  selected,
+  onSelect,
+}: {
+  m: Market;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { price, readings, isLoading } = useOracle(m.oracleAddress, m.priceApiMarket);
+  const priceUsd = price / 1_000_000;
+
+  let pctChange = 0;
+  if (readings.length >= 2) {
+    const oldest = readings[0].price / 1_000_000;
+    if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
+  }
+
+  return (
+    <button
+      onClick={() => m.live && onSelect()}
+      disabled={!m.live}
+      className={`w-full text-left p-3 border-b border-border/50 transition-colors ${
+        selected
+          ? "border-l-2 border-l-long bg-long/5"
+          : "border-l-2 border-l-transparent hover:bg-white/[.02]"
+      } ${!m.live ? "opacity-40 cursor-not-allowed" : ""}`}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        {m.image && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={m.image} alt={m.name} width={40} height={40} className="object-contain flex-shrink-0" style={{ imageRendering: "auto" }} />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-primary truncate">{m.name}</span>
+            {!m.live && (
+              <span className="text-[8px] px-1.5 py-0.5 border border-secondary text-secondary uppercase flex-shrink-0 ml-1">Soon</span>
+            )}
+            {m.badge && m.live && (
+              <span className="text-[8px] px-1.5 py-0.5 border border-long/40 text-long uppercase flex-shrink-0 ml-1">{m.badge}</span>
+            )}
+          </div>
+          <div className="text-[9px] text-secondary truncate">{m.subtitle}</div>
+          {m.live && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[11px] font-bold text-primary">
+                {isLoading ? "-.--" : `$${priceUsd.toFixed(2)}`}
+              </span>
+              <span className={`text-[10px] font-bold ${pctChange >= 0 ? "text-long" : "text-short"}`}>
+                {isLoading ? "--" : `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
+  );
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -219,43 +281,12 @@ export default function TradePage() {
           {/* Market list */}
           <div className="flex-1 overflow-y-auto">
             {filteredMarkets.map((m) => (
-              <button
+              <MarketListItem
                 key={m.id}
-                onClick={() => m.live && setSelectedMarket(m)}
-                disabled={!m.live}
-                className={`w-full text-left p-3 border-b border-border/50 transition-colors ${
-                  selectedMarket.id === m.id
-                    ? "border-l-2 border-l-long bg-long/5"
-                    : "border-l-2 border-l-transparent hover:bg-white/[.02]"
-                } ${!m.live ? "opacity-40 cursor-not-allowed" : ""}`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  {m.image && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={m.image} alt={m.name} width={40} height={40} className="object-contain flex-shrink-0" style={{ imageRendering: "auto" }} />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-primary truncate">{m.name}</span>
-                      {!m.live && (
-                        <span className="text-[8px] px-1.5 py-0.5 border border-secondary text-secondary uppercase flex-shrink-0 ml-1">Soon</span>
-                      )}
-                      {m.badge && m.live && (
-                        <span className="text-[8px] px-1.5 py-0.5 border border-long/40 text-long uppercase flex-shrink-0 ml-1">{m.badge}</span>
-                      )}
-                    </div>
-                    <div className="text-[9px] text-secondary truncate">{m.subtitle}</div>
-                    {m.live && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[11px] font-bold text-primary">${currentPrice.toFixed(2)}</span>
-                        <span className={`text-[10px] font-bold ${change24h >= 0 ? "text-long" : "text-short"}`}>
-                          {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </button>
+                m={m}
+                selected={selectedMarket.id === m.id}
+                onSelect={() => setSelectedMarket(m)}
+              />
             ))}
           </div>
 
