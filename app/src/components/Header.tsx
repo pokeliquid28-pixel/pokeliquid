@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Droplets, BarChart2, Trophy, Menu, X } from "lucide-react";
+import { Zap, Droplets, BarChart2, Trophy, BookOpen, Menu, X } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletButton } from "./WalletButton";
 import { NotificationBell } from "./NotificationBell";
@@ -19,6 +19,7 @@ const NAV = [
   { href: "/pool", label: "POOL" },
   { href: "/stats", label: "STATS" },
   { href: "/leaderboard", label: "LEADERBOARD" },
+  { href: "/docs", label: "DOCS" },
 ];
 
 // ─── Oracle health ──────────────────────────────────────────────────────────────
@@ -570,6 +571,7 @@ const MOBILE_TABS = [
   { href: "/pool", label: "POOL", Icon: Droplets },
   { href: "/stats", label: "STATS", Icon: BarChart2 },
   { href: "/leaderboard", label: "BOARD", Icon: Trophy },
+  { href: "/docs", label: "DOCS", Icon: BookOpen },
 ];
 
 function BottomTabBar({ pathname }: { pathname: string }) {

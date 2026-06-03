@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair } from "@solana/web3.js";
 import {
@@ -467,9 +468,22 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         {checking ? "Checking..." : "Start Trading"}
       </button>
 
+      {/* Read Docs link */}
+      <Link
+        href="/docs"
+        className="mt-6 text-xs font-mono transition-all duration-700 underline underline-offset-2"
+        style={{
+          color: "#666",
+          opacity: ctaVisible ? 1 : 0,
+          textDecoration: "none",
+        }}
+      >
+        Read the Docs
+      </Link>
+
       {/* DEVNET notice */}
       <p
-        className="mt-6 text-[10px] text-center font-mono transition-all duration-700"
+        className="mt-4 text-[10px] text-center font-mono transition-all duration-700"
         style={{
           color: "#444",
           opacity: ctaVisible ? 1 : 0,
