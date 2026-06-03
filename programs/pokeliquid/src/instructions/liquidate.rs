@@ -6,7 +6,7 @@ use crate::{
     error::ErrorCode,
     events::PositionLiquidated,
     instructions::close_position::compute_pnl,
-    state::{Direction, MarginAccount, OracleAccount, ProtocolState, MAX_POSITIONS},
+    state::{Direction, MarginAccount, MarketState, OracleAccount, ProtocolState, MAX_POSITIONS},
 };
 
 #[derive(Accounts)]
@@ -34,6 +34,12 @@ pub struct Liquidate<'info> {
     pub margin_account: Box<Account<'info, MarginAccount>>,
 
     pub oracle: Box<Account<'info, OracleAccount>>,
+
+    #[account(
+        mut,
+        constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
+    )]
+    pub market_state: Box<Account<'info, MarketState>>,
 
     #[account(
         mut,
@@ -157,11 +163,23 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
         }
     }
 
+    // Decrement per-market OI
+    let market = &mut ctx.accounts.market_state;
+    match direction {
+        Direction::Long => {
+            market.long_open_interest = market.long_open_interest.saturating_sub(notional);
+        }
+        Direction::Short => {
+            market.short_open_interest = market.short_open_interest.saturating_sub(notional);
+        }
+    }
+
     let margin = &mut ctx.accounts.margin_account;
     margin.positions[idx] = None;
 
     emit!(PositionLiquidated {
         user: ctx.accounts.user.key(),
+        oracle: ctx.accounts.oracle.key(),
         liquidator: ctx.accounts.liquidator.key(),
         entry_price: position.entry_price,
         exit_price: current_price,

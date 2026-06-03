@@ -124,6 +124,16 @@ pub mod pokeliquid {
         init_market_oracle::handler(ctx, market_id)
     }
 
+    /// Admin: initialize a per-market state account (tracks OI per market).
+    pub fn init_market_state(
+        ctx: Context<InitMarketState>,
+        market_id: String,
+        max_long_oi: u64,
+        max_short_oi: u64,
+    ) -> Result<()> {
+        init_market_state::handler(ctx, market_id, max_long_oi, max_short_oi)
+    }
+
     /// Admin: push a price to a market-specific oracle.
     pub fn update_market_oracle(ctx: Context<UpdateMarketOracle>, market_id: String, price: u64) -> Result<()> {
         update_market_oracle::handler(ctx, market_id, price)

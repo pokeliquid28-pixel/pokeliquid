@@ -5,7 +5,7 @@ use crate::{
     constants::*,
     error::ErrorCode,
     events::PositionClosed,
-    state::{CloseReason, Direction, LiquidityPool, MarginAccount, OracleAccount, ProtocolState, MAX_POSITIONS},
+    state::{CloseReason, Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, ProtocolState, MAX_POSITIONS},
 };
 
 #[derive(Accounts)]
@@ -29,6 +29,12 @@ pub struct ClosePosition<'info> {
     pub margin_account: Box<Account<'info, MarginAccount>>,
 
     pub oracle: Box<Account<'info, OracleAccount>>,
+
+    #[account(
+        mut,
+        constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
+    )]
+    pub market_state: Box<Account<'info, MarketState>>,
 
     #[account(
         mut,
@@ -93,21 +99,22 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         .clone();
 
     let protocol = &ctx.accounts.protocol_state;
+    let market = &ctx.accounts.market_state;
     let current_price = oracle.price;
 
-    // ── Funding ──────────────────────────────────────────────────────────────
+    // ── Funding (per-market OI) ──────────────────────────────────────────────
     let hours_open = ((now.saturating_sub(position.open_timestamp)) / 3600).max(0) as u64;
 
-    let total_exposure = protocol
-        .total_long_exposure
-        .checked_add(protocol.total_short_exposure)
+    let total_exposure = market
+        .long_open_interest
+        .checked_add(market.short_open_interest)
         .ok_or(ErrorCode::MathOverflow)?;
 
     let skew_rate = if total_exposure > 0 {
-        let diff = if protocol.total_long_exposure > protocol.total_short_exposure {
-            protocol.total_long_exposure - protocol.total_short_exposure
+        let diff = if market.long_open_interest > market.short_open_interest {
+            market.long_open_interest - market.short_open_interest
         } else {
-            protocol.total_short_exposure - protocol.total_long_exposure
+            market.short_open_interest - market.long_open_interest
         };
         diff.checked_mul(protocol.skew_factor)
             .ok_or(ErrorCode::MathOverflow)?
@@ -118,8 +125,8 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
     };
 
     let on_majority_side = match position.direction {
-        Direction::Long => protocol.total_long_exposure >= protocol.total_short_exposure,
-        Direction::Short => protocol.total_short_exposure >= protocol.total_long_exposure,
+        Direction::Long => market.long_open_interest >= market.short_open_interest,
+        Direction::Short => market.short_open_interest >= market.long_open_interest,
     };
 
     let hourly_rate = if on_majority_side {
@@ -289,6 +296,17 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         }
     }
 
+    // Decrement per-market OI
+    let market = &mut ctx.accounts.market_state;
+    match direction {
+        Direction::Long => {
+            market.long_open_interest = market.long_open_interest.saturating_sub(notional);
+        }
+        Direction::Short => {
+            market.short_open_interest = market.short_open_interest.saturating_sub(notional);
+        }
+    }
+
     let margin = &mut ctx.accounts.margin_account;
     margin.positions[idx] = None;
 
@@ -296,6 +314,7 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
 
     emit!(PositionClosed {
         user: ctx.accounts.user.key(),
+        oracle: ctx.accounts.oracle.key(),
         direction,
         entry_price: position.entry_price,
         exit_price: current_price,

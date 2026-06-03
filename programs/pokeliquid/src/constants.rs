@@ -25,6 +25,10 @@ pub const DEFAULT_LP_FEE_BPS: u64 = 3_000; // 30% of trading fees go to LPs
 pub const USDC_DECIMALS: u8 = 6;
 pub const DEVNET_MINT_AMOUNT: u64 = 1_000_000_000; // 1000 USDC (6 decimals)
 
+pub const MARKET_SEED: &[u8] = b"market";
+
+pub const DEFAULT_MAX_MARKET_OI: u64 = 100_000_000_000; // 100k USDC (6 decimals)
+
 pub const FUNDING_RATE_SCALE: u64 = 100_000;
 pub const LIQUIDATION_THRESHOLD_BPS: u64 = 500; // 5% = 500 bps
 pub const LIQUIDATOR_REWARD_BPS: u64 = 100; // 1%

@@ -495,6 +495,7 @@ fn fuzz_overflow_pnl_uses_i128() {
 #[test]
 fn fuzz_position_slot_boundary() {
     use pokeliquid::state::{Position, MAX_POSITIONS};
+    use anchor_lang::prelude::Pubkey;
 
     // Simulate filling all 5 slots
     let mut positions: [Option<Position>; MAX_POSITIONS] = Default::default();
@@ -505,6 +506,7 @@ fn fuzz_position_slot_boundary() {
             i
         );
         positions[i] = Some(Position {
+            oracle: Pubkey::default(),
             direction: Direction::Long,
             collateral: 100_000_000,
             notional: 1_000_000_000,

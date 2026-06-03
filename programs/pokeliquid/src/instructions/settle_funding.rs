@@ -5,7 +5,7 @@ use crate::{
     constants::*,
     error::ErrorCode,
     events::{FundingSettled, PositionLiquidated},
-    state::{Direction, MarginAccount, OracleAccount, ProtocolState, MAX_POSITIONS},
+    state::{Direction, MarginAccount, MarketState, OracleAccount, ProtocolState, MAX_POSITIONS},
 };
 
 #[derive(Accounts)]
@@ -21,6 +21,12 @@ pub struct SettleFunding<'info> {
     pub protocol_state: Box<Account<'info, ProtocolState>>,
 
     pub oracle: Box<Account<'info, OracleAccount>>,
+
+    #[account(
+        mut,
+        constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
+    )]
+    pub market_state: Box<Account<'info, MarketState>>,
 
     #[account(mut)]
     pub margin_account: Box<Account<'info, MarginAccount>>,
@@ -65,25 +71,26 @@ enum FundingAction {
 pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
     let oracle_price = ctx.accounts.oracle.price;
+    let oracle_key = ctx.accounts.oracle.key();
 
-    // Snapshot values we need from protocol_state (avoids holding immutable borrow)
-    let total_long = ctx.accounts.protocol_state.total_long_exposure;
-    let total_short = ctx.accounts.protocol_state.total_short_exposure;
+    // Snapshot values we need (avoids holding immutable borrow)
+    let market_long = ctx.accounts.market_state.long_open_interest;
+    let market_short = ctx.accounts.market_state.short_open_interest;
     let base_rate = ctx.accounts.protocol_state.base_funding_rate_per_hour;
     let skew_factor = ctx.accounts.protocol_state.skew_factor;
     let insurance_fund_bps = ctx.accounts.protocol_state.insurance_fund_bps;
     let protocol_bump = ctx.accounts.protocol_state.bump;
 
-    // Precompute skew rate
-    let total_exposure = total_long
-        .checked_add(total_short)
+    // Precompute skew rate from per-market OI
+    let total_exposure = market_long
+        .checked_add(market_short)
         .ok_or(ErrorCode::MathOverflow)?;
 
     let skew_rate = if total_exposure > 0 {
-        let diff = if total_long > total_short {
-            total_long - total_short
+        let diff = if market_long > market_short {
+            market_long - market_short
         } else {
-            total_short - total_long
+            market_short - market_long
         };
         diff.checked_mul(skew_factor)
             .ok_or(ErrorCode::MathOverflow)?
@@ -108,6 +115,12 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
             }
         };
 
+        // Only settle positions belonging to this market
+        if position.oracle != oracle_key {
+            actions.push(FundingAction::Skip);
+            continue;
+        }
+
         let hours_since = ((now.saturating_sub(position.last_funding_timestamp)) / 3600).max(0) as u64;
         if hours_since < 1 {
             actions.push(FundingAction::Skip);
@@ -115,8 +128,8 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
         }
 
         let on_majority_side = match position.direction {
-            Direction::Long => total_long >= total_short,
-            Direction::Short => total_short >= total_long,
+            Direction::Long => market_long >= market_short,
+            Direction::Short => market_short >= market_long,
         };
 
         let hourly_rate = if on_majority_side {
@@ -248,8 +261,27 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
                     }
                 }
 
+                // Decrement per-market OI
+                match direction {
+                    Direction::Long => {
+                        ctx.accounts.market_state.long_open_interest = ctx
+                            .accounts
+                            .market_state
+                            .long_open_interest
+                            .saturating_sub(notional);
+                    }
+                    Direction::Short => {
+                        ctx.accounts.market_state.short_open_interest = ctx
+                            .accounts
+                            .market_state
+                            .short_open_interest
+                            .saturating_sub(notional);
+                    }
+                }
+
                 emit!(PositionLiquidated {
                     user,
+                    oracle: oracle_key,
                     liquidator: ctx.accounts.cranker.key(),
                     entry_price,
                     exit_price: oracle_price,

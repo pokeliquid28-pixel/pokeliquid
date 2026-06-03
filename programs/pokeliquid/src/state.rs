@@ -48,6 +48,24 @@ impl OracleAccount {
     pub const SPACE: usize = 8 + 8 + 8 + 8 + 1 + 32;
 }
 
+// ─── Market State ────────────────────────────────────────────────────────────
+
+#[account]
+pub struct MarketState {
+    pub market_id: [u8; 32],
+    pub oracle: Pubkey,
+    pub long_open_interest: u64,
+    pub short_open_interest: u64,
+    pub max_long_oi: u64,
+    pub max_short_oi: u64,
+    pub bump: u8,
+}
+
+impl MarketState {
+    // 8 disc + 32 market_id + 32 oracle + 4*8 u64 + 1 bump + 32 padding
+    pub const SPACE: usize = 8 + 32 + 32 + 32 + 1 + 32;
+}
+
 // ─── Margin Account ───────────────────────────────────────────────────────────
 
 pub const MAX_POSITIONS: usize = 5;
@@ -61,7 +79,7 @@ pub struct MarginAccount {
 }
 
 impl MarginAccount {
-    // 8 disc + 32 owner + 8 collateral + 5 * (1 option_tag + Position::SPACE) + 1 bump + 32 padding
+    // 8 disc + 32 owner + 8 collateral + 5 * (1 option_tag + Position::SPACE) + 1 bump + 32 padding = 546
     pub const SPACE: usize = 8 + 32 + 8 + MAX_POSITIONS * (1 + Position::SPACE) + 1 + 32;
 
     pub fn open_position_count(&self) -> u8 {
@@ -77,6 +95,7 @@ impl MarginAccount {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct Position {
+    pub oracle: Pubkey,
     pub direction: Direction,
     pub collateral: u64,
     pub notional: u64,
@@ -89,8 +108,8 @@ pub struct Position {
 }
 
 impl Position {
-    // 1 + 8 + 8 + 1 + 8 + 8 + 8 + (1+8) + (1+8) = 60
-    pub const SPACE: usize = 1 + 8 + 8 + 1 + 8 + 8 + 8 + 9 + 9;
+    // 32 + 1 + 8 + 8 + 1 + 8 + 8 + 8 + (1+8) + (1+8) = 92
+    pub const SPACE: usize = 32 + 1 + 8 + 8 + 1 + 8 + 8 + 8 + 9 + 9;
 }
 
 // ─── Close Reason ────────────────────────────────────────────────────────────

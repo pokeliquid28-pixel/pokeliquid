@@ -5,6 +5,7 @@ use crate::state::{Direction, CloseReason};
 #[event]
 pub struct PositionOpened {
     pub user: Pubkey,
+    pub oracle: Pubkey,
     pub direction: Direction,
     pub collateral: u64,
     pub notional: u64,
@@ -17,6 +18,7 @@ pub struct PositionOpened {
 #[event]
 pub struct PositionClosed {
     pub user: Pubkey,
+    pub oracle: Pubkey,
     pub direction: Direction,
     pub entry_price: u64,
     pub exit_price: u64,
@@ -31,6 +33,7 @@ pub struct PositionClosed {
 #[event]
 pub struct PositionLiquidated {
     pub user: Pubkey,
+    pub oracle: Pubkey,
     pub liquidator: Pubkey,
     pub entry_price: u64,
     pub exit_price: u64,

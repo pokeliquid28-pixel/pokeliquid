@@ -5,7 +5,7 @@ use crate::{
     constants::*,
     error::ErrorCode,
     events::PositionOpened,
-    state::{Direction, LiquidityPool, MarginAccount, OracleAccount, Position, ProtocolState},
+    state::{Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, Position, ProtocolState},
 };
 
 #[derive(Accounts)]
@@ -29,6 +29,12 @@ pub struct OpenPosition<'info> {
     pub margin_account: Box<Account<'info, MarginAccount>>,
 
     pub oracle: Account<'info, OracleAccount>,
+
+    #[account(
+        mut,
+        constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
+    )]
+    pub market_state: Account<'info, MarketState>,
 
     #[account(
         mut,
@@ -110,7 +116,26 @@ pub fn handler(
         .checked_mul(leverage as u64)
         .ok_or(ErrorCode::MathOverflow)?;
 
-    // Exposure check
+    // Per-market exposure check
+    let market = &ctx.accounts.market_state;
+    match direction {
+        Direction::Long => {
+            let new_oi = market
+                .long_open_interest
+                .checked_add(notional)
+                .ok_or(ErrorCode::MathOverflow)?;
+            require!(new_oi <= market.max_long_oi, ErrorCode::ExceedsMaxExposure);
+        }
+        Direction::Short => {
+            let new_oi = market
+                .short_open_interest
+                .checked_add(notional)
+                .ok_or(ErrorCode::MathOverflow)?;
+            require!(new_oi <= market.max_short_oi, ErrorCode::ExceedsMaxExposure);
+        }
+    }
+
+    // Global exposure check (protocol-wide backstop)
     match direction {
         Direction::Long => {
             let new_exposure = protocol
@@ -187,6 +212,7 @@ pub fn handler(
         .ok_or(ErrorCode::MathOverflow)?;
 
     margin.positions[slot] = Some(Position {
+        oracle: ctx.accounts.oracle.key(),
         direction: direction.clone(),
         collateral: position_collateral,
         notional,
@@ -215,8 +241,26 @@ pub fn handler(
         }
     }
 
+    // Update per-market OI
+    let market = &mut ctx.accounts.market_state;
+    match direction {
+        Direction::Long => {
+            market.long_open_interest = market
+                .long_open_interest
+                .checked_add(notional)
+                .ok_or(ErrorCode::MathOverflow)?;
+        }
+        Direction::Short => {
+            market.short_open_interest = market
+                .short_open_interest
+                .checked_add(notional)
+                .ok_or(ErrorCode::MathOverflow)?;
+        }
+    }
+
     emit!(PositionOpened {
         user: ctx.accounts.user.key(),
+        oracle: ctx.accounts.oracle.key(),
         direction,
         collateral: position_collateral,
         notional,

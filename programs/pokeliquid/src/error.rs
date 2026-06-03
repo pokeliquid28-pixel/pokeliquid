@@ -46,4 +46,6 @@ pub enum ErrorCode {
     InvalidTakeProfit,
     #[msg("SL/TP conditions not met")]
     NotTriggered,
+    #[msg("Market state oracle does not match the provided oracle account")]
+    MarketOracleMismatch,
 }
