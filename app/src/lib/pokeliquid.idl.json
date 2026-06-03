@@ -125,22 +125,7 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
         }
       ],
       "args": []
@@ -385,22 +370,11 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
+        },
+        {
+          "name": "market_state",
+          "writable": true
         },
         {
           "name": "fee_vault",
@@ -690,22 +664,11 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
+        },
+        {
+          "name": "market_state",
+          "writable": true
         },
         {
           "name": "fee_vault",
@@ -821,6 +784,188 @@
         {
           "name": "position_index",
           "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "init_market_oracle",
+      "docs": [
+        "Admin: initialize a market-specific oracle account."
+      ],
+      "discriminator": [
+        38,
+        109,
+        232,
+        234,
+        150,
+        184,
+        68,
+        246
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  116,
+                  111,
+                  99,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  114,
+                  97,
+                  99,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "init_market_state",
+      "docs": [
+        "Admin: initialize a per-market state account (tracks OI per market)."
+      ],
+      "discriminator": [
+        177,
+        66,
+        5,
+        222,
+        159,
+        27,
+        63,
+        52
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  116,
+                  111,
+                  99,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  114,
+                  97,
+                  99,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "market_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "string"
+        },
+        {
+          "name": "max_long_oi",
+          "type": "u64"
+        },
+        {
+          "name": "max_short_oi",
+          "type": "u64"
         }
       ]
     },
@@ -1150,22 +1295,11 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
+        },
+        {
+          "name": "market_state",
+          "writable": true
         },
         {
           "name": "fee_vault",
@@ -1628,22 +1762,11 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
+        },
+        {
+          "name": "market_state",
+          "writable": true
         },
         {
           "name": "fee_vault",
@@ -1822,22 +1945,7 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
         }
       ],
       "args": [
@@ -1915,22 +2023,7 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
         }
       ],
       "args": [
@@ -1997,22 +2090,11 @@
           }
         },
         {
-          "name": "oracle",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "oracle"
+        },
+        {
+          "name": "market_state",
+          "writable": true
         },
         {
           "name": "margin_account",
@@ -2075,9 +2157,85 @@
       "args": []
     },
     {
+      "name": "update_market_oracle",
+      "docs": [
+        "Admin: push a price to a market-specific oracle."
+      ],
+      "discriminator": [
+        195,
+        200,
+        114,
+        92,
+        227,
+        5,
+        15,
+        119
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "protocol_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  116,
+                  111,
+                  99,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  114,
+                  97,
+                  99,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "string"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "update_oracle",
       "docs": [
-        "Admin: push a new oracle price."
+        "Admin: push a new oracle price (default market)."
       ],
       "discriminator": [
         112,
@@ -2185,22 +2343,7 @@
         },
         {
           "name": "oracle",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  114,
-                  97,
-                  99,
-                  108,
-                  101
-                ]
-              }
-            ]
-          }
+          "writable": true
         }
       ],
       "args": [
@@ -2521,6 +2664,19 @@
       ]
     },
     {
+      "name": "MarketState",
+      "discriminator": [
+        0,
+        125,
+        123,
+        215,
+        95,
+        96,
+        164,
+        194
+      ]
+    },
+    {
       "name": "OracleAccount",
       "discriminator": [
         189,
@@ -2789,6 +2945,11 @@
       "code": 6021,
       "name": "NotTriggered",
       "msg": "SL/TP conditions not met"
+    },
+    {
+      "code": 6022,
+      "name": "MarketOracleMismatch",
+      "msg": "Market state oracle does not match the provided oracle account"
     }
   ],
   "types": [
@@ -3018,6 +3179,47 @@
       }
     },
     {
+      "name": "MarketState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "oracle",
+            "type": "pubkey"
+          },
+          {
+            "name": "long_open_interest",
+            "type": "u64"
+          },
+          {
+            "name": "short_open_interest",
+            "type": "u64"
+          },
+          {
+            "name": "max_long_oi",
+            "type": "u64"
+          },
+          {
+            "name": "max_short_oi",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "OracleAccount",
       "type": {
         "kind": "struct",
@@ -3083,6 +3285,10 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "oracle",
+            "type": "pubkey"
+          },
+          {
             "name": "direction",
             "type": {
               "defined": {
@@ -3136,6 +3342,10 @@
         "fields": [
           {
             "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle",
             "type": "pubkey"
           },
           {
@@ -3195,6 +3405,10 @@
             "type": "pubkey"
           },
           {
+            "name": "oracle",
+            "type": "pubkey"
+          },
+          {
             "name": "liquidator",
             "type": "pubkey"
           },
@@ -3224,6 +3438,10 @@
         "fields": [
           {
             "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle",
             "type": "pubkey"
           },
           {
