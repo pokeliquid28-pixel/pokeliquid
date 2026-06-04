@@ -486,9 +486,9 @@ export default function TradePage() {
 type ChartPoint = { timestamp: number; price: number };
 type Timeframe = "1h" | "1d";
 
-const TF_CONFIG: Record<Timeframe, { limit: number; labelInterval: number }> = {
-  "1h": { limit: 12, labelInterval: 3 },   // label every 15min
-  "1d": { limit: 288, labelInterval: 36 },  // label every 3hr
+const TF_CONFIG: Record<Timeframe, { resolution: string }> = {
+  "1h": { resolution: "1h" },  // 1-hour candles, 7 days
+  "1d": { resolution: "1d" },  // 1-day candles, 30 days
 };
 
 function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string }) {
@@ -504,10 +504,10 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
     let cancelled = false;
     const load = () => {
       setChartLoading(true);
-      const { limit } = TF_CONFIG[timeframe];
-      fetch(`${API_BASE}/prices?market=${priceApiMarket}&limit=${limit}`)
+      const { resolution } = TF_CONFIG[timeframe];
+      fetch(`${API_BASE}/candles?market=${priceApiMarket}&resolution=${resolution}`)
         .then((r) => r.json())
-        .then((data: { timestamp: number; raw_price: number }[]) => {
+        .then((data: { timestamp: number; close: number }[]) => {
           if (cancelled) return;
           if (!Array.isArray(data) || data.length === 0) {
             console.warn("[Chart] No data from API");
@@ -517,13 +517,12 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
           }
           const points: ChartPoint[] = data.map((d) => ({
             timestamp: d.timestamp,
-            price: d.raw_price, // Already in USD (e.g. 161.68)
+            price: d.close,
           }));
-          // Sort by timestamp ascending
           points.sort((a, b) => a.timestamp - b.timestamp);
-          console.log(`[Chart ${timeframe}] ${points.length} points, first:`, points[0], "last:", points[points.length - 1]);
+          console.log(`[Chart ${timeframe}] ${points.length} candles, first:`, points[0], "last:", points[points.length - 1]);
           setChartData(points);
-          setInsufficient(points.length < TF_CONFIG[timeframe].limit * 0.5);
+          setInsufficient(points.length < 3);
           setChartLoading(false);
         })
         .catch((err) => {
@@ -588,34 +587,39 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       ctx.fillText(`$${priceVal.toFixed(2)}`, w - pad.right + 6, y + 3);
     }
 
-    // X-axis time labels — snap to clean boundaries
+    // X-axis time labels — one per candle, skip to avoid overlap
     ctx.fillStyle = "rgba(255,255,255,0.2)";
     ctx.font = "9px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
-    const tStart = chartData[0].timestamp;
-    const tEnd = chartData[chartData.length - 1].timestamp;
-    const tRange = tEnd - tStart || 1;
-    // For 1D: label every 3 hours, for 1H: label every 15 minutes
-    const snapSec = timeframe === "1d" ? 3 * 3600 : 15 * 60;
-    const firstSnap = Math.ceil(tStart / snapSec) * snapSec;
-    for (let t = firstSnap; t <= tEnd; t += snapSec) {
-      const frac = (t - tStart) / tRange;
-      if (frac < 0.02 || frac > 0.98) continue; // skip edges
-      const x = pad.left + frac * cw;
-      const d = new Date(t * 1000);
+    const n = chartData.length;
+    // Show ~6-8 labels max
+    const labelSkip = Math.max(1, Math.floor(n / 7));
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for (let i = 0; i < n; i += labelSkip) {
+      const x = pad.left + (i / (n - 1)) * cw;
+      const d = new Date(chartData[i].timestamp * 1000);
       let label: string;
       if (timeframe === "1d") {
+        label = `${months[d.getMonth()]} ${d.getDate()}`;
+      } else {
         const hr = d.getHours();
         label = hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`;
-      } else {
-        label = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
       }
       ctx.fillText(label, x, h - 4);
     }
-    // Always show last label (current time)
-    const lastX = pad.left + cw;
-    const lastD = new Date(tEnd * 1000);
-    ctx.fillText(`${lastD.getHours().toString().padStart(2, "0")}:${lastD.getMinutes().toString().padStart(2, "0")}`, lastX, h - 4);
+    // Always show last label
+    if ((n - 1) % labelSkip !== 0) {
+      const lastX = pad.left + cw;
+      const lastD = new Date(chartData[n - 1].timestamp * 1000);
+      let label: string;
+      if (timeframe === "1d") {
+        label = `${months[lastD.getMonth()]} ${lastD.getDate()}`;
+      } else {
+        const hr = lastD.getHours();
+        label = hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`;
+      }
+      ctx.fillText(label, lastX, h - 4);
+    }
 
     // Fill area
     const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);

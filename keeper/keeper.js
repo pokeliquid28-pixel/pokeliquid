@@ -237,6 +237,32 @@ for (const mc of MARKET_CONFIGS) {
   `);
 }
 
+// Prepared statements for fetching raw data for candle aggregation
+const marketQuerySince = {};
+for (const mc of MARKET_CONFIGS) {
+  const tbl = mc.id === "ETB" ? "price_history" : marketState[mc.id].dbTable;
+  marketQuerySince[mc.id] = db.prepare(
+    `SELECT timestamp, raw_price FROM ${tbl} WHERE timestamp >= ? ORDER BY timestamp ASC`
+  );
+}
+
+function aggregateCandles(rows, bucketSec) {
+  if (!rows.length) return [];
+  const buckets = new Map();
+  for (const r of rows) {
+    const key = Math.floor(r.timestamp / bucketSec) * bucketSec;
+    if (!buckets.has(key)) {
+      buckets.set(key, { timestamp: key, open: r.raw_price, high: r.raw_price, low: r.raw_price, close: r.raw_price });
+    } else {
+      const b = buckets.get(key);
+      b.high = Math.max(b.high, r.raw_price);
+      b.low = Math.min(b.low, r.raw_price);
+      b.close = r.raw_price; // last price in bucket
+    }
+  }
+  return Array.from(buckets.values());
+}
+
 // ─── Trades table ────────────────────────────────────────────────────────
 db.exec(`
   CREATE TABLE IF NOT EXISTS trades (
@@ -562,6 +588,30 @@ function startApiServer() {
 
         res.writeHead(200);
         res.end(JSON.stringify(rows));
+      } catch (err) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+      return;
+    }
+
+    if (url.pathname === "/candles") {
+      try {
+        const mktParam = (url.searchParams.get("market") || "ETB").toUpperCase();
+        const resolution = url.searchParams.get("resolution") || "1h"; // "1h" or "1d"
+        const qSince = marketQuerySince[mktParam];
+        if (!qSince) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: `Unknown market: ${mktParam}` }));
+          return;
+        }
+        const bucketSec = resolution === "1d" ? 86400 : 3600;
+        const lookback = resolution === "1d" ? 30 * 86400 : 7 * 86400; // 30d or 7d
+        const since = Math.floor(Date.now() / 1000) - lookback;
+        const rows = qSince.all(since);
+        const candles = aggregateCandles(rows, bucketSec);
+        res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify(candles));
       } catch (err) {
         res.writeHead(500);
         res.end(JSON.stringify({ error: err.message }));
