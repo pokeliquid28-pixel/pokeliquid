@@ -1,6 +1,6 @@
-# Pokeliquid — PRISMATIC-ETB-PERP
+# Pokeliquid — Pokemon Card Perps
 
-A perpetual futures DEX on Solana for trading the **Prismatic Evolutions Elite Trainer Box** — a real-world Pokemon TCG product priced via live TCGPlayer market data.
+A perpetual futures DEX on Solana for trading **Pokemon TCG products** — real-world cards and sealed product priced via live TCGPlayer market data. Four markets live on devnet.
 
 ```
 TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana Program (Anchor)
@@ -24,7 +24,7 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 
 | Service | URL / Address |
 |---------|---------------|
-| **Frontend** | `https://app-two-green-66.vercel.app` (Vercel) |
+| **Frontend** | `https://pokeliquid.xyz` (Vercel) |
 | **Keeper API** | `http://157.180.67.25:3001` (Hetzner CX23, Helsinki) |
 | **Program** | `7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ` (devnet) |
 | **Keeper proxy** | Frontend routes `/api/keeper/*` → Hetzner keeper (avoids mixed content) |
@@ -37,7 +37,10 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 |---------|---------|
 | **Program ID** | `7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ` |
 | **ProtocolState** | `8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK` |
-| **OracleAccount** | `2euE9eMGTNwyW7jqG63JvRZfHeo7psKZgBCizfNMjW12` |
+| **Oracle (PRISMATIC-ETB)** | `4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH` |
+| **Oracle (CHARIZARD-125/094-PFL)** | `8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg` |
+| **Oracle (CHARMANDER-038-MEP)** | `6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD` |
+| **Oracle (PIKACHU-276/217-AH)** | `B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs` |
 | **FeeVault** | `GRFF44bR65tVUChnidAqZAgpFbg1Kw8GboWzUBQbW581` |
 | **InsuranceFund** | `9NmpMraE2XCSUa1gKgwi9zxN8LLdT4o5Uiis5dKkKs1F` |
 | **LiquidityPool** | `DiM6xwNdBnNGf2TrgHHgZJYSFLpEXawADvAWdQvUKFT` |
@@ -46,9 +49,16 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 
 ---
 
-## Market Spec
+## Markets
 
-- **Market:** PRISMATIC-ETB-PERP (Prismatic Evolutions Elite Trainer Box)
+| Market | Card / Product | TCGPlayer ID |
+|--------|---------------|--------------|
+| PRISMATIC-ETB-PERP | Prismatic Evolutions Elite Trainer Box | 593355 |
+| CHARIZARD-125/094-PFL-PERP | Mega Charizard X ex 125/094 (Phantasmal Flames) | 662184 |
+| CHARMANDER-038-MEP-PERP | Charmander #038 (Mega Evolution Promo) | 684462 |
+| PIKACHU-276/217-AH-PERP | Pikachu ex 276/217 (Ascended Heroes) | 676088 |
+
+## Market Spec
 - **Collateral:** devnet USDC (program-controlled mint, 6 decimals)
 - **Positions:** Up to 5 simultaneous per account (`[Option<Position>; 5]`)
 - **Leverage:** 1x – 10x
@@ -85,6 +95,10 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 | `withdraw_fees(amount)` | Admin | Withdraw from fee vault. |
 | `withdraw_insurance(amount)` | Admin | Withdraw from insurance fund. |
 | `mint_devnet_usdc` | Anyone | Mint 1,000 devnet USDC to caller. |
+| `realloc_margin` | User | Reallocate margin account to new size (546 bytes). |
+| `init_market_state` | Admin | Initialize per-market state (OI tracking). |
+| `init_market_oracle(market)` | Admin | Create a new oracle account for a market. |
+| `update_market_oracle(market, price)` | Admin/Secondary | Push price to a specific market oracle. |
 | `init_liquidity_pool` | Admin | Initialize LP pool + vault. |
 | `lp_deposit(amount)` | User | Deposit USDC into LP pool. |
 | `lp_withdraw(amount)` | User | Withdraw USDC from LP pool. |
@@ -257,7 +271,7 @@ Users authenticate with email + password. No external wallet extensions required
 - **Logs:** `pm2 logs pokeliquid-keeper`
 
 ### Vercel Frontend
-- **URL:** `https://app-two-green-66.vercel.app`
+- **URL:** `https://pokeliquid.xyz`
 - **Deploy from:** `app/` subdirectory
 - **Rewrites:** `/api/keeper/*` → `http://157.180.67.25:3001/*` (via vercel.json)
 - **Deploy:** `cd app && npx vercel --prod`
@@ -277,7 +291,7 @@ RELAYER_PRIVATE_KEY=<base58-private-key>  # Funds new session wallets with SOL
 
 # Optional:
 NEXT_PUBLIC_RPC_ENDPOINT=https://api.devnet.solana.com
-NEXT_PUBLIC_APP_URL=https://app-two-green-66.vercel.app
+NEXT_PUBLIC_APP_URL=https://pokeliquid.xyz
 ```
 
 ---
@@ -388,7 +402,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 
 ## Current Strengths
 
-- **Unique market** — perpetual futures on a physical TCG product
+- **Unique market** — perpetual futures on physical TCG products (4 markets live)
 - **Full vertical stack** — on-chain program + keeper + scraper + frontend, all integrated
 - **No wallet extension required** — session wallet in localStorage, email+password auth for persistence
 - **Professional trading UX** — inline SL/TP, margin ratio bar, PnL flash, close confirmation
@@ -411,12 +425,9 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - [ ] **No limit orders** — market orders only
 
 ### Nice to have
-- [ ] Multi-asset support (additional perp markets)
 - [ ] Mainnet deployment with real USDC
-- [ ] Custom domain (pokeliquid.xyz)
 - [ ] Referral / fee sharing system
 - [ ] Governance token
-- [ ] API documentation page
 
 ---
 
@@ -429,7 +440,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - `anchor-lang` needs `init-if-needed` feature for `init_if_needed` constraint
 - bn.js `.toNumber()` throws on values > 53 bits — use `safeBn()` wrapper
 - Direction enum in TS: `{ long: {} }` / `{ short: {} }`
-- MarginAccount::SPACE = 386 bytes (verified via Rust test)
+- MarginAccount::SPACE = 546 bytes (verified via Rust test)
 - Vercel rewrites `/api/keeper/*` → Hetzner to avoid HTTPS→HTTP mixed content
 - Database uses `pg` package (not `@vercel/postgres`) — strips `sslmode` and `supa` params from connection string, sets `ssl: { rejectUnauthorized: false }` for Supabase
 - Only wallet adapter is `SessionWalletAdapter` — Phantom/Solflare removed

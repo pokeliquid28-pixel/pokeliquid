@@ -487,8 +487,8 @@ type ChartPoint = { timestamp: number; price: number };
 type Timeframe = "1h" | "1d";
 
 const TF_CONFIG: Record<Timeframe, { limit: number; labelInterval: number }> = {
-  "1h": { limit: 12, labelInterval: 2 },
-  "1d": { limit: 288, labelInterval: 48 },
+  "1h": { limit: 12, labelInterval: 3 },   // label every 15min
+  "1d": { limit: 288, labelInterval: 36 },  // label every 3hr
 };
 
 function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string }) {
@@ -565,8 +565,8 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
     const livePrice = oracle.price / 1_000_000;
     // Include live price in min/max so dashed line is always visible
     const allPrices = [...prices, livePrice];
-    const minP = Math.min(...allPrices) * 0.998;
-    const maxP = Math.max(...allPrices) * 1.002;
+    const minP = Math.min(...allPrices) * 0.98;
+    const maxP = Math.max(...allPrices) * 1.02;
     const range = maxP - minP || 1;
 
     ctx.clearRect(0, 0, w, h);

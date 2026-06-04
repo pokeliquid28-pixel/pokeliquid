@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
+  { id: "markets", label: "Markets" },
   { id: "getting-started", label: "Getting Started" },
   { id: "trading", label: "Trading" },
   { id: "fees", label: "Fees & Costs" },
@@ -167,7 +168,6 @@ function FAQ({ q, children }: { q: string; children: React.ReactNode }) {
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("overview");
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Track active section on scroll
   useEffect(() => {
@@ -285,14 +285,15 @@ export default function DocsPage() {
             </P>
             <P>Currently live on Solana Devnet with test USDC. No real money.</P>
 
-            <H3>Live Markets</H3>
+            {/* ════════════ MARKETS ════════════ */}
+            <H2 id="markets">Current Markets</H2>
             <Table
-              headers={["Market", "Product", "TCGPlayer ID", "Status"]}
+              headers={["Market", "Card", "Set", "Card #", "Live"]}
               rows={[
-                ["PRISMATIC-ETB-PERP", "Prismatic Evolutions Elite Trainer Box", "593355", "LIVE"],
-                ["CHARIZARD-X-PERP", "Mega Charizard X ex \u00B7 Phantasmal Flames", "662184", "LIVE"],
-                ["CHARMANDER-PERP", "Charmander #038 \u00B7 Mega Evolution Promo", "684462", "LIVE"],
-                ["PIKACHU-PERP", "Pikachu ex \u00B7 Ascended Heroes", "676088", "LIVE"],
+                ["PRISMATIC-ETB-PERP", "Prismatic Evolutions ETB", "Sealed Product", "\u2014", "Yes"],
+                ["CHARIZARD-125/094-PFL-PERP", "Mega Charizard X ex", "Phantasmal Flames", "125/094", "Yes"],
+                ["CHARMANDER-038-MEP-PERP", "Charmander", "Mega Evolution Promo", "#038", "Yes"],
+                ["PIKACHU-276/217-AH-PERP", "Pikachu ex", "Ascended Heroes", "276/217", "Yes"],
               ]}
             />
 
@@ -302,7 +303,7 @@ export default function DocsPage() {
             {/* ════════════ GETTING STARTED ════════════ */}
             <H2 id="getting-started">Getting Started</H2>
             <H3>1. Visit the app</H3>
-            <P>Go to pokeliquid.xyz (or the current Vercel deployment URL).</P>
+            <P>Go to <a href="https://pokeliquid.xyz" style={{ color: "#00ff41" }}>pokeliquid.xyz</a>.</P>
 
             <H3>2. Create an account</H3>
             <P>
@@ -334,6 +335,12 @@ export default function DocsPage() {
             <P>
               Select a market, choose Long or Short, set your collateral amount and leverage (1-10x),
               optionally set Stop Loss and Take Profit prices, then click to open your position.
+            </P>
+
+            <H3>7. Password Reset</H3>
+            <P>
+              If you forget your password, click &ldquo;Forgot password?&rdquo; on the login screen. Enter your email
+              and you&rsquo;ll receive a reset link via email. The link expires in 1 hour and is single-use.
             </P>
 
             {/* ════════════ TRADING ════════════ */}
@@ -380,15 +387,11 @@ Short PnL = notional * (entry_price - exit_price) / entry_price`}</Code>
               calls <code>execute_sl_tp</code> permissionlessly when conditions are met. The executor
               receives a <strong>0.1% reward</strong> (10 bps of position collateral) for executing the order.
             </P>
-            <P>
-              For longs: SL must be below entry price, TP must be above. For shorts: SL must be above entry price,
-              TP must be below.
-            </P>
 
             <H3>Multiple Positions</H3>
             <P>
-              Each MarginAccount supports up to <strong>5 simultaneous positions</strong> (MAX_POSITIONS = 5).
-              Positions are stored in a fixed-size array with Option slots. MarginAccount size = 386 bytes.
+              Each MarginAccount supports up to <strong>5 simultaneous positions</strong> across any market.
+              Positions are stored in a fixed-size array. MarginAccount size = 546 bytes.
             </P>
 
             {/* ════════════ FEES ════════════ */}
@@ -426,10 +429,6 @@ Skew Rate: skew_factor * (long_OI - short_OI) / (long_OI + short_OI)
 
 Total Funding = base_rate + skew_rate (per hour)
 Longs pay when long OI > short OI (and vice versa)`}</Code>
-            <P>
-              Funding is deducted from position collateral. If collateral drops below the liquidation
-              threshold due to funding, the position becomes liquidatable.
-            </P>
 
             {/* ════════════ RISK ════════════ */}
             <H2 id="risk">Risk Management</H2>
@@ -467,13 +466,6 @@ Liquidation Price (Short):
               reduce margin ratio below the liquidation threshold).
             </P>
 
-            <H3>Insurance Fund</H3>
-            <P>
-              The insurance fund covers bad debt when a liquidated position&rsquo;s collateral is insufficient.
-              It&rsquo;s funded by 10% of trading fees and 9% of liquidation proceeds. The admin can withdraw
-              from the insurance fund via <code>withdraw_insurance</code>.
-            </P>
-
             {/* ════════════ ORACLE ════════════ */}
             <H2 id="oracle">Oracle</H2>
 
@@ -481,22 +473,22 @@ Liquidation Price (Short):
             <P>
               Prices are scraped from TCGPlayer product pages using Playwright (headless Chromium).
               The keeper runs a browser instance, navigates to each product page, and extracts the
-              current market price from the TCGPlayer DOM.
+              current market price. All 4 live markets are scraped in parallel.
             </P>
             <Table
-              headers={["Market", "TCGPlayer Product ID"]}
+              headers={["Market", "TCGPlayer Product ID", "Oracle Address"]}
               rows={[
-                ["PRISMATIC-ETB-PERP", "593355"],
-                ["CHARIZARD-X-PERP", "662184"],
-                ["CHARMANDER-PERP", "684462"],
-                ["PIKACHU-PERP", "676088"],
+                ["PRISMATIC-ETB-PERP", "593355", "4v5ogQ...jW12"],
+                ["CHARIZARD-125/094-PFL-PERP", "662184", "8UWP5Y...HAfg"],
+                ["CHARMANDER-038-MEP-PERP", "684462", "6WQUKKr...a3XD"],
+                ["PIKACHU-276/217-AH-PERP", "676088", "B1BWNQ...QRYs"],
               ]}
             />
 
             <H3>Update Frequency</H3>
             <P>
-              The oracle updates every <strong>5 minutes</strong> (300,000ms). All 4 markets are scraped
-              in parallel using separate browser pages within a single Playwright context.
+              The oracle updates every <strong>5 minutes</strong> (300,000ms). Each market has its own
+              on-chain oracle account (PDA seeded with <code>[&quot;oracle&quot;, market_id]</code>).
             </P>
 
             <H3>Adaptive EWMA Smoothing</H3>
@@ -522,12 +514,8 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <H3>Staleness Protection</H3>
             <P>
               On-chain, the oracle has a <strong>staleness threshold of 30 minutes</strong> (1,800 seconds).
-              If the oracle hasn&rsquo;t been updated within this window, trading instructions will fail
-              with <code>PriceStale</code>.
-            </P>
-            <P>
-              Additionally, anyone can call <code>check_and_pause</code> (permissionless) to automatically
-              pause the protocol if the oracle is stale beyond the <strong>auto-pause threshold of 1 hour</strong> (3,600 seconds).
+              Anyone can call <code>check_and_pause</code> (permissionless) to automatically
+              pause the protocol if the oracle is stale beyond the <strong>auto-pause threshold of 1 hour</strong>.
             </P>
 
             <H3>Secondary Authority</H3>
@@ -548,7 +536,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
 
             <H3>Earning Fees</H3>
             <P>
-              <strong>30% of all trading fees</strong> (3,000 bps of the fee_bps allocation) are directed to the LP pool.
+              <strong>30% of all trading fees</strong> are directed to the LP pool.
               LPs can claim their proportional share of accumulated fees via <code>claim_fees</code> at any time.
             </P>
 
@@ -556,13 +544,6 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <P>
               Call <code>lp_withdraw</code> with the number of shares to burn. USDC is returned proportionally.
               There is no lockup period — withdraw anytime.
-            </P>
-
-            <H3>Risks</H3>
-            <P>
-              LP deposits are held in the protocol vault. If the vault is drained by profitable traders beyond
-              the insurance fund&rsquo;s capacity, LPs could face losses. Smart contract risk also applies.
-              This is devnet software — not audited.
             </P>
 
             {/* ════════════ PROTOCOL ════════════ */}
@@ -575,8 +556,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
                 ["Program ID", "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ"],
                 ["Network", "Solana Devnet"],
                 ["Framework", "Anchor 1.0.2"],
-                ["Rust Edition", "2021"],
-                ["Test Framework", "litesvm 0.10.0"],
+                ["Frontend", "pokeliquid.xyz"],
               ]}
             />
 
@@ -584,11 +564,13 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <Addr label="Program" address="7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ" desc="Pokeliquid program" />
             <Addr label="ProtocolState" address="8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK" desc="Global protocol configuration PDA" />
             <Addr label="Oracle (ETB)" address="4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH" desc="PRISMATIC-ETB-PERP price feed" />
-            <Addr label="Oracle (Charizard X)" address="8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg" desc="CHARIZARD-X-PERP price feed" />
-            <Addr label="Oracle (Charmander)" address="6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD" desc="CHARMANDER-PERP price feed" />
-            <Addr label="Oracle (Pikachu)" address="B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs" desc="PIKACHU-PERP price feed" />
+            <Addr label="Oracle (Charizard)" address="8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg" desc="CHARIZARD-125/094-PFL-PERP price feed" />
+            <Addr label="Oracle (Charmander)" address="6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD" desc="CHARMANDER-038-MEP-PERP price feed" />
+            <Addr label="Oracle (Pikachu)" address="B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs" desc="PIKACHU-276/217-AH-PERP price feed" />
             <Addr label="Fee Vault" address="GRFF44bR65tVUChnidAqZAgpFbg1Kw8GboWzUBQbW581" desc="Protocol revenue vault" />
             <Addr label="Insurance Fund" address="9NmpMraE2XCSUa1gKgwi9zxN8LLdT4o5Uiis5dKkKs1F" desc="Bad debt coverage fund" />
+            <Addr label="Liquidity Pool" address="DiM6xwNdBnNGf2TrgHHgZJYSFLpEXawADvAWdQvUKFT" desc="LP pool state" />
+            <Addr label="LP Vault" address="6UNaHeeQooouQ1eMemsZGgbBzgrQwqqyExaLjTTyc7My" desc="LP token vault" />
             <Addr label="USDC Mint" address="Gj9gBxmesYoNa4kvZUKJbiF85PduMKnHnppp4ikbWUUi" desc="Devnet test USDC mint (program-controlled)" />
 
             <H3>All Instructions</H3>
@@ -600,6 +582,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
                 ["deposit_collateral", "User", "Deposit USDC into margin account"],
                 ["withdraw_collateral", "User", "Withdraw free collateral"],
                 ["close_margin_account", "User", "Close margin account, return rent"],
+                ["realloc_margin", "User", "Resize margin account (migration helper)"],
                 ["open_position", "User", "Open a leveraged perpetual position"],
                 ["close_position", "User", "Close a position, settle PnL"],
                 ["add_margin", "User", "Add collateral to an open position"],
@@ -614,57 +597,12 @@ Price floor protection: if candidate < floor, update is rejected entirely.
                 ["claim_fees", "User", "Claim accumulated LP fee share"],
                 ["update_oracle", "Admin/Secondary", "Push price to default oracle"],
                 ["init_market_oracle", "Admin", "Create a market-specific oracle PDA"],
+                ["init_market_state", "Admin", "Create per-market OI tracking state"],
                 ["update_market_oracle", "Admin/Secondary", "Push price to market oracle"],
                 ["update_params", "Admin", "Update protocol parameters"],
                 ["withdraw_fees", "Admin", "Withdraw from fee vault"],
                 ["withdraw_insurance", "Admin", "Withdraw from insurance fund"],
                 ["mint_devnet_usdc", "Anyone", "Mint 1,000 test USDC (devnet only)"],
-              ]}
-            />
-
-            <H3>Events</H3>
-            <Table
-              headers={["Event", "Key Fields", "When Emitted"]}
-              rows={[
-                ["PositionOpened", "user, direction, collateral, notional, leverage, entry_price, fee_paid", "Position opened"],
-                ["PositionClosed", "user, direction, entry/exit price, pnl, funding_paid, fee_paid, reason", "Position closed (manual/SL/TP/liquidation)"],
-                ["PositionLiquidated", "user, liquidator, entry/exit price, collateral_lost", "Position liquidated"],
-                ["FundingSettled", "user, position_index, funding_owed, hours_settled, new_collateral", "Funding settled on position"],
-                ["LpDeposited", "user, amount, shares, total_usdc", "LP deposit"],
-                ["LpWithdrawn", "user, shares, usdc_out, total_usdc", "LP withdrawal"],
-                ["FeesClaimed", "user, amount", "LP fees claimed"],
-                ["SlTpSet", "user, position_index, sl_price, tp_price", "SL/TP prices updated"],
-                ["OracleUpdated", "old_price, new_price, timestamp", "Oracle price pushed"],
-                ["OracleStale", "last_updated, seconds_stale", "Oracle staleness detected"],
-              ]}
-            />
-
-            <H3>Error Codes</H3>
-            <Table
-              headers={["Code", "Message"]}
-              rows={[
-                ["InsufficientCollateral", "Insufficient collateral"],
-                ["PositionSlotsFull", "All position slots are full (max 5)"],
-                ["NoOpenPosition", "No open position in that slot"],
-                ["InvalidPositionIndex", "Invalid position index"],
-                ["BelowMinLeverage", "Leverage must be at least 1"],
-                ["AboveMaxLeverage", "Leverage cannot exceed 10"],
-                ["BelowMinPositionSize", "Position size below minimum"],
-                ["ExceedsMaxExposure", "Trade would exceed max exposure limit"],
-                ["NotLiquidatable", "Position is not liquidatable"],
-                ["Unauthorized", "Unauthorized"],
-                ["ProtocolPaused", "Protocol is paused"],
-                ["PriceStale", "Oracle price is stale"],
-                ["InsufficientVaultBalance", "Insufficient vault balance"],
-                ["MathOverflow", "Math overflow"],
-                ["InsufficientShares", "Insufficient LP shares"],
-                ["NoFeesToClaim", "No fees to claim"],
-                ["PoolAlreadyInitialized", "Pool already initialized"],
-                ["InsufficientPoolBalance", "Insufficient pool balance"],
-                ["OracleNotStale", "Oracle is not stale \u2014 cannot pause"],
-                ["InvalidStopLoss", "Invalid stop-loss price for position direction"],
-                ["InvalidTakeProfit", "Invalid take-profit price for position direction"],
-                ["NotTriggered", "SL/TP conditions not met"],
               ]}
             />
 
@@ -680,26 +618,6 @@ Price floor protection: if candidate < floor, update is rejected entirely.
 
             <H3>GET /health</H3>
             <P>Comprehensive system health including oracle status, liquidation stats, funding stats, Solana RPC health, and per-market oracle data.</P>
-            <Code>{`{
-  "status": "healthy" | "degraded" | "critical",
-  "oracle": {
-    "last_update": "ISO timestamp",
-    "seconds_since_update": 42,
-    "ewma": 161.60,
-    "updates_1h": 12,
-    "updates_24h": 288
-  },
-  "markets": {
-    "ETB": { "label": "PRISMATIC-ETB", "oracle": "2euE...", "ewma": 161.60, "seconds_since_update": 42 },
-    "CHARIZARD-X": { ... },
-    "CHARMANDER": { ... },
-    "PIKACHU": { ... }
-  },
-  "liquidation": { "checks_1h": 360, "liquidations_24h": 0, "accounts_monitored": 5 },
-  "funding": { "settlements_24h": 24, "errors_24h": 0 },
-  "solana": { "rpc_url": "...", "slot": 123456, "rpc_latency_ms": 45 },
-  "keeper": { "uptime_minutes": 1440, "total_updates": 288, "total_errors": 0 }
-}`}</Code>
 
             <H3>GET /prices</H3>
             <P>Historical price data for charting.</P>
@@ -727,40 +645,16 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             />
             <Code>{`Response: {
   "trades": [
-    { "id": 1, "timestamp": ..., "user_pubkey": "...", "direction": "long", "notional": 100, "entry_price": 161.5, "exit_price": 162.0, "pnl": 0.31, "action": "close" },
+    { "id": 1, "timestamp": ..., "user_pubkey": "...", "direction": "long", "notional": 100, "entry_price": 156.19, ... },
     ...
   ]
 }`}</Code>
 
             <H3>GET /trades</H3>
             <P>Trades for a specific user. Requires <code>user</code> parameter.</P>
-            <Table
-              headers={["Param", "Type", "Required", "Description"]}
-              rows={[
-                ["user", "string", "Yes", "User public key"],
-                ["limit", "number", "No", "Max trades (default 20, max 100)"],
-              ]}
-            />
-
-            <H3>GET /events/recent</H3>
-            <P>Recent decoded on-chain events.</P>
-            <Table
-              headers={["Param", "Type", "Default", "Description"]}
-              rows={[
-                ["limit", "number", "10", "Number of events (max 50)"],
-              ]}
-            />
 
             <H3>GET /stats</H3>
-            <P>Protocol statistics.</P>
-            <Code>{`Response: {
-  "total_volume_24h": 27688,
-  "total_volume_7d": 150000,
-  "total_trades_24h": 12,
-  "total_liquidations_24h": 0,
-  "total_fees_24h": 553.76,
-  "unique_traders_24h": 3
-}`}</Code>
+            <P>Protocol statistics (24h/7d volume, trades, liquidations, fees, unique traders).</P>
 
             {/* ════════════ FAQ ════════════ */}
             <H2 id="faq">FAQ</H2>
@@ -780,6 +674,11 @@ Price floor protection: if candidate < floor, update is rejected entirely.
               Your session wallet keypair persists in localStorage. When you return, your wallet reconnects
               automatically. If you created an account with email/password, you can recover your wallet on
               any device by logging in.
+            </FAQ>
+
+            <FAQ q="How do I reset my password?">
+              Click &ldquo;Forgot password?&rdquo; on the login screen, enter your email, and check your
+              inbox for a reset link. The link expires in 1 hour.
             </FAQ>
 
             <FAQ q="Can I get liquidated?">
@@ -802,20 +701,11 @@ Price floor protection: if candidate < floor, update is rejected entirely.
               fees proportional to your share. No lockup period.
             </FAQ>
 
-            <FAQ q="What are the fees?">
-              2% fee on open and 2% fee on close (200 bps each). Plus hourly funding charges based on
-              open interest skew.
-            </FAQ>
-
-            <FAQ q="When is mainnet?">
-              Soon. Follow the roadmap on the Stats page for updates.
-            </FAQ>
-
             {/* ════════════ ROADMAP ════════════ */}
             <H2 id="roadmap">Roadmap</H2>
 
             {[
-              { phase: "Phase 1", status: "LIVE", active: true, items: ["Devnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool with 30% fee share", "Adaptive EWMA oracle", "Automated keeper (liquidations, funding, SL/TP)"] },
+              { phase: "Phase 1", status: "LIVE", active: true, items: ["Devnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool with 30% fee share", "Adaptive EWMA oracle", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset"] },
               { phase: "Phase 2", status: "Planned", active: false, items: ["Mainnet launch", "25x max leverage", "Additional card markets", "Mobile-optimized UI"] },
               { phase: "Phase 3", status: "Planned", active: false, items: ["50x max leverage", "Vintage card oracle committee", "Governance token"] },
               { phase: "Phase 4", status: "Planned", active: false, items: ["100x max leverage", "BASE-SET-CHARIZARD-PERP", "$PLIQ governance live"] },

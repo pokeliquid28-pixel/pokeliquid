@@ -289,7 +289,7 @@ const ROADMAP = [
     phase: "Phase 1",
     status: "LIVE",
     active: true,
-    items: ["Devnet, 10x max", "PRISMATIC-ETB-PERP"],
+    items: ["Devnet, 10x max", "4 live markets"],
   },
   {
     phase: "Phase 2",
@@ -361,7 +361,7 @@ function StatsContent() {
       </div>
 
       {/* ── Section 1: Oracle Status ──────────────────────────────────── */}
-      <Section title="PRISMATIC-ETB-PERP Oracle">
+      <Section title="Oracle Status">
         {oracle.isLoading ? (
           <Skeleton height="h-48" />
         ) : (
