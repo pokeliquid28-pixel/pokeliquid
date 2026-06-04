@@ -80,13 +80,15 @@ export function useOracle(
     return () => { cancelled = true; clearInterval(id); };
   }, [connection, oracleAddress]);
 
-  // Poll keeper API for historical price chart data
+  // Poll keeper API for historical price data (24h range for accurate % change)
   useEffect(() => {
     let cancelled = false;
 
     const fetchHistory = async () => {
       try {
-        const res = await fetch(`${PRICE_API}/prices?market=${marketParam}&limit=50`);
+        const now = Math.floor(Date.now() / 1000);
+        const dayAgo = now - 86400;
+        const res = await fetch(`${PRICE_API}/prices?market=${marketParam}&from=${dayAgo}&to=${now}`);
         if (!res.ok) return;
         const rows: { ewma: number; timestamp: number }[] = await res.json();
         if (cancelled) return;
@@ -102,7 +104,7 @@ export function useOracle(
     };
 
     fetchHistory();
-    const id = setInterval(fetchHistory, 10_000);
+    const id = setInterval(fetchHistory, 60_000); // refresh every minute
     return () => { cancelled = true; clearInterval(id); };
   }, [marketParam]);
 
