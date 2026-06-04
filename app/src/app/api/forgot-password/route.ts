@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Pokeliquid <noreply@pokeliquid.xyz>",
+            from: "Pokeliquid <onboarding@resend.dev>",
             to: email,
             subject: "Reset your Pokeliquid password",
             html: `
