@@ -588,20 +588,33 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       ctx.fillText(`$${priceVal.toFixed(2)}`, w - pad.right + 6, y + 3);
     }
 
-    // X-axis time labels
-    const { labelInterval } = TF_CONFIG[timeframe];
+    // X-axis time labels — snap to clean boundaries
     ctx.fillStyle = "rgba(255,255,255,0.2)";
     ctx.font = "9px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
-    for (let i = 0; i < chartData.length; i += labelInterval) {
-      const x = pad.left + (i / (chartData.length - 1)) * cw;
-      const d = new Date(chartData[i].timestamp * 1000);
-      const label = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    const tStart = chartData[0].timestamp;
+    const tEnd = chartData[chartData.length - 1].timestamp;
+    const tRange = tEnd - tStart || 1;
+    // For 1D: label every 3 hours, for 1H: label every 15 minutes
+    const snapSec = timeframe === "1d" ? 3 * 3600 : 15 * 60;
+    const firstSnap = Math.ceil(tStart / snapSec) * snapSec;
+    for (let t = firstSnap; t <= tEnd; t += snapSec) {
+      const frac = (t - tStart) / tRange;
+      if (frac < 0.02 || frac > 0.98) continue; // skip edges
+      const x = pad.left + frac * cw;
+      const d = new Date(t * 1000);
+      let label: string;
+      if (timeframe === "1d") {
+        const hr = d.getHours();
+        label = hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`;
+      } else {
+        label = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+      }
       ctx.fillText(label, x, h - 4);
     }
-    // Always show last label
+    // Always show last label (current time)
     const lastX = pad.left + cw;
-    const lastD = new Date(chartData[chartData.length - 1].timestamp * 1000);
+    const lastD = new Date(tEnd * 1000);
     ctx.fillText(`${lastD.getHours().toString().padStart(2, "0")}:${lastD.getMinutes().toString().padStart(2, "0")}`, lastX, h - 4);
 
     // Fill area
