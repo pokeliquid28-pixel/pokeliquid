@@ -157,7 +157,7 @@ app/                        # Next.js 14 frontend
       NotificationBell.tsx  # Header notification dropdown
       ToastContainer.tsx    # Ephemeral toast notifications
       Header.tsx            # Nav + oracle indicator + wallet button
-      OracleChart.tsx       # Price chart (canvas)
+      OracleChart.tsx       # Price chart (canvas, OHLC candles via /candles endpoint)
       LongShortBar.tsx      # OI visualization
     hooks/
       useOracle.ts          # On-chain oracle + price history from keeper API
@@ -342,12 +342,31 @@ GET /ping                       # { ok: true, timestamp } — uptime monitoring
 GET /health                     # Comprehensive health: oracle, liquidation, funding, solana, protocol
 GET /prices?limit=50            # Last N price records
 GET /prices?from=1234&to=5678   # Records in unix timestamp range
+GET /candles?market=ETB&resolution=1h  # OHLC candles (1h or 1d)
 GET /stats                      # 24h/7d volume, trades, liquidations
 GET /trades?user=PUBKEY&limit=20 # Trade history for a user
+GET /trades/recent?limit=50     # Recent trades across all users
 GET /events/recent              # Recent decoded program events
 ```
 
 Health status logic: `healthy` (all normal) → `degraded` (oracle >10min stale OR >5 RPC errors/hr) → `critical` (oracle >30min stale OR RPC down OR vault <$10)
+
+### GET /candles
+Returns OHLC candle data aggregated from raw 5-minute price records.
+
+| Param | Default | Description |
+|-------|---------|-------------|
+| `market` | ETB | Market ID (ETB, CHARIZARD-X, CHARMANDER, PIKACHU) |
+| `resolution` | 1h | Candle resolution: `1h` (hourly) or `1d` (daily) |
+| `limit` | 100 | Max candles returned |
+
+Response:
+```json
+[
+  { "time": 1717401600, "open": 161.5, "high": 162.0, "low": 160.8, "close": 161.9 },
+  ...
+]
+```
 
 ---
 
@@ -416,6 +435,10 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - **Persistent infrastructure** — Hetzner keeper (pm2 + systemd), Vercel frontend, Supabase Postgres
 - **Secure auth** — bcrypt password hashing, AES-256-GCM key encryption, JWT sessions (HttpOnly cookies)
 - **Password recovery** — email-based forgot password flow via Resend (token-based, 1hr expiry, single-use)
+- **OHLC charts** — 1-hour and 1-day candle aggregation from 5-minute price data
+- **24h change tracking** — accurate 24-hour price change percentages per market
+- **Responsive mobile UI** — landing page, docs, and trading interface optimized for mobile
+- **Custom domain** — `pokeliquid.xyz` with verified email sending via Resend
 
 ## Known Limitations & Roadmap
 
@@ -427,7 +450,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 ### Nice to have
 - [ ] Mainnet deployment with real USDC
 - [ ] Referral / fee sharing system
-- [ ] Governance token
+- [ ] $POKE governance token
 
 ---
 
@@ -447,4 +470,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - RELAYER_PRIVATE_KEY is base58 format (not JSON array)
 - Password hashing uses `bcryptjs` (pure JS, no native deps) — legacy PBKDF2 hashes auto-migrate on login
 - JWT sessions use `jose` package (HS256) — 30-day expiry, HttpOnly/Secure/SameSite=Lax cookies
-- Forgot-password emails sent via Resend API — reset tokens stored in `password_reset_tokens` table
+- Forgot-password emails sent via Resend API (verified domain: `pokeliquid.xyz`) — reset tokens stored in `password_reset_tokens` table
+- Logout clears localStorage wallet + `walletName` (wallet adapter key) + JWT session cookie — prevents auto-reconnect
+- `SessionWalletAdapter.connect()` does NOT auto-generate keypairs — users must explicitly log in or choose guest mode
+- Guest wallets created via `createGuestWallet()` — generates keypair + requests funding from relayer
