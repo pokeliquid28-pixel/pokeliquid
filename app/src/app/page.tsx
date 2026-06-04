@@ -331,7 +331,7 @@ export default function TradePage() {
               </div>
               <span className="hidden lg:inline text-sm font-bold text-primary">{selectedMarket.name}</span>
               <span className="hidden lg:inline text-secondary text-xs cursor-pointer">&#9662;</span>
-              <span className="text-[9px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{selectedMarket.badge}</span>
+              {selectedMarket.badge && <span className="text-[9px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{selectedMarket.badge}</span>}
             </div>
             <div>
               <div className="text-lg font-bold text-long">${oracle.isLoading ? "—" : currentPrice.toFixed(2)}</div>
