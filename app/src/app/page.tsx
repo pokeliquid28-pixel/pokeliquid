@@ -52,8 +52,8 @@ function getMarketStatePDA(marketId: string): PublicKey {
   return pda;
 }
 
-// Persist landing bypass in sessionStorage so it survives refreshes within the tab
-let _passedLanding = typeof window !== "undefined" && sessionStorage.getItem("pokeliquid_passed") === "1";
+// Module-level flag — resets on every page reload / refresh
+let _passedLanding = false;
 
 type Side = "Long" | "Short";
 type OrderType = "MARKET" | "LIMIT" | "STOP";
@@ -250,7 +250,6 @@ export default function TradePage() {
 
   const handlePassLanding = useCallback(() => {
     _passedLanding = true;
-    try { sessionStorage.setItem("pokeliquid_passed", "1"); } catch {}
     setPassedLanding(true);
     window.dispatchEvent(new Event("pokeliquid:passed-landing"));
   }, []);

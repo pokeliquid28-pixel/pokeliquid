@@ -328,6 +328,7 @@ function MobileMenu({
                 fetch("/api/logout", { method: "POST" }).catch(() => {});
                 disconnect();
                 onClose();
+                window.location.href = "/";
               }}
               style={{
                 marginTop: 12,
