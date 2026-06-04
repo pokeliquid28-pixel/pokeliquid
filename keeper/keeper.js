@@ -1570,49 +1570,52 @@ function parseEventData(logLine) {
 }
 
 function decodePositionOpened(buf) {
-  // disc(8) + user(32) + direction(1) + collateral(8) + notional(8) + leverage(1) + entry_price(8) + fee_paid(8) + timestamp(8)
-  if (buf.length < 82) return null;
+  // disc(8) + user(32) + oracle(32) + direction(1) + collateral(8) + notional(8) + leverage(1) + entry_price(8) + fee_paid(8) + timestamp(8) = 114
+  if (buf.length < 114) return null;
   return {
     user: new PublicKey(buf.slice(8, 40)).toBase58(),
-    direction: buf[40] === 0 ? "long" : "short",
-    collateral: Number(buf.readBigUInt64LE(41)) / 1e6,
-    notional: Number(buf.readBigUInt64LE(49)) / 1e6,
-    leverage: buf[57],
-    entryPrice: Number(buf.readBigUInt64LE(58)) / 1e6,
-    feePaid: Number(buf.readBigUInt64LE(66)) / 1e6,
-    timestamp: Number(buf.readBigInt64LE(74)),
+    oracle: new PublicKey(buf.slice(40, 72)).toBase58(),
+    direction: buf[72] === 0 ? "long" : "short",
+    collateral: Number(buf.readBigUInt64LE(73)) / 1e6,
+    notional: Number(buf.readBigUInt64LE(81)) / 1e6,
+    leverage: buf[89],
+    entryPrice: Number(buf.readBigUInt64LE(90)) / 1e6,
+    feePaid: Number(buf.readBigUInt64LE(98)) / 1e6,
+    timestamp: Number(buf.readBigInt64LE(106)),
   };
 }
 
 function decodePositionClosed(buf) {
-  // disc(8) + user(32) + direction(1) + entry_price(8) + exit_price(8) + pnl(i64=8) + funding_paid(8) + fee_paid(8) + settlement(8) + reason(1) + timestamp(8)
-  if (buf.length < 98) return null;
-  const reasonByte = buf[89];
+  // disc(8) + user(32) + oracle(32) + direction(1) + entry_price(8) + exit_price(8) + pnl(i64=8) + funding_paid(8) + fee_paid(8) + settlement(8) + reason(1) + timestamp(8) = 130
+  if (buf.length < 130) return null;
+  const reasonByte = buf[121];
   const reasons = ["manual", "stop_loss", "take_profit", "liquidation"];
   return {
     user: new PublicKey(buf.slice(8, 40)).toBase58(),
-    direction: buf[40] === 0 ? "long" : "short",
-    entryPrice: Number(buf.readBigUInt64LE(41)) / 1e6,
-    exitPrice: Number(buf.readBigUInt64LE(49)) / 1e6,
-    pnl: Number(buf.readBigInt64LE(57)) / 1e6,
-    fundingPaid: Number(buf.readBigUInt64LE(65)) / 1e6,
-    feePaid: Number(buf.readBigUInt64LE(73)) / 1e6,
-    settlement: Number(buf.readBigUInt64LE(81)) / 1e6,
+    oracle: new PublicKey(buf.slice(40, 72)).toBase58(),
+    direction: buf[72] === 0 ? "long" : "short",
+    entryPrice: Number(buf.readBigUInt64LE(73)) / 1e6,
+    exitPrice: Number(buf.readBigUInt64LE(81)) / 1e6,
+    pnl: Number(buf.readBigInt64LE(89)) / 1e6,
+    fundingPaid: Number(buf.readBigUInt64LE(97)) / 1e6,
+    feePaid: Number(buf.readBigUInt64LE(105)) / 1e6,
+    settlement: Number(buf.readBigUInt64LE(113)) / 1e6,
     reason: reasons[reasonByte] || "manual",
-    timestamp: Number(buf.readBigInt64LE(90)),
+    timestamp: Number(buf.readBigInt64LE(122)),
   };
 }
 
 function decodePositionLiquidated(buf) {
-  // disc(8) + user(32) + liquidator(32) + entry_price(8) + exit_price(8) + collateral_lost(8) + timestamp(8)
-  if (buf.length < 104) return null;
+  // disc(8) + user(32) + oracle(32) + liquidator(32) + entry_price(8) + exit_price(8) + collateral_lost(8) + timestamp(8) = 136
+  if (buf.length < 136) return null;
   return {
     user: new PublicKey(buf.slice(8, 40)).toBase58(),
-    liquidator: new PublicKey(buf.slice(40, 72)).toBase58(),
-    entryPrice: Number(buf.readBigUInt64LE(72)) / 1e6,
-    exitPrice: Number(buf.readBigUInt64LE(80)) / 1e6,
-    collateralLost: Number(buf.readBigUInt64LE(88)) / 1e6,
-    timestamp: Number(buf.readBigInt64LE(96)),
+    oracle: new PublicKey(buf.slice(40, 72)).toBase58(),
+    liquidator: new PublicKey(buf.slice(72, 104)).toBase58(),
+    entryPrice: Number(buf.readBigUInt64LE(104)) / 1e6,
+    exitPrice: Number(buf.readBigUInt64LE(112)) / 1e6,
+    collateralLost: Number(buf.readBigUInt64LE(120)) / 1e6,
+    timestamp: Number(buf.readBigInt64LE(128)),
   };
 }
 

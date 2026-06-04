@@ -101,12 +101,6 @@ type RecentTrade = {
   action: string;
 };
 
-function normalizeTradeValue(v: number | null): number | null {
-  if (v == null) return null;
-  // If value looks like a raw u64 (> 100k), it was stored before keeper scaling fix
-  return v > 100_000 ? v / 1e6 : v;
-}
-
 function useRecentTrades(marketId: string) {
   const [trades, setTrades] = useState<RecentTrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,15 +112,7 @@ function useRecentTrades(marketId: string) {
         .then((r) => r.json())
         .then((data) => {
           if (!cancelled) {
-            const raw: RecentTrade[] = data.trades || [];
-            const normalized = raw.map((t) => ({
-              ...t,
-              entry_price: normalizeTradeValue(t.entry_price),
-              exit_price: normalizeTradeValue(t.exit_price),
-              notional: normalizeTradeValue(t.notional) ?? 0,
-              pnl: normalizeTradeValue(t.pnl),
-            }));
-            setTrades(normalized);
+            setTrades(data.trades || []);
             setLoading(false);
           }
         })
@@ -317,34 +303,6 @@ export default function TradePage() {
             ))}
           </div>
 
-          {/* Your positions (compact) */}
-          <div className="border-t border-border">
-            <div className="p-3">
-              <div className="text-[10px] uppercase tracking-wider text-secondary mb-2">Your Positions</div>
-              {margin.positions.length === 0 ? (
-                <div className="text-[10px] text-secondary/60">No open positions</div>
-              ) : (
-                <div className="space-y-1.5">
-                  {margin.positions.map((pos) => {
-                    const mkt = getMarketForOracle(pos.oracle);
-                    return (
-                      <div key={pos.index} className="flex items-center justify-between text-[10px]">
-                        <div className="flex items-center gap-1.5">
-                          <span className={pos.direction === "Long" ? "text-long" : "text-short"}>
-                            {pos.direction === "Long" ? "L" : "S"}
-                          </span>
-                          <span className="text-primary">{pos.leverage}x</span>
-                        </div>
-                        <span className="text-secondary truncate ml-1">
-                          {mkt?.name?.replace("-PERP", "") ?? "—"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* ── CENTER COLUMN: Chart + Order Entry ────────────────────── */}
