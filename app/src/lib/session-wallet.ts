@@ -138,6 +138,7 @@ export function clearSessionWallet() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(EMAIL_KEY);
+  localStorage.removeItem("walletName"); // wallet adapter's selected wallet
   sessionStorage.removeItem("pokeliquid_session_id");
 }
 
