@@ -12,6 +12,7 @@ import { useMarginAccount, Position } from "@/hooks/useMarginAccount";
 import { useMarket } from "@/hooks/useMarket";
 import { useOrderBook } from "@/hooks/useOrderBook";
 import { useMarketState } from "@/hooks/useMarketState";
+import { usePositionPrice } from "@/hooks/usePositionPrice";
 import { useNotifications } from "@/providers/NotificationProvider";
 import { incrementTradeCount } from "@/components/SaveWalletSheet";
 import { getProgram } from "@/lib/program";
@@ -100,6 +101,12 @@ type RecentTrade = {
   action: string;
 };
 
+function normalizeTradeValue(v: number | null): number | null {
+  if (v == null) return null;
+  // If value looks like a raw u64 (> 100k), it was stored before keeper scaling fix
+  return v > 100_000 ? v / 1e6 : v;
+}
+
 function useRecentTrades(marketId: string) {
   const [trades, setTrades] = useState<RecentTrade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +118,15 @@ function useRecentTrades(marketId: string) {
         .then((r) => r.json())
         .then((data) => {
           if (!cancelled) {
-            setTrades(data.trades || []);
+            const raw: RecentTrade[] = data.trades || [];
+            const normalized = raw.map((t) => ({
+              ...t,
+              entry_price: normalizeTradeValue(t.entry_price),
+              exit_price: normalizeTradeValue(t.exit_price),
+              notional: normalizeTradeValue(t.notional) ?? 0,
+              pnl: normalizeTradeValue(t.pnl),
+            }));
+            setTrades(normalized);
             setLoading(false);
           }
         })
@@ -311,7 +326,7 @@ export default function TradePage() {
               ) : (
                 <div className="space-y-1.5">
                   {margin.positions.map((pos) => {
-                    const pnl = rawToUsdc(calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional));
+                    const mkt = getMarketForOracle(pos.oracle);
                     return (
                       <div key={pos.index} className="flex items-center justify-between text-[10px]">
                         <div className="flex items-center gap-1.5">
@@ -320,8 +335,8 @@ export default function TradePage() {
                           </span>
                           <span className="text-primary">{pos.leverage}x</span>
                         </div>
-                        <span className={pnl >= 0 ? "text-long" : "text-short"}>
-                          {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}
+                        <span className="text-secondary truncate ml-1">
+                          {mkt?.name?.replace("-PERP", "") ?? "—"}
                         </span>
                       </div>
                     );
@@ -496,14 +511,9 @@ export default function TradePage() {
       {connected && margin.positions.length > 0 && (
         <PositionsTable
           positions={margin.positions}
-          oracle={oracle}
           protocol={protocol}
           margin={margin}
           onRefresh={handleRefresh}
-          oracleAddress={selectedMarket.oracleAddress}
-          marketId={selectedMarket.priceApiMarket}
-          marketLongOi={marketState.longOi}
-          marketShortOi={marketState.shortOi}
         />
       )}
     </div>
@@ -1248,44 +1258,74 @@ function CalcRow({ label, value, color }: { label: string; value: string; color?
 // POSITIONS TABLE
 // ═════════════════════════════════════════════════════════════════════════════
 
-function PositionsTable({
-  positions,
-  oracle,
+function getMarketForOracle(oracleAddr: string): Market | undefined {
+  return MARKETS.find((m) => m.oracleAddress === oracleAddr);
+}
+
+function getMarketIdForOracle(oracleAddr: string): string {
+  return getMarketForOracle(oracleAddr)?.priceApiMarket ?? "ETB";
+}
+
+// ── Individual position row (has its own price hook) ────────────────────────
+
+function PositionRow({
+  pos,
   protocol,
   margin,
   onRefresh,
-  oracleAddress,
-  marketId,
-  marketLongOi,
-  marketShortOi,
+  expandedIdx,
+  setExpandedIdx,
 }: {
-  positions: Position[];
-  oracle: ReturnType<typeof useOracle>;
+  pos: Position;
   protocol: ReturnType<typeof useProtocolState>;
   margin: ReturnType<typeof useMarginAccount>;
   onRefresh: () => void;
-  oracleAddress?: string;
-  marketId?: string;
-  marketLongOi: number;
-  marketShortOi: number;
+  expandedIdx: number | null;
+  setExpandedIdx: (idx: number | null) => void;
 }) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const anchorWallet = useAnchorWallet();
   const { addNotification } = useNotifications();
-  const [loading, setLoading] = useState<number | null>(null);
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
   const [slInput, setSlInput] = useState("");
   const [tpInput, setTpInput] = useState("");
   const [marginMode, setMarginMode] = useState<"idle" | "add" | "remove">("idle");
   const [marginInput, setMarginInput] = useState("");
-  const [confirmClose, setConfirmClose] = useState<number | null>(null);
 
-  const currentPriceUsd = rawToPrice(oracle.price);
+  // Each row fetches its OWN market price
+  const markPriceRaw = usePositionPrice(pos.oracle);
+  const markPriceUsd = rawToPrice(markPriceRaw);
+  const market = getMarketForOracle(pos.oracle);
+  const marketIdForPos = getMarketIdForOracle(pos.oracle);
 
-  async function handleClose(pos: Position) {
+  const pnlRaw = markPriceRaw > 0 ? calcPnl(pos.direction, markPriceRaw, pos.entryPrice, pos.notional) : 0;
+  const pnl = rawToUsdc(pnlRaw);
+  const isProfit = pnl >= 0;
+  const entryUsd = rawToPrice(pos.entryPrice);
+  const liq = pos.direction === "Long"
+    ? calcLiqPriceLong(pos.entryPrice, pos.leverage)
+    : calcLiqPriceShort(pos.entryPrice, pos.leverage);
+
+  const isExpanded = expandedIdx === pos.index;
+  const FUNDING_RATE_SCALE = 100_000;
+  const nowSec = Math.floor(Date.now() / 1000);
+  const hoursOpen = Math.max(0, Math.floor((nowSec - pos.openTimestamp) / 3600));
+  const marginRatio = pos.notional > 0 ? (pos.collateral / pos.notional) * 100 : 100;
+
+  // Funding estimate (simplified — uses base rate only since we don't have per-position market OI here)
+  const fundingAccrued = rawToUsdc(Math.floor(pos.notional * protocol.baseFundingRatePerHour * hoursOpen / FUNDING_RATE_SCALE));
+
+  const timeOpenStr = hoursOpen >= 24
+    ? `${Math.floor(hoursOpen / 24)}d ${hoursOpen % 24}h`
+    : hoursOpen > 0
+    ? `${hoursOpen}h ${Math.floor(((nowSec - pos.openTimestamp) % 3600) / 60)}m`
+    : `${Math.max(1, Math.floor((nowSec - pos.openTimestamp) / 60))}m`;
+
+  async function handleClose() {
     if (!publicKey || !anchorWallet) return;
-    setLoading(pos.index);
+    setLoading(true);
     try {
       const program = getProgram(connection, anchorWallet);
       const marginPda = getMarginAccountPDA(publicKey);
@@ -1293,11 +1333,11 @@ function PositionsTable({
       let needsCreate = false;
       try { await getAccount(connection, ata); } catch { needsCreate = true; }
 
-      const oracleKey = oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT;
+      const oracleKey = pos.oracle ? new PublicKey(pos.oracle) : ORACLE_ACCOUNT;
       const txBuilder = (program.methods as any).closePosition(pos.index).accounts({
         user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
         oracle: oracleKey,
-        marketState: getMarketStatePDA(marketId || "ETB"),
+        marketState: getMarketStatePDA(marketIdForPos),
         feeVault: FEE_VAULT, insuranceFund: INSURANCE_FUND,
         userTokenAccount: ata, tokenProgram: TOKEN_PROGRAM_ID,
         liquidityPool: PublicKey.findProgramAddressSync([Buffer.from("liquidity_pool")], PROGRAM_ID)[0],
@@ -1309,28 +1349,27 @@ function PositionsTable({
       } else {
         await txBuilder.rpc();
       }
-      const pnl = rawToUsdc(calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional));
       addNotification(pnl >= 0 ? "success" : "warning", `Position #${pos.index} Closed`, `PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}`);
-      setConfirmClose(null);
+      setConfirmClose(false);
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
       addNotification("error", "Close Failed", e?.message ?? "Transaction failed");
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   }
 
-  async function handleSetSlTp(pos: Position) {
+  async function handleSetSlTp() {
     if (!publicKey || !anchorWallet) return;
-    setLoading(pos.index);
+    setLoading(true);
     try {
       const program = getProgram(connection, anchorWallet);
       const marginPda = getMarginAccountPDA(publicKey);
       const slBn = slInput ? new BN(Math.round(parseFloat(slInput) * 1_000_000)) : null;
       const tpBn = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
-
+      const oracleKey = pos.oracle ? new PublicKey(pos.oracle) : ORACLE_ACCOUNT;
       await (program.methods as any).setSlTp(pos.index, slBn, tpBn).accounts({
-        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
+        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: oracleKey,
       }).rpc();
       addNotification("success", `SL/TP Updated — #${pos.index}`, `SL: ${slInput || "none"} / TP: ${tpInput || "none"}`);
       setExpandedIdx(null);
@@ -1338,65 +1377,296 @@ function PositionsTable({
     } catch (e: any) {
       addNotification("error", "SL/TP Failed", e?.message ?? "Failed");
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   }
 
-  async function handleAddMargin(pos: Position) {
+  async function handleMarginAction() {
     if (!publicKey || !anchorWallet) return;
     const amt = parseFloat(marginInput) || 0;
     if (amt <= 0) return;
-    setLoading(pos.index);
+    setLoading(true);
     try {
       const program = getProgram(connection, anchorWallet);
       const marginPda = getMarginAccountPDA(publicKey);
-      await (program.methods as any).addMargin(pos.index, new BN(Math.round(amt * 1e6))).accounts({
-        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
-      }).rpc();
-      addNotification("success", `Margin Added — #${pos.index}`, `+$${amt.toFixed(2)}`);
+      if (marginMode === "add") {
+        await (program.methods as any).addMargin(pos.index, new BN(Math.round(amt * 1e6))).accounts({
+          user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
+        }).rpc();
+        addNotification("success", `Margin Added — #${pos.index}`, `+$${amt.toFixed(2)}`);
+      } else {
+        const oracleKey = pos.oracle ? new PublicKey(pos.oracle) : ORACLE_ACCOUNT;
+        await (program.methods as any).removeMargin(pos.index, new BN(Math.round(amt * 1e6))).accounts({
+          user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: oracleKey,
+        }).rpc();
+        addNotification("info", `Margin Removed — #${pos.index}`, `-$${amt.toFixed(2)}`);
+      }
       setMarginMode("idle");
       setMarginInput("");
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
-      addNotification("error", "Add Margin Failed", e?.message ?? "Failed");
+      addNotification("error", `${marginMode === "add" ? "Add" : "Remove"} Margin Failed`, e?.message ?? "Failed");
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   }
 
-  async function handleRemoveMargin(pos: Position) {
-    if (!publicKey || !anchorWallet) return;
-    const amt = parseFloat(marginInput) || 0;
-    if (amt <= 0) return;
-    setLoading(pos.index);
-    try {
-      const program = getProgram(connection, anchorWallet);
-      const marginPda = getMarginAccountPDA(publicKey);
-      await (program.methods as any).removeMargin(pos.index, new BN(Math.round(amt * 1e6))).accounts({
-        user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda, oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
-      }).rpc();
-      addNotification("info", `Margin Removed — #${pos.index}`, `-$${amt.toFixed(2)}`);
+  function toggleExpand() {
+    if (isExpanded) {
+      setExpandedIdx(null);
+    } else {
+      setExpandedIdx(pos.index);
+      setSlInput(pos.slPrice ? rawToPrice(pos.slPrice).toFixed(2) : "");
+      setTpInput(pos.tpPrice ? rawToPrice(pos.tpPrice).toFixed(2) : "");
       setMarginMode("idle");
       setMarginInput("");
-      setTimeout(onRefresh, 2000);
-    } catch (e: any) {
-      addNotification("error", "Remove Margin Failed", e?.message ?? "Failed");
-    } finally {
-      setLoading(null);
     }
   }
 
-  const FUNDING_RATE_SCALE = 100_000;
+  // ── Desktop row ──────────────────────────────────────────────────────────
+
+  const desktopRow = (
+    <div key={pos.index}>
+      <div
+        className="hidden md:grid grid-cols-8 text-[12px] px-4 h-[36px] border-b border-border/30 hover:bg-white/[.02] items-center cursor-pointer select-none"
+        onClick={toggleExpand}
+      >
+        <span className="text-primary truncate">{market?.name ?? "—"}</span>
+        <span className={pos.direction === "Long" ? "text-long" : "text-short"}>
+          {pos.direction[0]}{pos.leverage}x
+        </span>
+        <span className="text-primary">${rawToUsdc(pos.notional).toFixed(2)}</span>
+        <span className="text-primary">${entryUsd.toFixed(2)}</span>
+        <span className="text-primary">{markPriceRaw > 0 ? `$${markPriceUsd.toFixed(2)}` : "..."}</span>
+        <span className="text-short">${liq.toFixed(2)}</span>
+        <span className={isProfit ? "text-long" : "text-short"}>
+          {isProfit ? "+" : ""}${pnl.toFixed(2)}
+        </span>
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          {confirmClose ? (
+            <div className="flex gap-1 items-center">
+              <button onClick={handleClose} disabled={loading} className="text-[10px] btn-red py-0.5 px-2">
+                {loading ? "..." : "Confirm"}
+              </button>
+              <button onClick={() => setConfirmClose(false)} className="text-[10px] text-secondary px-1">x</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmClose(true)}
+              disabled={loading || markPriceRaw === 0}
+              className="text-[10px] text-short hover:bg-short/10 border border-short/40 px-2 py-0.5 disabled:opacity-40"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop expanded panel */}
+      {isExpanded && (
+        <div className="hidden md:block px-4 py-3 bg-bg border-b border-border/30">
+          <div className="grid grid-cols-4 gap-4">
+            {/* Position Info */}
+            <div className="space-y-1 text-[11px]">
+              <div className="text-[9px] text-secondary uppercase mb-1">Details</div>
+              <div className="flex justify-between">
+                <span className="text-secondary">Margin</span>
+                <span className={marginRatio < 15 ? "text-short" : "text-long"}>{marginRatio.toFixed(1)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-secondary">Collateral</span>
+                <span className="text-primary">${rawToUsdc(pos.collateral).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-secondary">Funding</span>
+                <span className={hoursOpen > 0 ? "text-short" : "text-secondary"}>
+                  {hoursOpen > 0 ? `-$${fundingAccrued.toFixed(4)}` : "< 1h"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-secondary">Open</span>
+                <span className="text-primary">{timeOpenStr}</span>
+              </div>
+            </div>
+
+            {/* SL/TP */}
+            <div className="space-y-1 text-[11px]">
+              <div className="text-[9px] text-secondary uppercase mb-1">SL: {pos.slPrice ? `$${rawToPrice(pos.slPrice).toFixed(2)}` : "none"} / TP: {pos.tpPrice ? `$${rawToPrice(pos.tpPrice).toFixed(2)}` : "none"}</div>
+              <div className="grid grid-cols-2 gap-1">
+                <input type="number" step="0.01" value={slInput} onChange={(e) => setSlInput(e.target.value)}
+                  placeholder="SL" className="field-input text-[10px] py-1" />
+                <input type="number" step="0.01" value={tpInput} onChange={(e) => setTpInput(e.target.value)}
+                  placeholder="TP" className="field-input text-[10px] py-1" />
+              </div>
+              <button onClick={handleSetSlTp} disabled={loading}
+                className="btn-outline w-full text-[9px] py-1 active">
+                {loading ? "..." : "Set SL/TP"}
+              </button>
+            </div>
+
+            {/* Margin Management */}
+            <div className="space-y-1">
+              <div className="text-[9px] text-secondary uppercase mb-1">Margin</div>
+              <div className="flex gap-1">
+                <button onClick={() => setMarginMode("add")}
+                  className={`flex-1 text-[9px] py-0.5 border ${marginMode === "add" ? "border-long text-long" : "border-border text-secondary"}`}>
+                  Add
+                </button>
+                <button onClick={() => setMarginMode("remove")}
+                  className={`flex-1 text-[9px] py-0.5 border ${marginMode === "remove" ? "border-short text-short" : "border-border text-secondary"}`}>
+                  Remove
+                </button>
+              </div>
+              {marginMode !== "idle" && (
+                <>
+                  <input type="number" step="0.01" value={marginInput} onChange={(e) => setMarginInput(e.target.value)}
+                    placeholder="0.00" className="field-input text-[10px] py-1" />
+                  <button onClick={handleMarginAction} disabled={loading || !(parseFloat(marginInput) > 0)}
+                    className={`w-full text-[9px] py-1 font-bold uppercase ${marginMode === "add" ? "btn-green" : "btn-red"}`}>
+                    {loading ? "..." : marginMode === "add" ? "Add" : "Remove"}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Margin bar visual */}
+            <div className="space-y-1">
+              <div className="text-[9px] text-secondary uppercase mb-1">Margin Ratio</div>
+              <div className="w-full h-3 bg-border/30 rounded-sm overflow-hidden">
+                <div
+                  className={`h-full ${marginRatio < 8 ? "bg-short" : marginRatio < 15 ? "bg-yellow-500" : "bg-long"}`}
+                  style={{ width: `${Math.min(100, marginRatio)}%` }}
+                />
+              </div>
+              <div className={`text-[11px] font-bold ${marginRatio < 8 ? "text-short" : marginRatio < 15 ? "text-yellow-500" : "text-long"}`}>
+                {marginRatio.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Mobile row ───────────────────────────────────────────────────────────
+
+  const mobileRow = (
+    <div key={`m-${pos.index}`} className="md:hidden">
+      <div
+        className="grid grid-cols-4 text-[11px] px-3 h-[36px] border-b border-border/30 hover:bg-white/[.02] items-center cursor-pointer select-none"
+        onClick={toggleExpand}
+      >
+        <span className="text-primary truncate text-[10px]">{market?.name?.replace("-PERP", "") ?? "—"}</span>
+        <span className={pos.direction === "Long" ? "text-long" : "text-short"}>
+          {pos.direction[0]}{pos.leverage}x
+        </span>
+        <span className={isProfit ? "text-long" : "text-short"}>
+          {isProfit ? "+" : ""}${pnl.toFixed(2)}
+        </span>
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          {confirmClose ? (
+            <div className="flex gap-1 items-center">
+              <button onClick={handleClose} disabled={loading} className="text-[9px] btn-red py-0.5 px-1.5">
+                {loading ? "..." : "OK"}
+              </button>
+              <button onClick={() => setConfirmClose(false)} className="text-[9px] text-secondary px-0.5">x</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmClose(true)}
+              disabled={loading || markPriceRaw === 0}
+              className="text-[9px] text-short hover:bg-short/10 border border-short/40 px-1.5 py-0.5 disabled:opacity-40"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile expanded panel */}
+      {isExpanded && (
+        <div className="px-3 py-2 bg-bg border-b border-border/30 space-y-2">
+          <div className="grid grid-cols-3 gap-2 text-[10px]">
+            <div><span className="text-secondary">Entry </span><span className="text-primary">${entryUsd.toFixed(2)}</span></div>
+            <div><span className="text-secondary">Mark </span><span className="text-primary">{markPriceRaw > 0 ? `$${markPriceUsd.toFixed(2)}` : "..."}</span></div>
+            <div><span className="text-secondary">Liq </span><span className="text-short">${liq.toFixed(2)}</span></div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-[10px]">
+            <div><span className="text-secondary">Size </span><span className="text-primary">${rawToUsdc(pos.notional).toFixed(2)}</span></div>
+            <div><span className="text-secondary">Margin </span><span className={marginRatio < 15 ? "text-short" : "text-long"}>{marginRatio.toFixed(1)}%</span></div>
+            <div><span className="text-secondary">Open </span><span className="text-primary">{timeOpenStr}</span></div>
+          </div>
+          <div className="text-[10px]">
+            <span className="text-secondary">SL: </span><span className="text-primary">{pos.slPrice ? `$${rawToPrice(pos.slPrice).toFixed(2)}` : "none"}</span>
+            <span className="text-secondary ml-3">TP: </span><span className="text-primary">{pos.tpPrice ? `$${rawToPrice(pos.tpPrice).toFixed(2)}` : "none"}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1">
+            <input type="number" step="0.01" value={slInput} onChange={(e) => setSlInput(e.target.value)}
+              placeholder="SL" className="field-input text-[10px] py-1" />
+            <input type="number" step="0.01" value={tpInput} onChange={(e) => setTpInput(e.target.value)}
+              placeholder="TP" className="field-input text-[10px] py-1" />
+          </div>
+          <button onClick={handleSetSlTp} disabled={loading}
+            className="btn-outline w-full text-[9px] py-1 active">
+            {loading ? "..." : "Set SL/TP"}
+          </button>
+          <div className="flex gap-1">
+            <button onClick={() => setMarginMode(marginMode === "add" ? "idle" : "add")}
+              className={`flex-1 text-[9px] py-0.5 border ${marginMode === "add" ? "border-long text-long" : "border-border text-secondary"}`}>
+              +Margin
+            </button>
+            <button onClick={() => setMarginMode(marginMode === "remove" ? "idle" : "remove")}
+              className={`flex-1 text-[9px] py-0.5 border ${marginMode === "remove" ? "border-short text-short" : "border-border text-secondary"}`}>
+              -Margin
+            </button>
+          </div>
+          {marginMode !== "idle" && (
+            <div className="flex gap-1">
+              <input type="number" step="0.01" value={marginInput} onChange={(e) => setMarginInput(e.target.value)}
+                placeholder="0.00" className="field-input text-[10px] py-1 flex-1" />
+              <button onClick={handleMarginAction} disabled={loading || !(parseFloat(marginInput) > 0)}
+                className={`text-[9px] py-1 px-3 font-bold uppercase ${marginMode === "add" ? "btn-green" : "btn-red"}`}>
+                {loading ? "..." : "Go"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return <>{desktopRow}{mobileRow}</>;
+}
+
+// ── Positions panel container ───────────────────────────────────────────────
+
+function PositionsTable({
+  positions,
+  protocol,
+  margin,
+  onRefresh,
+}: {
+  positions: Position[];
+  protocol: ReturnType<typeof useProtocolState>;
+  margin: ReturnType<typeof useMarginAccount>;
+  onRefresh: () => void;
+}) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const count = positions.length;
+  const needsScroll = count >= 4;
 
   return (
     <div className="border-t border-border bg-panel">
-      <div className="px-4 py-2 border-b border-border">
-        <span className="text-[10px] uppercase tracking-wider text-secondary">Open Positions</span>
+      <div className="px-4 py-1.5 border-b border-border flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-wider text-secondary">Open Positions ({count})</span>
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden md:block overflow-x-auto">
-        <div className="grid grid-cols-9 text-[9px] uppercase text-secondary px-4 py-2 border-b border-border/50 min-w-[800px]">
+      <div
+        className={needsScroll ? "overflow-y-auto md:max-h-[200px] max-h-[160px]" : ""}
+        style={needsScroll ? { scrollbarWidth: "thin", scrollbarColor: "#00ff41 #111111" } : undefined}
+      >
+        {/* Desktop header */}
+        <div className="hidden md:grid grid-cols-8 text-[9px] uppercase text-secondary px-4 h-[28px] items-center border-b border-border/50 sticky top-0 bg-panel z-10">
           <span>Market</span>
           <span>Side</span>
           <span>Size</span>
@@ -1404,203 +1674,28 @@ function PositionsTable({
           <span>Mark</span>
           <span>Liq</span>
           <span>PnL</span>
-          <span>Funding</span>
-          <span>Actions</span>
+          <span className="text-right">Actions</span>
         </div>
-        {positions.map((pos) => {
-          const pnlRaw = calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional);
-          const pnl = rawToUsdc(pnlRaw);
-          const isProfit = pnl >= 0;
-          const entryUsd = rawToPrice(pos.entryPrice);
-          const liq = pos.direction === "Long"
-            ? calcLiqPriceLong(pos.entryPrice, pos.leverage)
-            : calcLiqPriceShort(pos.entryPrice, pos.leverage);
-          const nowSec = Math.floor(Date.now() / 1000);
-          const hoursOpen = Math.max(0, Math.floor((nowSec - pos.openTimestamp) / 3600));
-          const totalOI = marketLongOi + marketShortOi;
-          const skewRate = totalOI > 0 ? Math.floor(Math.abs(marketLongOi - marketShortOi) * protocol.skewFactor / totalOI) : 0;
-          const onMajority = pos.direction === "Long" ? marketLongOi >= marketShortOi : marketShortOi >= marketLongOi;
-          const hourlyRate = onMajority ? protocol.baseFundingRatePerHour + skewRate : Math.max(0, protocol.baseFundingRatePerHour - skewRate);
-          const fundingAccrued = rawToUsdc(Math.floor(pos.notional * hourlyRate * hoursOpen / FUNDING_RATE_SCALE));
-          const isExpanded = expandedIdx === pos.index;
 
-          return (
-            <div key={pos.index}>
-              <div className="grid grid-cols-9 text-[11px] px-4 py-2.5 border-b border-border/30 hover:bg-white/[.01] items-center min-w-[800px]">
-                <span className="text-primary">{MARKETS[0]?.name ?? "—"}</span>
-                <span className={pos.direction === "Long" ? "text-long" : "text-short"}>
-                  {pos.direction.toUpperCase()} {pos.leverage}x
-                </span>
-                <span className="text-primary">${rawToUsdc(pos.notional).toFixed(2)}</span>
-                <span className="text-primary">${entryUsd.toFixed(2)}</span>
-                <span className="text-primary">${currentPriceUsd.toFixed(2)}</span>
-                <span className="text-short">${liq.toFixed(2)}</span>
-                <span className={isProfit ? "text-long" : "text-short"}>
-                  {isProfit ? "+" : ""}${pnl.toFixed(2)}
-                </span>
-                <span className={hoursOpen > 0 ? "text-short" : "text-secondary"}>
-                  {hoursOpen > 0 ? `-$${fundingAccrued.toFixed(4)}` : "< 1h"}
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => {
-                      setExpandedIdx(isExpanded ? null : pos.index);
-                      setSlInput(pos.slPrice ? rawToPrice(pos.slPrice).toFixed(2) : "");
-                      setTpInput(pos.tpPrice ? rawToPrice(pos.tpPrice).toFixed(2) : "");
-                      setMarginMode("idle");
-                    }}
-                    className="text-[9px] text-secondary hover:text-primary border border-border px-2 py-1"
-                  >
-                    {isExpanded ? "Hide" : "Manage"}
-                  </button>
-                  {confirmClose === pos.index ? (
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleClose(pos)}
-                        disabled={loading === pos.index}
-                        className="text-[9px] btn-red py-1 px-2"
-                      >
-                        {loading === pos.index ? "..." : "Confirm"}
-                      </button>
-                      <button onClick={() => setConfirmClose(null)} className="text-[9px] text-secondary px-1">
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmClose(pos.index)}
-                      disabled={loading === pos.index || oracle.isStale}
-                      className="text-[9px] text-short hover:bg-short/10 border border-short/40 px-2 py-1 disabled:opacity-40"
-                    >
-                      Close
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* Mobile header */}
+        <div className="md:hidden grid grid-cols-4 text-[9px] uppercase text-secondary px-3 h-[24px] items-center border-b border-border/50 sticky top-0 bg-panel z-10">
+          <span>Market</span>
+          <span>Side</span>
+          <span>PnL</span>
+          <span className="text-right">Actions</span>
+        </div>
 
-              {/* Expanded management panel */}
-              {isExpanded && (
-                <div className="px-4 py-3 bg-bg border-b border-border/30 min-w-[800px]">
-                  <div className="grid grid-cols-3 gap-4">
-                    {/* SL/TP */}
-                    <div className="space-y-2">
-                      <div className="text-[9px] text-secondary uppercase">Stop Loss / Take Profit</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input type="number" step="0.01" value={slInput} onChange={(e) => setSlInput(e.target.value)}
-                          placeholder="SL Price" className="field-input text-[10px] py-1.5" />
-                        <input type="number" step="0.01" value={tpInput} onChange={(e) => setTpInput(e.target.value)}
-                          placeholder="TP Price" className="field-input text-[10px] py-1.5" />
-                      </div>
-                      <button onClick={() => handleSetSlTp(pos)} disabled={loading === pos.index}
-                        className="btn-outline w-full text-[9px] py-1.5 active">
-                        {loading === pos.index ? "..." : "Set SL/TP"}
-                      </button>
-                    </div>
-
-                    {/* Add/Remove Margin */}
-                    <div className="space-y-2">
-                      <div className="text-[9px] text-secondary uppercase">Margin</div>
-                      <div className="flex gap-1">
-                        <button onClick={() => setMarginMode("add")}
-                          className={`flex-1 text-[9px] py-1 border ${marginMode === "add" ? "border-long text-long" : "border-border text-secondary"}`}>
-                          Add
-                        </button>
-                        <button onClick={() => setMarginMode("remove")}
-                          className={`flex-1 text-[9px] py-1 border ${marginMode === "remove" ? "border-short text-short" : "border-border text-secondary"}`}>
-                          Remove
-                        </button>
-                      </div>
-                      {marginMode !== "idle" && (
-                        <>
-                          <input type="number" step="0.01" value={marginInput} onChange={(e) => setMarginInput(e.target.value)}
-                            placeholder="0.00" className="field-input text-[10px] py-1.5" />
-                          <button
-                            onClick={() => marginMode === "add" ? handleAddMargin(pos) : handleRemoveMargin(pos)}
-                            disabled={loading === pos.index || !(parseFloat(marginInput) > 0)}
-                            className={`w-full text-[9px] py-1.5 font-bold uppercase ${marginMode === "add" ? "btn-green" : "btn-red"}`}>
-                            {loading === pos.index ? "..." : marginMode === "add" ? "Add Margin" : "Remove Margin"}
-                          </button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Position Info */}
-                    <div className="space-y-1 text-[10px]">
-                      <div className="text-[9px] text-secondary uppercase mb-1">Position Details</div>
-                      <div className="flex justify-between">
-                        <span className="text-secondary">Margin Ratio</span>
-                        <span className={`${(pos.collateral / pos.notional) * 100 < 15 ? "text-short" : "text-long"}`}>
-                          {((pos.collateral / pos.notional) * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-secondary">SL</span>
-                        <span className="text-primary">{pos.slPrice ? `$${rawToPrice(pos.slPrice).toFixed(2)}` : "Not set"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-secondary">TP</span>
-                        <span className="text-primary">{pos.tpPrice ? `$${rawToPrice(pos.tpPrice).toFixed(2)}` : "Not set"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-secondary">Collateral</span>
-                        <span className="text-primary">${rawToUsdc(pos.collateral).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-secondary">Funding Rate</span>
-                        <span className="text-primary">{(hourlyRate / FUNDING_RATE_SCALE * 100).toFixed(4)}%/hr</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Mobile card view */}
-      <div className="md:hidden space-y-0">
-        {positions.map((pos) => {
-          const pnl = rawToUsdc(calcPnl(pos.direction, oracle.price, pos.entryPrice, pos.notional));
-          const isProfit = pnl >= 0;
-          const liq = pos.direction === "Long" ? calcLiqPriceLong(pos.entryPrice, pos.leverage) : calcLiqPriceShort(pos.entryPrice, pos.leverage);
-          return (
-            <div key={pos.index} className="p-3 border-b border-border/30">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold ${pos.direction === "Long" ? "text-long" : "text-short"}`}>
-                    {pos.direction.toUpperCase()} {pos.leverage}x
-                  </span>
-                  <span className="text-[10px] text-primary">${rawToUsdc(pos.notional).toFixed(2)}</span>
-                </div>
-                <span className={`text-[11px] font-bold ${isProfit ? "text-long" : "text-short"}`}>
-                  {isProfit ? "+" : ""}${pnl.toFixed(2)}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-[10px] mb-2">
-                <div>
-                  <div className="text-secondary">Entry</div>
-                  <div className="text-primary">${rawToPrice(pos.entryPrice).toFixed(2)}</div>
-                </div>
-                <div>
-                  <div className="text-secondary">Mark</div>
-                  <div className="text-primary">${currentPriceUsd.toFixed(2)}</div>
-                </div>
-                <div>
-                  <div className="text-secondary">Liq</div>
-                  <div className="text-short">${liq.toFixed(2)}</div>
-                </div>
-              </div>
-              <button
-                onClick={() => confirmClose === pos.index ? handleClose(pos) : setConfirmClose(pos.index)}
-                disabled={loading === pos.index || oracle.isStale}
-                className="w-full py-2 text-[10px] font-bold uppercase border border-short/40 text-short hover:bg-short/10 disabled:opacity-40"
-              >
-                {loading === pos.index ? "..." : confirmClose === pos.index ? "Confirm Close" : "Close Position"}
-              </button>
-            </div>
-          );
-        })}
+        {positions.map((pos) => (
+          <PositionRow
+            key={pos.index}
+            pos={pos}
+            protocol={protocol}
+            margin={margin}
+            onRefresh={onRefresh}
+            expandedIdx={expandedIdx}
+            setExpandedIdx={setExpandedIdx}
+          />
+        ))}
       </div>
     </div>
   );

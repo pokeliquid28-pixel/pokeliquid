@@ -7,6 +7,7 @@ import { getMarginAccountPDA } from "@/lib/addresses";
 
 export type Position = {
   index: number;        // slot index 0–4
+  oracle: string;       // oracle pubkey (base58) — identifies which market
   direction: "Long" | "Short";
   collateral: number;   // raw
   notional: number;     // raw
@@ -69,6 +70,7 @@ export function useMarginAccount(): MarginAccountData {
           if (p) {
             positions.push({
               index: i,
+              oracle: p.oracle?.toBase58?.() ?? "",
               direction: decodeDirection(p.direction),
               collateral: p.collateral.toNumber(),
               notional: p.notional.toNumber(),

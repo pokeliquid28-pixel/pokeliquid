@@ -194,7 +194,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           : calcLiqPriceShort(pos.entryPrice, pos.leverage);
 
         const lastWarned = lastLiqWarnings.current[pos.index] ?? 0;
-        const cooldown = 60_000; // 1 minute between repeated warnings
+        const cooldown = 300_000; // 5 minutes between repeated warnings
 
         if (marginRatio < 8 && now - lastWarned > cooldown) {
           lastLiqWarnings.current[pos.index] = now;
@@ -215,9 +215,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
 
     checkLiquidation();
-    const id = setInterval(checkLiquidation, 10_000);
+    const id = setInterval(checkLiquidation, 30_000);
     return () => clearInterval(id);
-  }, [connected, margin.positions, margin.hasOpenPosition, oracle.price, addNotification]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, margin.hasOpenPosition, oracle.price]);
 
   // ── Price movement monitor ─────────────────────────────────────────────
 

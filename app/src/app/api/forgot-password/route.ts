@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       // Send email via Resend
       const resendKey = process.env.RESEND_API_KEY;
       if (resendKey) {
-        await fetch("https://api.resend.com/emails", {
+        const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${resendKey}`,
@@ -45,6 +45,12 @@ export async function POST(req: NextRequest) {
             `,
           }),
         });
+        if (!emailRes.ok) {
+          const errBody = await emailRes.text();
+          console.error("Resend API error:", emailRes.status, errBody);
+        }
+      } else {
+        console.error("RESEND_API_KEY not set — cannot send password reset email");
       }
     }
 
