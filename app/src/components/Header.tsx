@@ -9,7 +9,7 @@ import { WalletButton } from "./WalletButton";
 import { NotificationBell } from "./NotificationBell";
 import { Logo } from "./Logo";
 import { useOracle, OracleHealth } from "@/hooks/useOracle";
-import { getSavedEmail } from "@/lib/session-wallet";
+import { getSavedEmail, clearSessionWallet } from "@/lib/session-wallet";
 import { MARKETS } from "@/lib/markets";
 
 // ─── Nav config ────────────────────────────────────────────────────────────────
@@ -326,6 +326,7 @@ function MobileMenu({
             <button
               onClick={() => {
                 fetch("/api/logout", { method: "POST" }).catch(() => {});
+                clearSessionWallet();
                 disconnect();
                 onClose();
                 window.location.href = "/";
