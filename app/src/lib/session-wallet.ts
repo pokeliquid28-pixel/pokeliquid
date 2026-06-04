@@ -37,35 +37,14 @@ export class SessionWalletAdapter extends BaseSignerWalletAdapter {
     this._connecting = true;
 
     try {
-      // Try loading from localStorage
+      // Try loading from localStorage — do NOT generate a new keypair on connect.
+      // New keypairs are only created explicitly via guest mode or signup.
       const stored = loadSessionKeypair();
       if (stored) {
         this._keypair = stored;
       } else {
-        // Generate new keypair and request funding from API
-        const kp = Keypair.generate();
-        saveSessionKeypair(kp);
-        this._keypair = kp;
-
-        // Fire-and-forget: request funding
-        try {
-          const res = await fetch("/api/create-session-wallet", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              publicKey: kp.publicKey.toBase58(),
-              privateKey: JSON.stringify(Array.from(kp.secretKey)),
-            }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.sessionId) {
-              sessionStorage.setItem("pokeliquid_session_id", data.sessionId);
-            }
-          }
-        } catch {
-          // API not available — wallet still works, user can airdrop manually
-        }
+        this._connecting = false;
+        return; // No wallet — user must log in or choose guest mode
       }
 
       this.emit("connect", this._keypair.publicKey);
@@ -160,4 +139,20 @@ export function clearSessionWallet() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(EMAIL_KEY);
   sessionStorage.removeItem("pokeliquid_session_id");
+}
+
+/** Create a new guest keypair, save to localStorage, and request funding. */
+export async function createGuestWallet(): Promise<void> {
+  const kp = Keypair.generate();
+  saveSessionKeypair(kp);
+  try {
+    await fetch("/api/create-session-wallet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        publicKey: kp.publicKey.toBase58(),
+        privateKey: JSON.stringify(Array.from(kp.secretKey)),
+      }),
+    });
+  } catch { /* funding optional */ }
 }

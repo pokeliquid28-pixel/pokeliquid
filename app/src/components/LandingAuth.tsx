@@ -9,6 +9,7 @@ import {
   setSessionFromPrivateKey,
   setSavedEmail,
   saveSessionKeypair,
+  createGuestWallet,
   SessionWalletName,
 } from "@/lib/session-wallet";
 import { Logo } from "./Logo";
@@ -161,7 +162,8 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
     }
   }
 
-  function handleGuest() {
+  async function handleGuest() {
+    await createGuestWallet();
     select(SessionWalletName);
     onPass?.();
   }
