@@ -170,33 +170,20 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
 
   function handleStartTrading() {
     setChecking(true);
-    // Check auth state on click only — no auto-redirect on page load
-    // Check both server session AND localStorage wallet
+    // Must have a local wallet to auto-bypass — server session alone isn't enough
+    // (wallet is needed to sign transactions)
     const hasLocalWallet = typeof window !== "undefined" && !!localStorage.getItem("pokeliquid_session_wallet");
 
-    fetch("/api/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.email || hasLocalWallet) {
-          // Already logged in or has a session wallet — go to trading
-          if (!connected) select(SessionWalletName);
-          onPass?.();
-        } else {
-          setShowAuth(true);
-        }
-      })
-      .catch(() => {
-        // API error — if we have a local wallet, let them through
-        if (hasLocalWallet) {
-          if (!connected) select(SessionWalletName);
-          onPass?.();
-        } else {
-          setShowAuth(true);
-        }
-      })
-      .finally(() => {
-        setChecking(false);
-      });
+    if (hasLocalWallet) {
+      if (!connected) select(SessionWalletName);
+      onPass?.();
+      setChecking(false);
+      return;
+    }
+
+    // No local wallet — show auth form
+    setShowAuth(true);
+    setChecking(false);
   }
 
   const signupValid = email && password && confirmPassword && password.length >= 6 && password === confirmPassword;

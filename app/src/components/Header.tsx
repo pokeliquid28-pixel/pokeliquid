@@ -324,11 +324,11 @@ function MobileMenu({
               {addr.slice(0, 4)}...{addr.slice(-4)}
             </div>
             <button
-              onClick={async () => {
+              onClick={() => {
                 clearSessionWallet();
                 disconnect();
                 onClose();
-                try { await fetch("/api/logout", { method: "POST" }); } catch {}
+                fetch("/api/logout", { method: "POST" }).catch(() => {});
                 window.location.href = "/";
               }}
               style={{
