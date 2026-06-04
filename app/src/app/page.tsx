@@ -274,9 +274,9 @@ export default function TradePage() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-56px-56px)] md:h-[calc(100dvh-72px)]">
-      {/* 3-column layout */}
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-col">
+      {/* 3-column layout — fills viewport */}
+      <div className="flex h-[calc(100dvh-56px-56px)] md:h-[calc(100dvh-72px)]">
         {/* ── LEFT COLUMN: Markets ──────────────────────────────────── */}
         <div className="hidden lg:flex flex-col w-[220px] border-r border-border bg-panel flex-shrink-0">
           {/* Markets header */}
