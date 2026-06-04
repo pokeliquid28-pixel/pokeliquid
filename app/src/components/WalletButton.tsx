@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { getSavedEmail, clearSessionWallet, SessionWalletName } from "@/lib/session-wallet";
+import { getSavedEmail, clearSessionWallet, createGuestWallet, SessionWalletName } from "@/lib/session-wallet";
 import { AuthModal } from "./AuthModal";
 
 export function WalletButton() {
@@ -29,13 +29,12 @@ export function WalletButton() {
       .catch(() => {});
   }, [connected]);
 
-  async function handleDisconnect() {
-    // Clear server session cookie
-    try {
-      await fetch("/api/logout", { method: "POST" });
-    } catch {}
-    setDropdownOpen(false);
+  function handleDisconnect() {
+    clearSessionWallet();
     disconnect();
+    setDropdownOpen(false);
+    fetch("/api/logout", { method: "POST" }).catch(() => {});
+    window.location.href = "/";
   }
 
   if (connected && publicKey) {
@@ -169,7 +168,7 @@ export function WalletButton() {
           Log In
         </button>
         <button
-          onClick={() => select(SessionWalletName)}
+          onClick={async () => { await createGuestWallet(); select(SessionWalletName); }}
           className="uppercase tracking-wider"
           style={{
             fontFamily: "'JetBrains Mono', monospace",
