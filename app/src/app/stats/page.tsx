@@ -307,7 +307,7 @@ const ROADMAP = [
     phase: "Phase 4",
     status: "Planned",
     active: false,
-    items: ["100x max", "+ BASE-SET-CHARIZARD-PERP", "+ $PLIQ governance live"],
+    items: ["100x max", "+ BASE-SET-CHARIZARD-PERP", "+ $POKE governance live"],
   },
 ];
 

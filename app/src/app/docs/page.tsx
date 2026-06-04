@@ -637,6 +637,21 @@ Price floor protection: if candidate < floor, update is rejected entirely.
   ...
 ]`}</Code>
 
+            <H3>GET /candles</H3>
+            <P>OHLC candle data aggregated from raw 5-minute price records. Used for charting.</P>
+            <Table
+              headers={["Param", "Type", "Default", "Description"]}
+              rows={[
+                ["market", "string", "ETB", "Market ID (ETB, CHARIZARD-X, CHARMANDER, PIKACHU)"],
+                ["resolution", "string", "1h", "Candle resolution: 1h (hourly) or 1d (daily)"],
+                ["limit", "number", "100", "Max candles returned"],
+              ]}
+            />
+            <Code>{`Response: [
+  { "time": 1717401600, "open": 161.5, "high": 162.0, "low": 160.8, "close": 161.9 },
+  ...
+]`}</Code>
+
             <H3>GET /trades/recent</H3>
             <P>Recent trades across all users.</P>
             <Table
@@ -707,10 +722,10 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <H2 id="roadmap">Roadmap</H2>
 
             {[
-              { phase: "Phase 1", status: "LIVE", active: true, items: ["Devnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool with 30% fee share", "Adaptive EWMA oracle", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset"] },
+              { phase: "Phase 1", status: "LIVE", active: true, items: ["Devnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool with 30% fee share", "Adaptive EWMA oracle with spike protection", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset", "OHLC charts (1H / 1D candles)", "Mobile-responsive UI", "Custom domain (pokeliquid.xyz)", "Telegram monitoring & alerts"] },
               { phase: "Phase 2", status: "Planned", active: false, items: ["Mainnet launch", "25x max leverage", "Additional card markets", "Mobile-optimized UI"] },
               { phase: "Phase 3", status: "Planned", active: false, items: ["50x max leverage", "Vintage card oracle committee", "Governance token"] },
-              { phase: "Phase 4", status: "Planned", active: false, items: ["100x max leverage", "BASE-SET-CHARIZARD-PERP", "$PLIQ governance live"] },
+              { phase: "Phase 4", status: "Planned", active: false, items: ["100x max leverage", "BASE-SET-CHARIZARD-PERP", "$POKE governance live"] },
             ].map((phase) => (
               <div
                 key={phase.phase}
