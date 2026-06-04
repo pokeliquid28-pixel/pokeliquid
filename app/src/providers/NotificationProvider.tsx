@@ -102,9 +102,17 @@ function makeId() {
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [active, setActive] = useState(false);
   const { connected } = useWallet();
   const oracle = useOracle();
   const margin = useMarginAccount();
+
+  // Only activate after user passes the landing page
+  useEffect(() => {
+    const handler = () => setActive(true);
+    window.addEventListener("pokeliquid:passed-landing", handler);
+    return () => window.removeEventListener("pokeliquid:passed-landing", handler);
+  }, []);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -180,7 +188,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const lastLiqWarnings = useRef<Record<number, number>>({});
 
   useEffect(() => {
-    if (!connected || !margin.hasOpenPosition || oracle.price === 0) return;
+    if (!active || !connected || !margin.hasOpenPosition || oracle.price === 0) return;
 
     const checkLiquidation = () => {
       const now = Date.now();
@@ -218,14 +226,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const id = setInterval(checkLiquidation, 30_000);
     return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, margin.hasOpenPosition, oracle.price]);
+  }, [active, connected, margin.hasOpenPosition, oracle.price]);
 
   // ── Price movement monitor ─────────────────────────────────────────────
 
   const lastNotifiedPrice = useRef(0);
 
   useEffect(() => {
-    if (oracle.price === 0 || oracle.isLoading) return;
+    if (!active || oracle.price === 0 || oracle.isLoading) return;
 
     const currentUsd = rawToPrice(oracle.price);
 
@@ -246,14 +254,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         `PRISMATIC-ETB-PERP moved ${Math.abs(pctChange).toFixed(1)}% from $${prev.toFixed(2)}`
       );
     }
-  }, [oracle.price, oracle.isLoading, addNotification]);
+  }, [active, oracle.price, oracle.isLoading, addNotification]);
 
   // ── SL/TP position disappearance monitor ───────────────────────────────
 
   const prevPositions = useRef<Position[]>([]);
 
   useEffect(() => {
-    if (!connected || margin.isLoading) return;
+    if (!active || !connected || margin.isLoading) return;
 
     const prev = prevPositions.current;
     if (prev.length === 0) {
@@ -307,7 +315,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     prevPositions.current = [...margin.positions];
-  }, [connected, margin.positions, margin.isLoading, oracle.price, addNotification]);
+  }, [active, connected, margin.positions, margin.isLoading, oracle.price, addNotification]);
 
   return (
     <NotificationContext.Provider
