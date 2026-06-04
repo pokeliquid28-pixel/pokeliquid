@@ -384,9 +384,9 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
 
       {/* Card fan */}
       <div
-        className="relative mb-4 md:mb-6 flex items-end justify-center"
+        className="relative mb-8 md:mb-6 flex items-end justify-center"
         style={{
-          height: "clamp(160px, 30vw, 300px)",
+          height: "clamp(120px, 25vw, 300px)",
           width: "100%",
           maxWidth: 600,
         }}
@@ -405,7 +405,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                 transitionDelay: `${i * 100}ms`,
                 left: `${10 + i * 16}%`,
                 bottom: 0,
-                width: "clamp(90px, 16vw, 140px)",
+                width: "clamp(70px, 14vw, 140px)",
                 zIndex: isCenter ? 10 : 5 - Math.abs(i - 2),
                 transformOrigin: "bottom center",
               }}

@@ -51,18 +51,20 @@ function CopyBtn({ text }: { text: string }) {
 
 function Addr({ label, address, desc }: { label: string; address: string; desc?: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: "1px solid #1a1a1a", flexWrap: "wrap" }}>
-      <span style={{ fontSize: 12, color: "#888", minWidth: 160 }}>{label}</span>
-      <a
-        href={`https://explorer.solana.com/address/${address}?cluster=devnet`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ fontSize: 11, color: "#00ff41", fontFamily: "'JetBrains Mono', monospace", textDecoration: "none", wordBreak: "break-all" }}
-      >
-        {address}
-      </a>
-      <CopyBtn text={address} />
-      {desc && <span style={{ fontSize: 10, color: "#555", width: "100%", marginTop: 2 }}>{desc}</span>}
+    <div style={{ padding: "8px 0", borderBottom: "1px solid #1a1a1a" }}>
+      <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <a
+          href={`https://explorer.solana.com/address/${address}?cluster=devnet`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: 11, color: "#00ff41", fontFamily: "'JetBrains Mono', monospace", textDecoration: "none", wordBreak: "break-all" }}
+        >
+          {address}
+        </a>
+        <CopyBtn text={address} />
+      </div>
+      {desc && <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>{desc}</div>}
     </div>
   );
 }
@@ -86,12 +88,12 @@ function Code({ children }: { children: string }) {
 
 function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div style={{ overflowX: "auto", marginTop: 8, marginBottom: 16 }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginTop: 8, marginBottom: 16 }}>
+      <table style={{ minWidth: 400, width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
         <thead>
           <tr>
             {headers.map((h) => (
-              <th key={h} style={{ textAlign: "left", padding: "8px 12px", borderBottom: "1px solid #333", color: "#666", fontWeight: 600, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <th key={h} style={{ textAlign: "left", padding: "8px 10px", borderBottom: "1px solid #333", color: "#666", fontWeight: 600, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
                 {h}
               </th>
             ))}
@@ -101,7 +103,7 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
-                <td key={j} style={{ padding: "8px 12px", borderBottom: "1px solid #1a1a1a", color: "#ccc", whiteSpace: j === 0 ? "nowrap" : undefined }}>
+                <td key={j} style={{ padding: "8px 10px", borderBottom: "1px solid #1a1a1a", color: "#ccc", whiteSpace: j === 0 ? "nowrap" : undefined }}>
                   {cell}
                 </td>
               ))}
@@ -198,7 +200,7 @@ export default function DocsPage() {
         fontFamily: "'JetBrains Mono', 'Fira Mono', 'Consolas', monospace",
       }}
     >
-      <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", gap: 0 }}>
+      <div className="flex flex-col lg:flex-row" style={{ maxWidth: 1100, margin: "0 auto" }}>
         {/* ── Desktop Sidebar ──────────────────────────────────── */}
         <nav
           className="hidden lg:block"
@@ -272,8 +274,8 @@ export default function DocsPage() {
         </div>
 
         {/* ── Content ──────────────────────────────────────────── */}
-        <main style={{ flex: 1, padding: "32px 16px 80px", minWidth: 0 }}>
-          <div style={{ maxWidth: 760 }}>
+        <main className="flex-1 min-w-0 px-4 md:px-8 pt-8 pb-20">
+          <div style={{ maxWidth: 760, margin: "0 auto" }}>
 
             {/* ════════════ OVERVIEW ════════════ */}
             <H2 id="overview">Overview</H2>
