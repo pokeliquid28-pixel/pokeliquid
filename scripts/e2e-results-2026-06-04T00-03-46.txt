@@ -1,0 +1,44 @@
+Pokeliquid E2E Test — 2026-06-04T00:03:46.588Z
+26/27 passed
+
+PASS Oracle ETB — $156.19 age=181s
+PASS Oracle CHARIZARD-X — $875.97 age=181s
+PASS Oracle CHARMANDER — $42.88 age=181s
+PASS Oracle PIKACHU — $1077.11 age=180s
+PASS Margin account size OK — 546 bytes
+PASS Mint test USDC — tx=u8QxH2Bnj7jzYLrg…
+PASS Deposit 100 USDC — collateral=$180.00 tx=2zTqQQ8uhkefhGT8…
+PASS Open LONG $10 2x ETB — tx=45W93HtKVjsaTz2R…
+PASS Open SHORT $10 2x ETB — tx=5yoiaRMHAEC41Ve8…
+PASS Set SL on long (-5%) — sl=$148.38 tx=3UBrrfq1Li62PCfb…
+PASS Set TP on short (-5%) — tp=$148.38 tx=2wDZvEi8Duu4Hyor…
+PASS Positions open & healthy — 2 open
+PASS Positions survive keeper (30s) — 2 still open
+PASS Close long position — tx=mkyibCSKd1uUEk6H…
+PASS PnL settled (long closed) — free_collateral=$160.00
+PASS Close short position — tx=5Uxs7UCfL3ao36H6…
+PASS Withdraw collateral — $160.00 tx=4zzgKZmHHVA6tkKY…
+PASS LP deposit 10 USDC — tx=9mT5oC6aqshLxJki…
+FAIL LP withdraw — Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 0: custom program error: 0xbbf. 
+Logs: 
+[
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ invoke [1]",
+  "Program log: Instruction: LpWithdraw",
+  "Program log: AnchorError caused by account: lp_position. Error Code: AccountOwnedByWrongProgram. Error Number: 3007. Error Message: The given account is owned by a different program than expected.",
+  "Program log: Left:",
+  "Program log: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  "Program log: Right:",
+  "Program log: 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ",
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ consumed 5284 of 200000 compute units",
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ failed: custom program error: 0xbbf"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+PASS Liquidation loop running — 234 checks/hr
+PASS SL/TP loop running — integrated with liq loop
+PASS Trade history API — 5 trades, total=16
+PASS Stats API — vol_24h=$10000 trades_24h=3
+PASS Frontend loads — 200 14281 bytes
+PASS API proxy (Vercel→Hetzner) — status=healthy
+PASS Auth endpoint — status=401
+PASS Chart data per market — ETB=3 CHARIZARD-X=3 entries

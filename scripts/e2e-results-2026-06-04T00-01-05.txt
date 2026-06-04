@@ -1,0 +1,50 @@
+Pokeliquid E2E Test — 2026-06-04T00:01:06.003Z
+23/27 passed
+
+PASS Oracle ETB — $156.19 age=21s
+PASS Oracle CHARIZARD-X — $875.97 age=21s
+PASS Oracle CHARMANDER — $42.88 age=20s
+PASS Oracle PIKACHU — $1077.11 age=19s
+PASS Close old margin account — 386→546 tx=3diCEwBTVxvTzc1k…
+PASS Mint test USDC — tx=5meevgwcCDPmdxTV…
+PASS Deposit 100 USDC — collateral=$100.00 tx=54GPPVLHGw2YrX2m…
+PASS Open LONG $10 2x ETB — tx=4s2BfoQXMyGBn4Ft…
+PASS Open SHORT $10 2x ETB — tx=5SUDA5E1a5vdhLKM…
+PASS Set SL on long (-5%) — sl=$148.38 tx=47qmoEMhUvn943Wb…
+PASS Set TP on short (-5%) — tp=$148.38 tx=2Zs4zZQniprgSvAo…
+PASS Positions open & healthy — 2 open
+PASS Positions survive keeper (30s) — 2 still open
+PASS Close long position — tx=48j2HrAGKhTtKJG5…
+FAIL PnL settled (long closed) — free_collateral=$80.00 remaining=2
+PASS Close short position — tx=2gRkaQqSoVXX621Z…
+FAIL Withdraw collateral — Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x7df. 
+Logs: 
+[
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ invoke [1]",
+  "Program log: Instruction: WithdrawCollateral",
+  "Program log: AnchorError occurred. Error Code: ConstraintTokenOwner. Error Number: 2015. Error Message: A token owner constraint was violated.",
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ consumed 10094 of 200000 compute units",
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ failed: custom program error: 0x7df"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+FAIL LP deposit — Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 0: custom program error: 0xbc4. 
+Logs: 
+[
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ invoke [1]",
+  "Program log: Instruction: LpDeposit",
+  "Program log: AnchorError caused by account: user_token_account. Error Code: AccountNotInitialized. Error Number: 3012. Error Message: The program expected this account to be already initialized.",
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ consumed 5136 of 200000 compute units",
+  "Program 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ failed: custom program error: 0xbc4"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+FAIL LP withdraw — Cannot read properties of null (reading 'data')
+PASS Liquidation loop running — 218 checks/hr
+PASS SL/TP loop running — integrated with liq loop
+PASS Trade history API — 5 trades, total=16
+PASS Stats API — vol_24h=$10000 trades_24h=3
+PASS Frontend loads — 200 14281 bytes
+PASS API proxy (Vercel→Hetzner) — status=healthy
+PASS Auth endpoint — status=401
+PASS Chart data per market — ETB=3 CHARIZARD-X=3 entries
