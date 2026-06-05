@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
                   If you didn't request this, you can safely ignore this email.
                 </p>
                 <p style="color: #444; font-size: 10px; margin-top: 24px; border-top: 1px solid #222; padding-top: 16px;">
-                  DEVNET ONLY — NOT REAL MONEY
+                  pokeliquid.xyz
                 </p>
               </div>
             `,

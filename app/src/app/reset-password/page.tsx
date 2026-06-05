@@ -164,7 +164,7 @@ function ResetPasswordInner() {
         </div>
 
         <p className="text-[10px] text-secondary/50 text-center">
-          DEVNET ONLY — NOT REAL MONEY — TESTNET ONLY
+          pokeliquid.xyz
         </p>
       </div>
     </div>

@@ -288,17 +288,6 @@ function MobileMenu({
         {/* Oracle info */}
         <div style={{ padding: "16px 24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <span
-              style={{
-                fontSize: 9,
-                color: "#ff3333",
-                border: "1px solid #ff3333",
-                padding: "1px 5px",
-                letterSpacing: "0.1em",
-              }}
-            >
-              DEVNET
-            </span>
             <OracleDot />
           </div>
           <div style={{ fontSize: 12, color: "#ccc" }}>
@@ -537,19 +526,6 @@ export function Header() {
             }}
           >
             <OracleDot />
-            <span
-              style={{
-                fontSize: 9,
-                fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-                color: "#ff3333",
-                border: "1px solid #ff3333",
-                padding: "1px 5px",
-                letterSpacing: "0.1em",
-                lineHeight: 1.4,
-              }}
-            >
-              DEVNET
-            </span>
             <NotificationBell />
             <WalletButton />
           </div>
