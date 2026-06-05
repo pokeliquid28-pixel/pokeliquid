@@ -2,16 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getSavedEmail, clearSessionWallet, createGuestWallet, SessionWalletName } from "@/lib/session-wallet";
 import { AuthModal } from "./AuthModal";
 
 export function WalletButton() {
   const { connected, publicKey, disconnect, select } = useWallet();
+  const { connection } = useConnection();
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [solBalance, setSolBalance] = useState<number | null>(null);
+
+  // Poll SOL balance
+  useEffect(() => {
+    if (!connected || !publicKey) { setSolBalance(null); return; }
+    let cancelled = false;
+    const fetch_ = () =>
+      connection.getBalance(publicKey).then((b) => {
+        if (!cancelled) setSolBalance(b / LAMPORTS_PER_SOL);
+      }).catch(() => {});
+    fetch_();
+    const id = setInterval(fetch_, 15_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [connected, publicKey, connection]);
 
   useEffect(() => {
     const localEmail = getSavedEmail();
@@ -139,6 +156,22 @@ export function WalletButton() {
               >
                 {copied ? "✓ Copied!" : `${addr.slice(0, 8)}...${addr.slice(-8)}  ⧉`}
               </button>
+
+              {/* SOL Balance */}
+              {solBalance !== null && (
+                <div
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "11px",
+                    padding: "6px 10px",
+                    color: "#ccc",
+                    borderBottom: "1px solid #1a1a1a",
+                  }}
+                >
+                  <span style={{ color: "#666" }}>SOL:</span>{" "}
+                  {solBalance.toFixed(4)}
+                </div>
+              )}
 
               {/* Swap SOL → USDC */}
               <button
