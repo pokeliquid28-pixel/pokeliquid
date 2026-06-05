@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import { encrypt, generateToken } from "@/lib/crypto";
 
-const RPC = process.env.NEXT_PUBLIC_RPC_ENDPOINT ?? "https://api.mainnet-beta.solana.com";
+const RPC = process.env.NEXT_PUBLIC_RPC_ENDPOINT ?? "https://mainnet.helius-rpc.com/?api-key=ca9121cd-101b-49fb-b064-ef8c3e9cec89";
 
 // Simple in-memory rate limit (resets on cold start)
 const ipTimestamps = new Map<string, number>();
