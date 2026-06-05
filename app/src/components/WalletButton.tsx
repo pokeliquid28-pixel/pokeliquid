@@ -6,6 +6,7 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getSavedEmail, clearSessionWallet, createGuestWallet, SessionWalletName } from "@/lib/session-wallet";
 import { AuthModal } from "./AuthModal";
+import { SwapModal } from "./SwapModal";
 
 export function WalletButton() {
   const { connected, publicKey, disconnect, select } = useWallet();
@@ -16,6 +17,7 @@ export function WalletButton() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [solBalance, setSolBalance] = useState<number | null>(null);
+  const [showSwap, setShowSwap] = useState(false);
 
   // Poll SOL balance
   useEffect(() => {
@@ -61,13 +63,8 @@ export function WalletButton() {
   }
 
   function handleSwap() {
-    if (!publicKey) return;
     setDropdownOpen(false);
-    // Jupiter swap: SOL → USDC
-    window.open(
-      `https://jup.ag/swap/SOL-USDC?referrer=${publicKey.toBase58()}`,
-      "_blank"
-    );
+    setShowSwap(true);
   }
 
   if (connected && publicKey) {
@@ -234,6 +231,7 @@ export function WalletButton() {
             defaultMode={authMode}
           />
         )}
+        {showSwap && <SwapModal onClose={() => setShowSwap(false)} />}
       </>
     );
   }
