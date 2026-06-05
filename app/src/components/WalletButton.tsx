@@ -11,16 +11,14 @@ export function WalletButton() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Check localStorage first (fast)
     const localEmail = getSavedEmail();
     if (localEmail) {
       setEmail(localEmail);
       return;
     }
-
-    // Fall back to JWT session cookie via /api/me
     fetch("/api/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -35,6 +33,24 @@ export function WalletButton() {
     setDropdownOpen(false);
     fetch("/api/logout", { method: "POST" }).catch(() => {});
     window.location.href = "/";
+  }
+
+  function handleCopyAddress() {
+    if (!publicKey) return;
+    navigator.clipboard.writeText(publicKey.toBase58()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function handleSwap() {
+    if (!publicKey) return;
+    setDropdownOpen(false);
+    // Jupiter swap: SOL → USDC
+    window.open(
+      `https://jup.ag/swap/SOL-USDC?referrer=${publicKey.toBase58()}`,
+      "_blank"
+    );
   }
 
   if (connected && publicKey) {
@@ -91,13 +107,66 @@ export function WalletButton() {
           {/* Dropdown */}
           {dropdownOpen && (
             <div
-              className="absolute right-0 top-full mt-1 z-50 min-w-[160px]"
+              className="absolute right-0 top-full mt-1 z-50 min-w-[200px]"
               style={{
                 background: "#111111",
                 border: "1px solid #1a1a1a",
                 padding: "4px",
               }}
             >
+              {/* Full address + copy */}
+              <button
+                onClick={handleCopyAddress}
+                className="w-full text-left uppercase tracking-wider"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "10px",
+                  padding: "8px 10px",
+                  background: "transparent",
+                  color: copied ? "#00ff41" : "#888",
+                  border: "1px solid transparent",
+                  cursor: "pointer",
+                  transition: "color .15s",
+                  wordBreak: "break-all",
+                  textTransform: "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!copied) e.currentTarget.style.color = "#ccc";
+                }}
+                onMouseLeave={(e) => {
+                  if (!copied) e.currentTarget.style.color = "#888";
+                }}
+              >
+                {copied ? "✓ Copied!" : `${addr.slice(0, 8)}...${addr.slice(-8)}  ⧉`}
+              </button>
+
+              {/* Swap SOL → USDC */}
+              <button
+                onClick={handleSwap}
+                className="w-full text-left uppercase tracking-wider"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "11px",
+                  padding: "6px 10px",
+                  background: "transparent",
+                  color: "#888",
+                  border: "1px solid transparent",
+                  cursor: "pointer",
+                  transition: "color .15s, border-color .15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#00ff41";
+                  e.currentTarget.style.borderColor = "#00ff41";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#888";
+                  e.currentTarget.style.borderColor = "transparent";
+                }}
+              >
+                Swap SOL → USDC
+              </button>
+
+              {/* Disconnect */}
               <button
                 onClick={handleDisconnect}
                 className="w-full text-left uppercase tracking-wider"
