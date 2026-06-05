@@ -121,68 +121,6 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh, oracleAddres
     ? `${positionCount}/${maxPositions} positions open`
     : null;
 
-  async function handleMintUsdc() {
-    if (!publicKey || !anchorWallet) return;
-    setLoading(true);
-    setTxStatus(null);
-    try {
-      // Check SOL balance — airdrop if empty
-      const solBalance = await connection.getBalance(publicKey);
-      if (solBalance < 5_000_000) {
-        setTxStatus({ type: "success", msg: "Airdropping SOL for fees..." });
-        try {
-          const sig = await connection.requestAirdrop(publicKey, 0.05 * 1_000_000_000);
-          await connection.confirmTransaction(sig, "confirmed");
-        } catch {
-          try {
-            const sig = await connection.requestAirdrop(publicKey, 0.01 * 1_000_000_000);
-            await connection.confirmTransaction(sig, "confirmed");
-          } catch {
-            setTxStatus({ type: "error", msg: "Devnet airdrop failed — try again in a minute" });
-            setLoading(false);
-            return;
-          }
-        }
-      }
-
-      const program = getProgram(connection, anchorWallet);
-      const { ata, needsCreate } = await ensureAta(
-        connection,
-        publicKey,
-        USDC_MINT,
-        publicKey
-      );
-
-      const txBuilder = (program.methods as any).mintDevnetUsdc().accounts({
-        user: publicKey,
-        protocolState: PROTOCOL_STATE,
-        usdcMint: USDC_MINT,
-        userTokenAccount: ata,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      });
-
-      if (needsCreate) {
-        const createIx = createAssociatedTokenAccountInstruction(
-          publicKey,
-          ata,
-          publicKey,
-          USDC_MINT
-        );
-        await txBuilder.preInstructions([createIx]).rpc();
-      } else {
-        await txBuilder.rpc();
-      }
-      setTxStatus({ type: "success", msg: "Minted 1,000 devnet USDC!" });
-      addNotification("success", "USDC Minted", "1,000 devnet USDC added to your wallet");
-      setTimeout(onRefresh, 2000);
-    } catch (e: any) {
-      setTxStatus({ type: "error", msg: e?.message ?? "Transaction failed" });
-      addNotification("error", "Mint Failed", e?.message ?? "Transaction failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleCloseMarginAccount() {
     if (!publicKey || !anchorWallet) return;
     setLoading(true);

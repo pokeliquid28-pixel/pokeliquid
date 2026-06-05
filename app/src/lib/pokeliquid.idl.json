@@ -1,5 +1,5 @@
 {
-  "address": "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ",
+  "address": "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
   "metadata": {
     "name": "pokeliquid",
     "version": "0.1.0",
@@ -1033,27 +1033,9 @@
         {
           "name": "usdc_mint",
           "docs": [
-            "Our devnet USDC mint — protocol_state is the mint authority"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  100,
-                  99,
-                  95,
-                  109,
-                  105,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
+            "On mainnet: pass the real USDC mint (e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v).",
+            "On devnet: creates a program-controlled mint via PDA."
+          ]
         },
         {
           "name": "fee_vault",
@@ -1625,7 +1607,8 @@
     {
       "name": "mint_devnet_usdc",
       "docs": [
-        "Devnet helper: mint 1000 USDC to the caller (no auth required)."
+        "Devnet helper: mint 1000 USDC to the caller (no auth required).",
+        "Disabled on mainnet builds."
       ],
       "discriminator": [
         17,

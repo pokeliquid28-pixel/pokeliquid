@@ -11,8 +11,11 @@ pokeliquid = "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ"
 [programs.devnet]
 pokeliquid = "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ"
 
+[programs.mainnet]
+pokeliquid = "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6"
+
 [provider]
-cluster = "devnet"
+cluster = "mainnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

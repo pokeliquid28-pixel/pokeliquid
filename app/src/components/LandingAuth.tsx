@@ -340,9 +340,6 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
             </button>
           </div>
 
-          <p className="text-[10px] text-center" style={{ color: "#666" }}>
-            DEVNET ONLY — NOT REAL MONEY — TESTNET ONLY
-          </p>
         </div>
       </div>
     );
@@ -470,16 +467,6 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         Read the Docs
       </Link>
 
-      {/* DEVNET notice */}
-      <p
-        className="mt-2 text-[10px] text-center font-mono transition-all duration-700"
-        style={{
-          color: "#444",
-          opacity: ctaVisible ? 1 : 0,
-        }}
-      >
-        DEVNET ONLY — NOT REAL MONEY — TESTNET ONLY
-      </p>
     </div>
   );
 }

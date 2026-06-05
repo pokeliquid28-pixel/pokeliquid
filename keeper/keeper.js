@@ -16,10 +16,10 @@ const { sendAlert, sendDailyDigest } = require("./telegram");
 
 const ADMIN_KEYPAIR_PATH    = process.env.ADMIN_KEYPAIR_PATH || "/Users/ethangriffin/.config/solana/id.json";
 const SECONDARY_KEYPAIR_PATH = process.env.SECONDARY_KEYPAIR_PATH || "./secondary.json";
-const PROGRAM_ID            = new PublicKey(process.env.PROGRAM_ID || "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ");
-const ORACLE_PUBKEY         = new PublicKey(process.env.ORACLE_PUBKEY || "4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH");
-const PROTOCOL_STATE_PUBKEY = new PublicKey(process.env.PROTOCOL_STATE_PUBKEY || "8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK");
-const RPC_URL               = process.env.RPC_URL || "https://api.devnet.solana.com";
+const PROGRAM_ID            = new PublicKey(process.env.PROGRAM_ID || "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6");
+const ORACLE_PUBKEY         = new PublicKey(process.env.ORACLE_PUBKEY || "FbPBfXaCY1Chm23pyVv7gcesRVK7FxFXHgd5xNb84r4Q");
+const PROTOCOL_STATE_PUBKEY = new PublicKey(process.env.PROTOCOL_STATE_PUBKEY || "6yAYSsp863889v7bhMEwj6tVq5DvFTi1gwzwHFrqwLFL");
+const RPC_URL               = process.env.RPC_URL || "https://api.mainnet-beta.solana.com";
 const UPDATE_INTERVAL_MS    = parseInt(process.env.UPDATE_INTERVAL_MS || "300000", 10);
 const PRICE_MIN_USD         = parseFloat(process.env.PRICE_MIN_USD || "100");
 const SEED_PRICE_USD        = parseFloat(process.env.SEED_PRICE_USD || "179");
@@ -45,40 +45,40 @@ const MARKET_CONFIGS = [
     seedPrice: SEED_PRICE_USD,
     priceFloor: PRICE_MIN_USD,
     useDefaultOracle: false, // now uses market-specific oracle like all others
-    marketIdOnChain: "ETB",
+    marketIdOnChain: "PRISMATIC-ETB",
   },
   {
     id: "CHARIZARD-X",
     label: "MEGA-CHARIZARD-X",
     tcgplayerProductId: 662184,
     tcgplayerUrl: "https://www.tcgplayer.com/product/662184",
-    oraclePubkey: new PublicKey(process.env.ORACLE_CHARIZARD_X || "8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg"),
+    oraclePubkey: new PublicKey(process.env.ORACLE_CHARIZARD_X || "8KU9oyrCAhX58Mz73z8MjKH8P88CyqPcx8zCm61HWzeP"),
     seedPrice: 884,
     priceFloor: 200,
     useDefaultOracle: false,
-    marketIdOnChain: "CHARIZARD-X",
+    marketIdOnChain: "CHARIZARD-125/094-PFL",
   },
   {
     id: "CHARMANDER",
     label: "CHARMANDER-PROMO",
     tcgplayerProductId: 684462,
     tcgplayerUrl: "https://www.tcgplayer.com/product/684462",
-    oraclePubkey: new PublicKey(process.env.ORACLE_CHARMANDER || "6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD"),
+    oraclePubkey: new PublicKey(process.env.ORACLE_CHARMANDER || "EN3Y7vWu2a2PXma2V5vfm6swFed8YTFHCG75EQxoHETY"),
     seedPrice: 20,
     priceFloor: 1,
     useDefaultOracle: false,
-    marketIdOnChain: "CHARMANDER",
+    marketIdOnChain: "CHARMANDER-038-MEP",
   },
   {
     id: "PIKACHU",
     label: "PIKACHU-EX",
     tcgplayerProductId: 676088,
     tcgplayerUrl: "https://www.tcgplayer.com/product/676088",
-    oraclePubkey: new PublicKey(process.env.ORACLE_PIKACHU || "B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs"),
+    oraclePubkey: new PublicKey(process.env.ORACLE_PIKACHU || "Fx1rYyuEz91rqgpEWHs8MyH7kiLpNeXuDdcAJiSjhN87"),
     seedPrice: 150,
     priceFloor: 10,
     useDefaultOracle: false,
-    marketIdOnChain: "PIKACHU",
+    marketIdOnChain: "PIKACHU-276/217-AH",
   },
 ];
 
@@ -102,10 +102,10 @@ const FUNDING_RATE_SCALE      = 100_000n;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID || "";
 
-// Well-known devnet addresses
-const USDC_MINT_PUBKEY   = new PublicKey("Gj9gBxmesYoNa4kvZUKJbiF85PduMKnHnppp4ikbWUUi");
-const FEE_VAULT_PUBKEY   = new PublicKey("GRFF44bR65tVUChnidAqZAgpFbg1Kw8GboWzUBQbW581");
-const INS_FUND_PUBKEY    = new PublicKey("9NmpMraE2XCSUa1gKgwi9zxN8LLdT4o5Uiis5dKkKs1F");
+// Well-known addresses
+const USDC_MINT_PUBKEY   = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const FEE_VAULT_PUBKEY   = new PublicKey("BFm4z6Z2H84GrpcKkydmE1qZVidwuj2sP3N3wTNZemJt");
+const INS_FUND_PUBKEY    = new PublicKey("266CZZpRb1PFDGQf4bNE5ASPVxAUkon6tv6BvRYpP7x9");
 const TOKEN_PROGRAM      = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ASSOC_TOKEN_PROG   = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe1bSe");
 

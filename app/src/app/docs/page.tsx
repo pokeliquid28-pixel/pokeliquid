@@ -55,7 +55,7 @@ function Addr({ label, address, desc }: { label: string; address: string; desc?:
       <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>{label}</div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <a
-          href={`https://explorer.solana.com/address/${address}?cluster=devnet`}
+          href={`https://explorer.solana.com/address/${address}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ fontSize: 11, color: "#00ff41", fontFamily: "'JetBrains Mono', monospace", textDecoration: "none", wordBreak: "break-all" }}
@@ -285,7 +285,7 @@ export default function DocsPage() {
               and single cards with up to 10x leverage. Prices are sourced from TCGPlayer market data via
               an automated Playwright scraper with adaptive EWMA smoothing.
             </P>
-            <P>Currently live on Solana Devnet with test USDC. No real money.</P>
+            <P>Live on Solana Mainnet with real USDC.</P>
 
             {/* ════════════ MARKETS ════════════ */}
             <H2 id="markets">Current Markets</H2>
@@ -300,7 +300,7 @@ export default function DocsPage() {
             />
 
             <H3>Network</H3>
-            <P>Solana Devnet. All addresses are devnet PDAs derived from the program.</P>
+            <P>Solana Mainnet. All addresses are mainnet PDAs derived from the program.</P>
 
             {/* ════════════ GETTING STARTED ════════════ */}
             <H2 id="getting-started">Getting Started</H2>
@@ -321,25 +321,19 @@ export default function DocsPage() {
               for email recovery (AES-256-GCM encryption).
             </P>
 
-            <H3>4. Get Test USDC</H3>
-            <P>
-              Click &ldquo;GET TEST USDC&rdquo; in the trading interface. This calls the <code>mint_devnet_usdc</code> instruction
-              which mints 1,000 test USDC to your wallet. This is devnet-only and requires no authorization.
-            </P>
-
-            <H3>5. Deposit Collateral</H3>
+            <H3>4. Deposit Collateral</H3>
             <P>
               Click &ldquo;DEPOSIT/WITHDRAW&rdquo; and deposit USDC into your margin account. Your margin account
               is a PDA derived from your wallet address with the seed <code>margin</code>.
             </P>
 
-            <H3>6. Open a Position</H3>
+            <H3>5. Open a Position</H3>
             <P>
               Select a market, choose Long or Short, set your collateral amount and leverage (1-10x),
               optionally set Stop Loss and Take Profit prices, then click to open your position.
             </P>
 
-            <H3>7. Password Reset</H3>
+            <H3>6. Password Reset</H3>
             <P>
               If you forget your password, click &ldquo;Forgot password?&rdquo; on the login screen. Enter your email
               and you&rsquo;ll receive a reset link via email. The link expires in 1 hour and is single-use.
@@ -555,25 +549,25 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <Table
               headers={["Property", "Value"]}
               rows={[
-                ["Program ID", "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ"],
-                ["Network", "Solana Devnet"],
+                ["Program ID", "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6"],
+                ["Network", "Solana Mainnet"],
                 ["Framework", "Anchor 1.0.2"],
                 ["Frontend", "pokeliquid.xyz"],
               ]}
             />
 
             <H3>Deployed Addresses</H3>
-            <Addr label="Program" address="7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ" desc="Pokeliquid program" />
-            <Addr label="ProtocolState" address="8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK" desc="Global protocol configuration PDA" />
-            <Addr label="Oracle (ETB)" address="4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH" desc="PRISMATIC-ETB-PERP price feed" />
-            <Addr label="Oracle (Charizard)" address="8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg" desc="CHARIZARD-125/094-PFL-PERP price feed" />
-            <Addr label="Oracle (Charmander)" address="6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD" desc="CHARMANDER-038-MEP-PERP price feed" />
-            <Addr label="Oracle (Pikachu)" address="B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs" desc="PIKACHU-276/217-AH-PERP price feed" />
-            <Addr label="Fee Vault" address="GRFF44bR65tVUChnidAqZAgpFbg1Kw8GboWzUBQbW581" desc="Protocol revenue vault" />
-            <Addr label="Insurance Fund" address="9NmpMraE2XCSUa1gKgwi9zxN8LLdT4o5Uiis5dKkKs1F" desc="Bad debt coverage fund" />
-            <Addr label="Liquidity Pool" address="DiM6xwNdBnNGf2TrgHHgZJYSFLpEXawADvAWdQvUKFT" desc="LP pool state" />
-            <Addr label="LP Vault" address="6UNaHeeQooouQ1eMemsZGgbBzgrQwqqyExaLjTTyc7My" desc="LP token vault" />
-            <Addr label="USDC Mint" address="Gj9gBxmesYoNa4kvZUKJbiF85PduMKnHnppp4ikbWUUi" desc="Devnet test USDC mint (program-controlled)" />
+            <Addr label="Program" address="5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6" desc="Pokeliquid program" />
+            <Addr label="ProtocolState" address="6yAYSsp863889v7bhMEwj6tVq5DvFTi1gwzwHFrqwLFL" desc="Global protocol configuration PDA" />
+            <Addr label="Oracle (ETB)" address="FbPBfXaCY1Chm23pyVv7gcesRVK7FxFXHgd5xNb84r4Q" desc="PRISMATIC-ETB-PERP price feed" />
+            <Addr label="Oracle (Charizard)" address="8KU9oyrCAhX58Mz73z8MjKH8P88CyqPcx8zCm61HWzeP" desc="CHARIZARD-125/094-PFL-PERP price feed" />
+            <Addr label="Oracle (Charmander)" address="EN3Y7vWu2a2PXma2V5vfm6swFed8YTFHCG75EQxoHETY" desc="CHARMANDER-038-MEP-PERP price feed" />
+            <Addr label="Oracle (Pikachu)" address="Fx1rYyuEz91rqgpEWHs8MyH7kiLpNeXuDdcAJiSjhN87" desc="PIKACHU-276/217-AH-PERP price feed" />
+            <Addr label="Fee Vault" address="BFm4z6Z2H84GrpcKkydmE1qZVidwuj2sP3N3wTNZemJt" desc="Protocol revenue vault" />
+            <Addr label="Insurance Fund" address="266CZZpRb1PFDGQf4bNE5ASPVxAUkon6tv6BvRYpP7x9" desc="Bad debt coverage fund" />
+            <Addr label="Liquidity Pool" address="BdvpxuezgBbdAXNkRoiTrHbtEig7eQDV7X4x3Tcf2q9K" desc="LP pool state" />
+            <Addr label="LP Vault" address="H1YCpzUXcoYFnek3Qc8VtekAe4gDTDNZZDVLwYuC9J1C" desc="LP token vault" />
+            <Addr label="USDC Mint" address="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" desc="USDC (SPL Token)" />
 
             <H3>All Instructions</H3>
             <Table
@@ -604,7 +598,6 @@ Price floor protection: if candidate < floor, update is rejected entirely.
                 ["update_params", "Admin", "Update protocol parameters"],
                 ["withdraw_fees", "Admin", "Withdraw from fee vault"],
                 ["withdraw_insurance", "Admin", "Withdraw from insurance fund"],
-                ["mint_devnet_usdc", "Anyone", "Mint 1,000 test USDC (devnet only)"],
               ]}
             />
 
@@ -683,8 +676,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             </FAQ>
 
             <FAQ q="Is this real money?">
-              No. Pokeliquid is on Solana Devnet with test USDC. You can mint free test USDC with one click.
-              No real funds are at risk.
+              Yes. Pokeliquid is live on Solana Mainnet and uses real USDC. Only deposit what you are prepared to lose.
             </FAQ>
 
             <FAQ q="What happens if I close my browser?">
@@ -722,8 +714,8 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <H2 id="roadmap">Roadmap</H2>
 
             {[
-              { phase: "Phase 1", status: "LIVE", active: true, items: ["Devnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool with 30% fee share", "Adaptive EWMA oracle with spike protection", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset", "OHLC charts (1H / 1D candles)", "Mobile-responsive UI", "Custom domain (pokeliquid.xyz)", "Telegram monitoring & alerts"] },
-              { phase: "Phase 2", status: "Planned", active: false, items: ["Mainnet launch", "25x max leverage", "Additional card markets", "Mobile-optimized UI"] },
+              { phase: "Phase 1", status: "LIVE", active: true, items: ["Mainnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool with 30% fee share", "Adaptive EWMA oracle with spike protection", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset", "OHLC charts (1H / 1D candles)", "Mobile-responsive UI", "Custom domain (pokeliquid.xyz)", "Telegram monitoring & alerts"] },
+              { phase: "Phase 2", status: "Planned", active: false, items: ["25x max leverage", "Additional card markets", "Mobile-optimized UI"] },
               { phase: "Phase 3", status: "Planned", active: false, items: ["50x max leverage", "Vintage card oracle committee", "Governance token"] },
               { phase: "Phase 4", status: "Planned", active: false, items: ["100x max leverage", "BASE-SET-CHARIZARD-PERP", "$POKE governance live"] },
             ].map((phase) => (

@@ -1,6 +1,6 @@
 # Pokeliquid — Pokemon Card Perps
 
-A perpetual futures DEX on Solana for trading **Pokemon TCG products** — real-world cards and sealed product priced via live TCGPlayer market data. Four markets live on devnet.
+A perpetual futures DEX on Solana for trading **Pokemon TCG products** — real-world cards and sealed product priced via live TCGPlayer market data. Four markets live on mainnet.
 
 ```
 TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana Program (Anchor)
@@ -26,26 +26,26 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 |---------|---------------|
 | **Frontend** | `https://pokeliquid.xyz` (Vercel) |
 | **Keeper API** | `http://157.180.67.25:3001` (Hetzner CX23, Helsinki) |
-| **Program** | `7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ` (devnet) |
+| **Program** | `5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6` (mainnet) |
 | **Keeper proxy** | Frontend routes `/api/keeper/*` → Hetzner keeper (avoids mixed content) |
 
 ---
 
-## Deployed Addresses (Devnet)
+## Deployed Addresses (Mainnet)
 
 | Account | Address |
 |---------|---------|
-| **Program ID** | `7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ` |
-| **ProtocolState** | `8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK` |
-| **Oracle (PRISMATIC-ETB)** | `4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH` |
-| **Oracle (CHARIZARD-125/094-PFL)** | `8UWP5YpJh2bZAC24zNaQm9z4p6vLwJJPEGztRY4QHAfg` |
-| **Oracle (CHARMANDER-038-MEP)** | `6WQUKKr2uLU4Pv7ZNwUEuLhCrQjEFCvsaZxfCwo2a3XD` |
-| **Oracle (PIKACHU-276/217-AH)** | `B1BWNQ2YdS7fgage61wFHc1Qs3aFMLtbYw7TPi6bQRYs` |
-| **FeeVault** | `GRFF44bR65tVUChnidAqZAgpFbg1Kw8GboWzUBQbW581` |
-| **InsuranceFund** | `9NmpMraE2XCSUa1gKgwi9zxN8LLdT4o5Uiis5dKkKs1F` |
-| **LiquidityPool** | `DiM6xwNdBnNGf2TrgHHgZJYSFLpEXawADvAWdQvUKFT` |
-| **LP Vault** | `6UNaHeeQooouQ1eMemsZGgbBzgrQwqqyExaLjTTyc7My` |
-| **USDC Mint** | `Gj9gBxmesYoNa4kvZUKJbiF85PduMKnHnppp4ikbWUUi` |
+| **Program ID** | `5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6` |
+| **ProtocolState** | `6yAYSsp863889v7bhMEwj6tVq5DvFTi1gwzwHFrqwLFL` |
+| **Oracle (PRISMATIC-ETB)** | `FbPBfXaCY1Chm23pyVv7gcesRVK7FxFXHgd5xNb84r4Q` |
+| **Oracle (CHARIZARD-125/094-PFL)** | `8KU9oyrCAhX58Mz73z8MjKH8P88CyqPcx8zCm61HWzeP` |
+| **Oracle (CHARMANDER-038-MEP)** | `EN3Y7vWu2a2PXma2V5vfm6swFed8YTFHCG75EQxoHETY` |
+| **Oracle (PIKACHU-276/217-AH)** | `Fx1rYyuEz91rqgpEWHs8MyH7kiLpNeXuDdcAJiSjhN87` |
+| **FeeVault** | `BFm4z6Z2H84GrpcKkydmE1qZVidwuj2sP3N3wTNZemJt` |
+| **InsuranceFund** | `266CZZpRb1PFDGQf4bNE5ASPVxAUkon6tv6BvRYpP7x9` |
+| **LiquidityPool** | (derived from LP_POOL_SEED) |
+| **LP Vault** | (derived from LP_VAULT_SEED) |
+| **USDC Mint** | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (real USDC) |
 
 ---
 
@@ -59,7 +59,7 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 | PIKACHU-276/217-AH-PERP | Pikachu ex 276/217 (Ascended Heroes) | 676088 |
 
 ## Market Spec
-- **Collateral:** devnet USDC (program-controlled mint, 6 decimals)
+- **Collateral:** USDC (real SPL Token, 6 decimals)
 - **Positions:** Up to 5 simultaneous per account (`[Option<Position>; 5]`)
 - **Leverage:** 1x – 10x
 - **Open fee:** 2% of collateral (90% fee vault / 10% insurance)
@@ -192,8 +192,8 @@ app/                        # Next.js 14 frontend
 ```bash
 anchor build
 solana program deploy target/deploy/pokeliquid.so \
-  --program-id 7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ \
-  --url devnet
+  --program-id 5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6 \
+  --url mainnet-beta
 
 # Copy IDL to frontend after build
 cp target/idl/pokeliquid.json app/src/lib/pokeliquid.idl.json
@@ -290,7 +290,7 @@ RESEND_API_KEY=re_xxxxx                   # Resend.com API key
 RELAYER_PRIVATE_KEY=<base58-private-key>  # Funds new session wallets with SOL
 
 # Optional:
-NEXT_PUBLIC_RPC_ENDPOINT=https://api.devnet.solana.com
+NEXT_PUBLIC_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
 NEXT_PUBLIC_APP_URL=https://pokeliquid.xyz
 ```
 
@@ -448,7 +448,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - [ ] **No limit orders** — market orders only
 
 ### Nice to have
-- [ ] Mainnet deployment with real USDC
+- [x] Mainnet deployment with real USDC
 - [ ] Referral / fee sharing system
 - [ ] $POKE governance token
 

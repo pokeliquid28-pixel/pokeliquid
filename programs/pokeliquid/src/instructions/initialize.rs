@@ -29,7 +29,12 @@ pub struct Initialize<'info> {
     )]
     pub oracle: Account<'info, OracleAccount>,
 
-    /// Our devnet USDC mint — protocol_state is the mint authority
+    /// On mainnet: pass the real USDC mint (e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v).
+    /// On devnet: creates a program-controlled mint via PDA.
+    #[cfg(feature = "mainnet")]
+    pub usdc_mint: Account<'info, Mint>,
+
+    #[cfg(not(feature = "mainnet"))]
     #[account(
         init,
         payer = admin,
@@ -89,7 +94,16 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     state.last_oracle_update = 0;
     state.auto_pause_threshold = DEFAULT_AUTO_PAUSE_THRESHOLD;
     state.bump = bumps.protocol_state;
-    state.usdc_mint_bump = bumps.usdc_mint;
+
+    #[cfg(not(feature = "mainnet"))]
+    {
+        state.usdc_mint_bump = bumps.usdc_mint;
+    }
+    #[cfg(feature = "mainnet")]
+    {
+        state.usdc_mint_bump = 0; // Not used on mainnet (external mint)
+    }
+
     state.fee_vault_bump = bumps.fee_vault;
     state.insurance_fund_bump = bumps.insurance_fund;
 
@@ -99,9 +113,9 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     oracle.staleness_threshold = DEFAULT_STALENESS_THRESHOLD;
     oracle.bump = bumps.oracle;
 
-    msg!("pokeliquid initialized. CHARIZARD-PERP market ready.");
+    msg!("pokeliquid initialized.");
     msg!("protocol_state: {}", state.key());
-    msg!("oracle: {}", oracle.key());
+    msg!("oracle: {}", ctx.accounts.oracle.key());
     msg!("fee_vault: {}", ctx.accounts.fee_vault.key());
     msg!("insurance_fund: {}", ctx.accounts.insurance_fund.key());
     msg!("usdc_mint: {}", ctx.accounts.usdc_mint.key());

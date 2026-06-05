@@ -1,27 +1,27 @@
 import { PublicKey } from "@solana/web3.js";
 
 export const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_PROGRAM_ID ?? "7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ"
+  process.env.NEXT_PUBLIC_PROGRAM_ID ?? "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6"
 );
 
 export const PROTOCOL_STATE = new PublicKey(
-  process.env.NEXT_PUBLIC_PROTOCOL_STATE ?? "8cGem2Q8BrqYpvnwqscnGiKjoEZPXpyb8KziueJ24SiK"
+  process.env.NEXT_PUBLIC_PROTOCOL_STATE ?? "6yAYSsp863889v7bhMEwj6tVq5DvFTi1gwzwHFrqwLFL"
 );
 
 export const ORACLE_ACCOUNT = new PublicKey(
-  process.env.NEXT_PUBLIC_ORACLE_ACCOUNT ?? "4v5ogQV1i2yQhdsc4YuG78AG5NvtDaE9kfCSCQwL3bZH"
+  process.env.NEXT_PUBLIC_ORACLE_ACCOUNT ?? "ANrbuXt3ui1KMEDfnRrhT72Zi8v3NSrVgCwvcdwurTCp"
 );
 
 export const FEE_VAULT = new PublicKey(
-  process.env.NEXT_PUBLIC_FEE_VAULT ?? "GRFF44bR65tVUChnidAqZAgpFbg1Kw8GboWzUBQbW581"
+  process.env.NEXT_PUBLIC_FEE_VAULT ?? "BFm4z6Z2H84GrpcKkydmE1qZVidwuj2sP3N3wTNZemJt"
 );
 
 export const INSURANCE_FUND = new PublicKey(
-  process.env.NEXT_PUBLIC_INSURANCE_FUND ?? "9NmpMraE2XCSUa1gKgwi9zxN8LLdT4o5Uiis5dKkKs1F"
+  process.env.NEXT_PUBLIC_INSURANCE_FUND ?? "266CZZpRb1PFDGQf4bNE5ASPVxAUkon6tv6BvRYpP7x9"
 );
 
 export const USDC_MINT = new PublicKey(
-  process.env.NEXT_PUBLIC_USDC_MINT ?? "Gj9gBxmesYoNa4kvZUKJbiF85PduMKnHnppp4ikbWUUi"
+  process.env.NEXT_PUBLIC_USDC_MINT ?? "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 );
 
 // PDA seeds (mirror constants.rs)

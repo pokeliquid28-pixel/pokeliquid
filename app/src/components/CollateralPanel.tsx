@@ -144,60 +144,6 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
     }
   }
 
-  async function handleMintUsdc() {
-    if (!publicKey || !anchorWallet) return;
-    setLoading(true);
-    setTxStatus(null);
-    try {
-      // Check SOL balance — airdrop if empty
-      const solBalance = await connection.getBalance(publicKey);
-      if (solBalance < 5_000_000) { // < 0.005 SOL
-        setTxStatus({ type: "success", msg: "Airdropping SOL for fees..." });
-        try {
-          const sig = await connection.requestAirdrop(publicKey, 0.05 * 1_000_000_000);
-          await connection.confirmTransaction(sig, "confirmed");
-        } catch {
-          // Retry once with smaller amount
-          try {
-            const sig = await connection.requestAirdrop(publicKey, 0.01 * 1_000_000_000);
-            await connection.confirmTransaction(sig, "confirmed");
-          } catch {
-            setTxStatus({ type: "error", msg: "Devnet airdrop failed — try again in a minute" });
-            setLoading(false);
-            return;
-          }
-        }
-      }
-
-      const program = getProgram(connection, anchorWallet);
-      const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
-
-      let needsCreate = false;
-      try { await getAccount(connection, ata); } catch { needsCreate = true; }
-
-      const txBuilder = (program.methods as any).mintDevnetUsdc().accounts({
-        user: publicKey,
-        protocolState: PROTOCOL_STATE,
-        usdcMint: USDC_MINT,
-        userTokenAccount: ata,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      });
-
-      if (needsCreate) {
-        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
-        await txBuilder.preInstructions([createIx]).rpc();
-      } else {
-        await txBuilder.rpc();
-      }
-      setTxStatus({ type: "success", msg: "Minted 1,000 devnet USDC!" });
-      setTimeout(onRefresh, 2000);
-    } catch (e: any) {
-      setTxStatus({ type: "error", msg: e?.message ?? "Mint failed" });
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const withdrawWarning = mode === "withdraw" && inputUsdc > 0 && (freeCollateral - inputUsdc) < 5 && (freeCollateral - inputUsdc) >= 0;
   const withdrawBlocked = mode === "withdraw" && inputUsdc > freeCollateral;
   const depositBlocked = mode === "deposit" && walletBalance !== null && inputUsdc > walletBalance;
@@ -324,15 +270,6 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
           </div>
         </div>
       )}
-
-      {/* Get Test USDC */}
-      <button
-        onClick={handleMintUsdc}
-        disabled={loading}
-        className="w-full py-2 text-xs border border-border text-secondary hover:text-primary hover:border-secondary transition-colors disabled:opacity-50"
-      >
-        {loading ? "..." : "Get 1,000 Test USDC"}
-      </button>
 
       {txStatus && (
         <div

@@ -11,7 +11,8 @@ pub use events::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("7DVf9oEMcKPV6VUUz5BpptbwqpgBfXunwxjTNNQmZvbJ");
+// Mainnet program ID
+declare_id!("5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6");
 
 #[program]
 pub mod pokeliquid {
@@ -155,7 +156,15 @@ pub mod pokeliquid {
     }
 
     /// Devnet helper: mint 1000 USDC to the caller (no auth required).
-    pub fn mint_devnet_usdc(ctx: Context<MintDevnetUsdc>) -> Result<()> {
-        mint_devnet_usdc::handler(ctx)
+    /// Disabled on mainnet builds.
+    pub fn mint_devnet_usdc(_ctx: Context<MintDevnetUsdc>) -> Result<()> {
+        #[cfg(feature = "mainnet")]
+        {
+            return Err(error!(crate::error::ErrorCode::Unauthorized));
+        }
+        #[cfg(not(feature = "mainnet"))]
+        {
+            mint_devnet_usdc::handler(_ctx)
+        }
     }
 }

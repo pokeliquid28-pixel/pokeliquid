@@ -225,7 +225,7 @@ export default function TradePage() {
   const { markets, selectedMarket, setSelectedMarket } = useMarket();
   const oracle = useOracle(selectedMarket.oracleAddress, selectedMarket.priceApiMarket);
   const protocol = useProtocolState();
-  const marketState = useMarketState(selectedMarket.priceApiMarket);
+  const marketState = useMarketState(selectedMarket.id);
   const margin = useMarginAccount();
   const { asks, bids } = useOrderBook(selectedMarket.id);
   const stats = useStats();
@@ -388,7 +388,7 @@ export default function TradePage() {
               walletUsdc={walletUsdc}
               onRefresh={handleRefresh}
               oracleAddress={selectedMarket.oracleAddress}
-              marketId={selectedMarket.priceApiMarket}
+              marketId={selectedMarket.id}
             />
           </div>
         </div>
@@ -796,7 +796,7 @@ function OrderEntry({
           protocolState: PROTOCOL_STATE,
           marginAccount: marginPda,
           oracle: oracleAddress ? new PublicKey(oracleAddress) : ORACLE_ACCOUNT,
-          marketState: marketId ? getMarketStatePDA(marketId) : getMarketStatePDA("ETB"),
+          marketState: marketId ? getMarketStatePDA(marketId) : getMarketStatePDA("PRISMATIC-ETB"),
           feeVault: FEE_VAULT,
           insuranceFund: INSURANCE_FUND,
           liquidityPool: PublicKey.findProgramAddressSync([Buffer.from("liquidity_pool")], PROGRAM_ID)[0],
@@ -819,48 +819,6 @@ function OrderEntry({
     }
   }
 
-  async function handleMintUsdc() {
-    if (!publicKey || !anchorWallet) return;
-    setLoading(true);
-    setTxStatus(null);
-    try {
-      const solBalance = await connection.getBalance(publicKey);
-      if (solBalance < 5_000_000) {
-        setTxStatus({ type: "success", msg: "Airdropping SOL..." });
-        try {
-          const sig = await connection.requestAirdrop(publicKey, 0.05 * 1e9);
-          await connection.confirmTransaction(sig, "confirmed");
-        } catch {
-          try {
-            const sig = await connection.requestAirdrop(publicKey, 0.01 * 1e9);
-            await connection.confirmTransaction(sig, "confirmed");
-          } catch {
-            setTxStatus({ type: "error", msg: "Devnet airdrop failed" });
-            setLoading(false);
-            return;
-          }
-        }
-      }
-      const program = getProgram(connection, anchorWallet);
-      const { ata, needsCreate } = await ensureAta(connection, publicKey, USDC_MINT, publicKey);
-      const txBuilder = (program.methods as any).mintDevnetUsdc().accounts({
-        user: publicKey, protocolState: PROTOCOL_STATE, usdcMint: USDC_MINT, userTokenAccount: ata, tokenProgram: TOKEN_PROGRAM_ID,
-      });
-      if (needsCreate) {
-        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
-        await txBuilder.preInstructions([createIx]).rpc();
-      } else {
-        await txBuilder.rpc();
-      }
-      setTxStatus({ type: "success", msg: "Minted 1,000 devnet USDC!" });
-      addNotification("success", "USDC Minted", "1,000 devnet USDC added");
-      setTimeout(onRefresh, 2000);
-    } catch (e: any) {
-      setTxStatus({ type: "error", msg: e?.message ?? "Mint failed" });
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleDeposit() {
     if (!publicKey || !anchorWallet) return;
@@ -998,9 +956,6 @@ function OrderEntry({
             className="btn-outline text-[9px] py-1.5 px-2 flex-1 md:flex-none"
           >
             {showCollateral ? "Hide" : "Deposit/Withdraw"}
-          </button>
-          <button onClick={handleMintUsdc} disabled={loading} className="btn-outline text-[9px] py-1.5 px-2 flex-1 md:flex-none">
-            {loading ? "..." : "Get Test USDC"}
           </button>
         </div>
       </div>
@@ -1241,7 +1196,7 @@ function getMarketForOracle(oracleAddr: string): Market | undefined {
 }
 
 function getMarketIdForOracle(oracleAddr: string): string {
-  return getMarketForOracle(oracleAddr)?.priceApiMarket ?? "ETB";
+  return getMarketForOracle(oracleAddr)?.id ?? "PRISMATIC-ETB";
 }
 
 // ── Individual position row (has its own price hook) ────────────────────────
