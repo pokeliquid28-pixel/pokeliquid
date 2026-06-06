@@ -115,6 +115,232 @@ export default function LeaderboardPage() {
   return <AuthGuard><LeaderboardContent /></AuthGuard>;
 }
 
+function LeaderboardTable({
+  title,
+  subtitle,
+  rows,
+  loading,
+  sortBy,
+}: {
+  title: string;
+  subtitle: string;
+  rows: TraderRow[];
+  loading: boolean;
+  sortBy: "pnl" | "volume";
+}) {
+  const sorted =
+    sortBy === "volume"
+      ? [...rows].sort((a, b) => b.volume - a.volume)
+      : rows; // already sorted by PnL from aggregateTrades
+
+  return (
+    <div style={{ marginBottom: 40 }}>
+      <div style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#ffffff",
+            letterSpacing: "0.05em",
+          }}
+        >
+          {title}
+        </div>
+        <div style={{ fontSize: 12, color: "#666666", marginTop: 4 }}>
+          {subtitle}
+        </div>
+      </div>
+
+      <div
+        style={{
+          backgroundColor: "#111111",
+          border: "1px solid #1a1a1a",
+          overflowX: "auto",
+        }}
+      >
+        {/* Column headers — desktop */}
+        <div
+          className="hidden md:grid"
+          style={{
+            gridTemplateColumns: "60px minmax(100px, 1fr) minmax(100px, 130px) 90px 70px 100px",
+            gap: 12,
+            borderBottom: "1px solid #1a1a1a",
+            padding: "10px 16px",
+          }}
+        >
+          {["RANK", "WALLET", sortBy === "volume" ? "VOLUME" : "TOTAL PNL", "WIN RATE", "TRADES", sortBy === "volume" ? "TOTAL PNL" : "VOLUME"].map((h) => (
+            <div
+              key={h}
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: "#666666",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {h}
+            </div>
+          ))}
+        </div>
+
+        {/* Column headers — mobile */}
+        <div
+          className="grid md:hidden"
+          style={{
+            gridTemplateColumns: "50px 1fr minmax(80px, auto)",
+            gap: 8,
+            borderBottom: "1px solid #1a1a1a",
+            padding: "10px 12px",
+          }}
+        >
+          {["RANK", "WALLET", sortBy === "volume" ? "VOLUME" : "TOTAL PNL"].map((h) => (
+            <div
+              key={h}
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: "#666666",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {h}
+            </div>
+          ))}
+        </div>
+
+        {/* Body */}
+        {loading ? (
+          <div
+            style={{
+              padding: "48px 16px",
+              textAlign: "center",
+              fontSize: 12,
+              color: "#666666",
+            }}
+          >
+            Loading leaderboard...
+          </div>
+        ) : sorted.length === 0 ? (
+          <div
+            style={{
+              padding: "48px 16px",
+              textAlign: "center",
+              fontSize: 12,
+              color: "#666666",
+            }}
+          >
+            No trades yet — be the first
+          </div>
+        ) : (
+          sorted.map((row, idx) => {
+            const rank = idx + 1;
+            const winRate =
+              row.trades > 0
+                ? ((row.wins / row.trades) * 100).toFixed(1)
+                : "0.0";
+            const isEven = idx % 2 === 0;
+            const primaryValue = sortBy === "volume" ? row.volume : row.totalPnl;
+            const secondaryValue = sortBy === "volume" ? row.totalPnl : row.volume;
+
+            return (
+              <div key={row.pubkey}>
+                {/* Desktop row */}
+                <div
+                  className="hidden md:grid"
+                  style={{
+                    gridTemplateColumns: "60px minmax(100px, 1fr) minmax(100px, 130px) 90px 70px 100px",
+                    gap: 12,
+                    padding: "10px 16px",
+                    backgroundColor: isEven ? "#111111" : "#0a0a0a",
+                    borderBottom: "1px solid #1a1a1a",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
+                    #{rank}
+                  </div>
+                  <div
+                    style={{ fontSize: 12, color: "#cccccc", letterSpacing: "0.02em" }}
+                    title={row.pubkey}
+                  >
+                    {truncateWallet(row.pubkey)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: sortBy === "volume"
+                        ? "#cccccc"
+                        : primaryValue >= 0
+                          ? "#00ff41"
+                          : "#ff3333",
+                    }}
+                  >
+                    {sortBy === "volume" ? formatVolume(primaryValue) : formatPnl(primaryValue)}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#cccccc" }}>{winRate}%</div>
+                  <div style={{ fontSize: 12, color: "#cccccc" }}>{row.trades}</div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: sortBy === "volume"
+                        ? secondaryValue >= 0
+                          ? "#00ff41"
+                          : "#ff3333"
+                        : "#cccccc",
+                    }}
+                  >
+                    {sortBy === "volume" ? formatPnl(secondaryValue) : formatVolume(secondaryValue)}
+                  </div>
+                </div>
+
+                {/* Mobile row */}
+                <div
+                  className="grid md:hidden"
+                  style={{
+                    gridTemplateColumns: "50px 1fr minmax(80px, auto)",
+                    gap: 8,
+                    padding: "10px 12px",
+                    backgroundColor: isEven ? "#111111" : "#0a0a0a",
+                    borderBottom: "1px solid #1a1a1a",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
+                    #{rank}
+                  </div>
+                  <div
+                    style={{ fontSize: 11, color: "#cccccc", letterSpacing: "0.02em" }}
+                    title={row.pubkey}
+                  >
+                    {truncateWallet(row.pubkey)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      textAlign: "right",
+                      color: sortBy === "volume"
+                        ? "#cccccc"
+                        : primaryValue >= 0
+                          ? "#00ff41"
+                          : "#ff3333",
+                    }}
+                  >
+                    {sortBy === "volume" ? formatVolume(primaryValue) : formatPnl(primaryValue)}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LeaderboardContent() {
   const { rows, loading } = useLeaderboard();
 
@@ -128,195 +354,20 @@ function LeaderboardContent() {
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#ffffff",
-              letterSpacing: "0.05em",
-            }}
-          >
-            LEADERBOARD
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "#666666",
-              marginTop: 4,
-            }}
-          >
-            Top traders by total PnL
-          </div>
-        </div>
-
-        {/* Table container */}
-        <div
-          style={{
-            backgroundColor: "#111111",
-            border: "1px solid #1a1a1a",
-            overflowX: "auto",
-          }}
-        >
-          {/* Column headers — desktop */}
-          <div
-            className="hidden md:grid"
-            style={{
-              gridTemplateColumns: "60px minmax(100px, 1fr) minmax(100px, 130px) 90px 70px 100px",
-              gap: 12,
-              borderBottom: "1px solid #1a1a1a",
-              padding: "10px 16px",
-            }}
-          >
-            {["RANK", "WALLET", "TOTAL PNL", "WIN RATE", "TRADES", "VOLUME"].map((h) => (
-              <div
-                key={h}
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "#666666",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                {h}
-              </div>
-            ))}
-          </div>
-
-          {/* Column headers — mobile (3 cols) */}
-          <div
-            className="grid md:hidden"
-            style={{
-              gridTemplateColumns: "50px 1fr minmax(80px, auto)",
-              gap: 8,
-              borderBottom: "1px solid #1a1a1a",
-              padding: "10px 12px",
-            }}
-          >
-            {["RANK", "WALLET", "TOTAL PNL"].map((h) => (
-              <div
-                key={h}
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "#666666",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                {h}
-              </div>
-            ))}
-          </div>
-
-          {/* Body */}
-          {loading ? (
-            <div
-              style={{
-                padding: "48px 16px",
-                textAlign: "center",
-                fontSize: 12,
-                color: "#666666",
-              }}
-            >
-              Loading leaderboard...
-            </div>
-          ) : rows.length === 0 ? (
-            <div
-              style={{
-                padding: "48px 16px",
-                textAlign: "center",
-                fontSize: 12,
-                color: "#666666",
-              }}
-            >
-              No trades yet — be the first
-            </div>
-          ) : (
-            rows.map((row, idx) => {
-              const rank = idx + 1;
-              const winRate =
-                row.trades > 0
-                  ? ((row.wins / row.trades) * 100).toFixed(1)
-                  : "0.0";
-              const isEven = idx % 2 === 0;
-
-              return (
-                <div key={row.pubkey}>
-                  {/* Desktop row */}
-                  <div
-                    className="hidden md:grid"
-                    style={{
-                      gridTemplateColumns: "60px minmax(100px, 1fr) minmax(100px, 130px) 90px 70px 100px",
-                      gap: 12,
-                      padding: "10px 16px",
-                      backgroundColor: isEven ? "#111111" : "#0a0a0a",
-                      borderBottom: "1px solid #1a1a1a",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
-                      #{rank}
-                    </div>
-                    <div
-                      style={{ fontSize: 12, color: "#cccccc", letterSpacing: "0.02em" }}
-                      title={row.pubkey}
-                    >
-                      {truncateWallet(row.pubkey)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: row.totalPnl >= 0 ? "#00ff41" : "#ff3333",
-                      }}
-                    >
-                      {formatPnl(row.totalPnl)}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#cccccc" }}>{winRate}%</div>
-                    <div style={{ fontSize: 12, color: "#cccccc" }}>{row.trades}</div>
-                    <div style={{ fontSize: 12, color: "#cccccc" }}>{formatVolume(row.volume)}</div>
-                  </div>
-
-                  {/* Mobile row (3 cols) */}
-                  <div
-                    className="grid md:hidden"
-                    style={{
-                      gridTemplateColumns: "50px 1fr minmax(80px, auto)",
-                      gap: 8,
-                      padding: "10px 12px",
-                      backgroundColor: isEven ? "#111111" : "#0a0a0a",
-                      borderBottom: "1px solid #1a1a1a",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
-                      #{rank}
-                    </div>
-                    <div
-                      style={{ fontSize: 11, color: "#cccccc", letterSpacing: "0.02em" }}
-                      title={row.pubkey}
-                    >
-                      {truncateWallet(row.pubkey)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: row.totalPnl >= 0 ? "#00ff41" : "#ff3333",
-                        textAlign: "right",
-                      }}
-                    >
-                      {formatPnl(row.totalPnl)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        <LeaderboardTable
+          title="PNL LEADERBOARD"
+          subtitle="Top traders by total PnL"
+          rows={rows}
+          loading={loading}
+          sortBy="pnl"
+        />
+        <LeaderboardTable
+          title="VOLUME LEADERBOARD"
+          subtitle="Top traders by trading volume"
+          rows={rows}
+          loading={loading}
+          sortBy="volume"
+        />
       </div>
     </div>
   );
