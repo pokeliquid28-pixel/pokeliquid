@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletReadyState } from "@solana/wallet-adapter-base";
 import { Keypair } from "@solana/web3.js";
 import {
   setSessionFromPrivateKey,
@@ -12,6 +13,7 @@ import {
   createGuestWallet,
   SessionWalletName,
 } from "@/lib/session-wallet";
+import { getLastWallet } from "@/providers/SessionWalletProvider";
 import { Logo } from "./Logo";
 
 /* eslint-disable @next/next/no-img-element */
@@ -51,9 +53,10 @@ const CARD_OFFSETS_Y = [16, 6, -4, 6, 16];
 const CARD_SCALES = [1, 1, 1.15, 1, 1];
 
 export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
-  const { select, connected } = useWallet();
+  const { select, connected, wallets, connect } = useWallet();
   const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
+  const [showWalletPicker, setShowWalletPicker] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,6 +76,20 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
     const t3 = setTimeout(() => setCtaVisible(true), 800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
+
+  // When an external wallet connects, pass through
+  useEffect(() => {
+    if (connected) {
+      onPass?.();
+    }
+  }, [connected, onPass]);
+
+  // Get available external wallets (Phantom, Solflare, etc.)
+  const externalWallets = wallets.filter(
+    (w) => w.adapter.name !== SessionWalletName &&
+           (w.adapter.readyState === WalletReadyState.Installed ||
+            w.adapter.readyState === WalletReadyState.Loadable)
+  );
 
   function clearFields() {
     setPassword("");
@@ -168,11 +185,29 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
     onPass?.();
   }
 
+  async function handleSelectWallet(walletName: string) {
+    try {
+      select(walletName as any);
+      setShowWalletPicker(false);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to connect wallet");
+    }
+  }
+
   function handleStartTrading() {
     setChecking(true);
-    // Must have a local wallet to auto-bypass — server session alone isn't enough
-    // (wallet is needed to sign transactions)
     const hasLocalWallet = typeof window !== "undefined" && !!localStorage.getItem("pokeliquid_session_wallet");
+    const lastWallet = getLastWallet();
+
+    // If user previously connected an external wallet, try to reconnect
+    if (lastWallet && lastWallet !== SessionWalletName) {
+      const ext = wallets.find((w) => w.adapter.name === lastWallet);
+      if (ext && ext.adapter.readyState === WalletReadyState.Installed) {
+        select(lastWallet as any);
+        setChecking(false);
+        return;
+      }
+    }
 
     if (hasLocalWallet) {
       if (!connected) select(SessionWalletName);
@@ -188,7 +223,100 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
 
   const signupValid = email && password && confirmPassword && password.length >= 6 && password === confirmPassword;
 
-  // Auth modal overlay
+  // Wallet picker modal
+  if (showWalletPicker) {
+    return (
+      <div className="h-[100dvh] flex items-center justify-center px-4 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center space-y-3">
+            <div className="flex justify-center">
+              <div className="block md:hidden"><Logo width={240} /></div>
+              <div className="hidden md:block"><Logo width={320} /></div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4" style={{ backgroundColor: "#111111", border: "1px solid #1a1a1a" }}>
+            <h2 className="font-mono text-center text-lg font-bold" style={{ color: "#ffffff" }}>
+              Connect Wallet
+            </h2>
+
+            <div className="space-y-2">
+              {externalWallets.length === 0 ? (
+                <p className="text-center text-xs" style={{ color: "#666" }}>
+                  No wallets detected. Install{" "}
+                  <a href="https://phantom.app" target="_blank" rel="noopener noreferrer" style={{ color: "#00ff41" }}>
+                    Phantom
+                  </a>{" "}
+                  or{" "}
+                  <a href="https://solflare.com" target="_blank" rel="noopener noreferrer" style={{ color: "#00ff41" }}>
+                    Solflare
+                  </a>{" "}
+                  to connect.
+                </p>
+              ) : (
+                externalWallets.map((w) => (
+                  <button
+                    key={w.adapter.name}
+                    onClick={() => handleSelectWallet(w.adapter.name)}
+                    className="w-full flex items-center gap-3 px-4 py-3 transition-colors"
+                    style={{
+                      background: "transparent",
+                      border: "1px solid #1a1a1a",
+                      cursor: "pointer",
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 13,
+                      color: "#ccc",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#00ff41";
+                      e.currentTarget.style.color = "#fff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#1a1a1a";
+                      e.currentTarget.style.color = "#ccc";
+                    }}
+                  >
+                    {w.adapter.icon && (
+                      <img
+                        src={w.adapter.icon}
+                        alt={w.adapter.name}
+                        width={24}
+                        height={24}
+                        style={{ borderRadius: 4 }}
+                      />
+                    )}
+                    <span>{w.adapter.name}</span>
+                    {w.adapter.readyState === WalletReadyState.Installed && (
+                      <span style={{ marginLeft: "auto", fontSize: 10, color: "#00ff41" }}>Detected</span>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="text-center space-y-3">
+            <button
+              onClick={() => { setShowWalletPicker(false); setShowAuth(true); }}
+              className="text-xs underline underline-offset-2 transition-colors hover:opacity-80"
+              style={{ color: "#666" }}
+            >
+              Use email instead
+            </button>
+            <button
+              onClick={() => setShowWalletPicker(false)}
+              className="text-xs block w-full transition-colors hover:opacity-80"
+              style={{ color: "#555" }}
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth modal overlay (email/password)
   if (showAuth) {
     return (
       <div className="h-[100dvh] flex items-center justify-center px-4 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
@@ -324,6 +452,15 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           </form>
 
           <div className="text-center space-y-3">
+            {externalWallets.length > 0 && (
+              <button
+                onClick={() => { setShowAuth(false); setShowWalletPicker(true); }}
+                className="text-xs underline underline-offset-2 transition-colors hover:opacity-80"
+                style={{ color: "#00ff41" }}
+              >
+                Connect wallet instead
+              </button>
+            )}
             <button
               onClick={handleGuest}
               className="text-xs underline underline-offset-2 transition-colors hover:opacity-80"
@@ -359,7 +496,6 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           transform: logoVisible ? "translateY(0)" : "translateY(-20px)",
         }}
       >
-        {/* Mobile: 120px, Desktop: 400px */}
         <div className="block md:hidden">
           <Logo size={120} />
         </div>
@@ -423,36 +559,69 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         Pok&eacute;mon card perpetual futures on Solana
       </p>
 
-      {/* CTA button */}
-      <button
-        onClick={handleStartTrading}
-        className="transition-all duration-700 uppercase tracking-wider font-bold"
+      {/* CTA buttons */}
+      <div
+        className="flex flex-col items-center gap-3 w-full transition-all duration-700"
         style={{
           opacity: ctaVisible ? 1 : 0,
           transform: ctaVisible ? "translateY(0)" : "translateY(10px)",
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "clamp(13px, 2vw, 15px)",
-          padding: "14px 48px",
-          background: "#00ff41",
-          color: "#000000",
-          border: "none",
-          boxShadow: "4px 4px 0 #009926, 0 0 30px rgba(0,255,65,0.15)",
-          cursor: "pointer",
-          letterSpacing: "0.08em",
-          width: "100%",
           maxWidth: 320,
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = "2px 2px 0 #009926, 0 0 40px rgba(0,255,65,0.25)";
-          e.currentTarget.style.transform = "translate(2px, 2px)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = "4px 4px 0 #009926, 0 0 30px rgba(0,255,65,0.15)";
-          e.currentTarget.style.transform = "translate(0, 0)";
-        }}
       >
-        {checking ? "Checking..." : "Start Trading"}
-      </button>
+        <button
+          onClick={handleStartTrading}
+          className="uppercase tracking-wider font-bold w-full"
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "clamp(13px, 2vw, 15px)",
+            padding: "14px 48px",
+            background: "#00ff41",
+            color: "#000000",
+            border: "none",
+            boxShadow: "4px 4px 0 #009926, 0 0 30px rgba(0,255,65,0.15)",
+            cursor: "pointer",
+            letterSpacing: "0.08em",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = "2px 2px 0 #009926, 0 0 40px rgba(0,255,65,0.25)";
+            e.currentTarget.style.transform = "translate(2px, 2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "4px 4px 0 #009926, 0 0 30px rgba(0,255,65,0.15)";
+            e.currentTarget.style.transform = "translate(0, 0)";
+          }}
+        >
+          {checking ? "Checking..." : "Start Trading"}
+        </button>
+
+        {externalWallets.length > 0 && (
+          <button
+            onClick={() => setShowWalletPicker(true)}
+            className="uppercase tracking-wider font-bold w-full"
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "clamp(12px, 1.8vw, 13px)",
+              padding: "12px 48px",
+              background: "transparent",
+              color: "#00ff41",
+              border: "1px solid rgba(0,255,65,0.4)",
+              cursor: "pointer",
+              letterSpacing: "0.08em",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#00ff41";
+              e.currentTarget.style.background = "rgba(0,255,65,0.06)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "rgba(0,255,65,0.4)";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            Connect Wallet
+          </button>
+        )}
+      </div>
 
       {/* Read Docs link */}
       <Link

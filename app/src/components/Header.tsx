@@ -9,7 +9,8 @@ import { WalletButton } from "./WalletButton";
 import { NotificationBell } from "./NotificationBell";
 import { Logo } from "./Logo";
 import { useOracle, OracleHealth } from "@/hooks/useOracle";
-import { getSavedEmail, clearSessionWallet } from "@/lib/session-wallet";
+import { getSavedEmail, clearSessionWallet, SessionWalletName } from "@/lib/session-wallet";
+import { clearLastWallet } from "@/providers/SessionWalletProvider";
 import { MARKETS } from "@/lib/markets";
 
 // ─── Nav config ────────────────────────────────────────────────────────────────
@@ -176,12 +177,17 @@ function MobileMenu({
   pathname: string;
 }) {
   const { price, lastUpdated, isLoading } = useOracle();
-  const { publicKey, connected, disconnect } = useWallet();
+  const { publicKey, connected, disconnect, wallet } = useWallet();
   const [email, setEmail] = useState<string | null>(null);
+  const isExternal = connected && wallet && wallet.adapter.name !== SessionWalletName;
 
   useEffect(() => {
-    setEmail(getSavedEmail());
-  }, [connected]);
+    if (isExternal) {
+      setEmail(null);
+    } else {
+      setEmail(getSavedEmail());
+    }
+  }, [connected, isExternal]);
 
   const priceUsd = price / 1_000_000;
   const ago = lastUpdated
@@ -312,12 +318,25 @@ function MobileMenu({
             <div style={{ fontSize: 10, color: "#666", fontFamily: "monospace" }}>
               {addr.slice(0, 4)}...{addr.slice(-4)}
             </div>
+            {isExternal && wallet && (
+              <div style={{ fontSize: 11, color: "#00ff41", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                {wallet.adapter.icon && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={wallet.adapter.icon} alt="" width={14} height={14} style={{ borderRadius: 2 }} />
+                )}
+                {wallet.adapter.name}
+              </div>
+            )}
             <button
               onClick={() => {
-                clearSessionWallet();
+                if (isExternal) {
+                  clearLastWallet();
+                } else {
+                  clearSessionWallet();
+                  fetch("/api/logout", { method: "POST" }).catch(() => {});
+                }
                 disconnect();
                 onClose();
-                fetch("/api/logout", { method: "POST" }).catch(() => {});
                 window.location.href = "/";
               }}
               style={{
