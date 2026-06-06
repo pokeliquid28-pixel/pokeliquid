@@ -114,8 +114,25 @@ function PoolContent() {
       const lpPositionPda = getLpPositionPDA(publicKey);
       const { ata, needsCreate } = await ensureAta(connection, publicKey, USDC_MINT, publicKey);
 
+      // Cap to actual wallet balance
+      let actualRaw = 0;
+      try {
+        const acc = await getAccount(connection, ata);
+        actualRaw = Number(acc.amount);
+      } catch {
+        setTxStatus({ type: "error", msg: "No USDC token account found." });
+        setLoading(null);
+        return;
+      }
+      const finalAmount = Math.min(amountRaw, actualRaw);
+      if (finalAmount <= 0) {
+        setTxStatus({ type: "error", msg: `Insufficient USDC. Wallet has ${(actualRaw / 1e6).toFixed(6)}.` });
+        setLoading(null);
+        return;
+      }
+
       const txBuilder = (program.methods as any)
-        .lpDeposit(new BN(amountRaw))
+        .lpDeposit(new BN(finalAmount))
         .accounts({
           user: publicKey,
           protocolState: PROTOCOL_STATE,
