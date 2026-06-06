@@ -6,7 +6,7 @@ use crate::{
     error::ErrorCode,
     events::PositionLiquidated,
     instructions::close_position::compute_pnl,
-    state::{Direction, MarginAccount, MarketState, OracleAccount, ProtocolState, MAX_POSITIONS},
+    state::{Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, ProtocolState, MAX_POSITIONS},
 };
 
 #[derive(Accounts)]
@@ -64,6 +64,13 @@ pub struct Liquidate<'info> {
     )]
     pub liquidator_token_account: Box<Account<'info, TokenAccount>>,
 
+    #[account(
+        mut,
+        seeds = [LP_POOL_SEED],
+        bump = liquidity_pool.bump,
+    )]
+    pub liquidity_pool: Box<Account<'info, LiquidityPool>>,
+
     pub token_program: Program<'info, Token>,
 }
 
@@ -100,11 +107,17 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
     let is_liquidatable = equity <= 0 || (equity * 20 < position.notional as i128);
     require!(is_liquidatable, ErrorCode::NotLiquidatable);
 
-    // ── Distribute collateral ─────────────────────────────────────────────────
+    // ── Distribute collateral: 2% liquidator, 44% LP, 44% insurance, 10% platform
     let collateral = position.collateral;
 
     let liquidator_reward = collateral
         .checked_mul(LIQUIDATOR_REWARD_BPS)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(10_000)
+        .ok_or(ErrorCode::MathOverflow)?;
+
+    let lp_portion = collateral
+        .checked_mul(LIQUIDATION_LP_BPS)
         .ok_or(ErrorCode::MathOverflow)?
         .checked_div(10_000)
         .ok_or(ErrorCode::MathOverflow)?;
@@ -131,6 +144,16 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
             signer,
         );
         token::transfer(cpi_ctx, liquidator_reward)?;
+    }
+
+    // Record LP portion in accumulated_fees (stays in fee_vault, claimable by LPs)
+    if lp_portion > 0 {
+        ctx.accounts.liquidity_pool.accumulated_fees = ctx
+            .accounts
+            .liquidity_pool
+            .accumulated_fees
+            .checked_add(lp_portion)
+            .ok_or(ErrorCode::MathOverflow)?;
     }
 
     // Transfer insurance portion
@@ -188,10 +211,11 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
     });
 
     msg!(
-        "Liquidated user={} slot={}. reward={} insurance={}",
+        "Liquidated user={} slot={}. reward={} lp={} insurance={}",
         ctx.accounts.user.key(),
         idx,
         liquidator_reward,
+        lp_portion,
         insurance_portion
     );
     Ok(())

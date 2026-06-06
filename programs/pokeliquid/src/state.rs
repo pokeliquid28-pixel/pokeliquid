@@ -178,4 +178,6 @@ pub struct ProtocolParams {
     pub staleness_threshold: Option<i64>,
     pub secondary_authority: Option<Pubkey>,
     pub auto_pause_threshold: Option<i64>,
+    pub insurance_fund_bps: Option<u64>,
+    pub lp_fee_bps: Option<u64>,
 }

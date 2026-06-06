@@ -5,7 +5,7 @@ use crate::{
     constants::*,
     error::ErrorCode,
     events::{FundingSettled, PositionLiquidated},
-    state::{Direction, MarginAccount, MarketState, OracleAccount, ProtocolState, MAX_POSITIONS},
+    state::{Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, ProtocolState, MAX_POSITIONS},
 };
 
 #[derive(Accounts)]
@@ -47,6 +47,13 @@ pub struct SettleFunding<'info> {
     )]
     pub insurance_fund: Box<Account<'info, TokenAccount>>,
 
+    #[account(
+        mut,
+        seeds = [LP_POOL_SEED],
+        bump = liquidity_pool.bump,
+    )]
+    pub liquidity_pool: Box<Account<'info, LiquidityPool>>,
+
     pub token_program: Program<'info, Token>,
 }
 
@@ -78,7 +85,6 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
     let market_short = ctx.accounts.market_state.short_open_interest;
     let base_rate = ctx.accounts.protocol_state.base_funding_rate_per_hour;
     let skew_factor = ctx.accounts.protocol_state.skew_factor;
-    let insurance_fund_bps = ctx.accounts.protocol_state.insurance_fund_bps;
     let protocol_bump = ctx.accounts.protocol_state.bump;
 
     // Precompute skew rate from per-market OI
@@ -132,11 +138,13 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
             Direction::Short => market_short >= market_long,
         };
 
-        let hourly_rate = if on_majority_side {
-            base_rate.checked_add(skew_rate).ok_or(ErrorCode::MathOverflow)?
-        } else {
-            base_rate.saturating_sub(skew_rate)
-        };
+        // Minority side pays 0 funding
+        if !on_majority_side {
+            actions.push(FundingAction::Skip);
+            continue;
+        }
+
+        let hourly_rate = base_rate.checked_add(skew_rate).ok_or(ErrorCode::MathOverflow)?;
 
         let funding_owed = position
             .notional
@@ -195,13 +203,30 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
 
                 let new_collateral = pos.collateral;
 
-                // Split funding: insurance portion from fee_vault → insurance_fund
-                let insurance_portion = funding_owed
-                    .checked_mul(insurance_fund_bps)
+                // Funding fee split: 30% LP, 20% insurance, rest platform
+                let funding_lp_portion = funding_owed
+                    .checked_mul(FUNDING_LP_BPS)
                     .ok_or(ErrorCode::MathOverflow)?
                     .checked_div(10_000)
                     .ok_or(ErrorCode::MathOverflow)?;
 
+                let insurance_portion = funding_owed
+                    .checked_mul(FUNDING_INSURANCE_BPS)
+                    .ok_or(ErrorCode::MathOverflow)?
+                    .checked_div(10_000)
+                    .ok_or(ErrorCode::MathOverflow)?;
+
+                // Record LP portion in accumulated_fees
+                if funding_lp_portion > 0 {
+                    ctx.accounts.liquidity_pool.accumulated_fees = ctx
+                        .accounts
+                        .liquidity_pool
+                        .accumulated_fees
+                        .checked_add(funding_lp_portion)
+                        .ok_or(ErrorCode::MathOverflow)?;
+                }
+
+                // Transfer insurance portion from fee_vault → insurance_fund
                 if insurance_portion > 0 {
                     let cpi_ctx = CpiContext::new_with_signer(
                         ctx.accounts.token_program.key(),

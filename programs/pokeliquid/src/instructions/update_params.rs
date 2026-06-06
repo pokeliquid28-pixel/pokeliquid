@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::*,
     error::ErrorCode,
-    state::{OracleAccount, ProtocolState, ProtocolParams},
+    state::{LiquidityPool, OracleAccount, ProtocolState, ProtocolParams},
 };
 
 #[derive(Accounts)]
@@ -20,6 +20,13 @@ pub struct UpdateProtocolParams<'info> {
 
     #[account(mut)]
     pub oracle: Account<'info, OracleAccount>,
+
+    #[account(
+        mut,
+        seeds = [LP_POOL_SEED],
+        bump = liquidity_pool.bump,
+    )]
+    pub liquidity_pool: Account<'info, LiquidityPool>,
 }
 
 pub fn handler(ctx: Context<UpdateProtocolParams>, params: ProtocolParams) -> Result<()> {
@@ -57,6 +64,12 @@ pub fn handler(ctx: Context<UpdateProtocolParams>, params: ProtocolParams) -> Re
     }
     if let Some(v) = params.auto_pause_threshold {
         state.auto_pause_threshold = v;
+    }
+    if let Some(v) = params.insurance_fund_bps {
+        state.insurance_fund_bps = v;
+    }
+    if let Some(v) = params.lp_fee_bps {
+        ctx.accounts.liquidity_pool.lp_fee_bps = v;
     }
 
     msg!("Protocol params updated");

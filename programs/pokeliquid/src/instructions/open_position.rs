@@ -160,7 +160,7 @@ pub fn handler(
         .checked_div(10_000)
         .ok_or(ErrorCode::MathOverflow)?;
 
-    // Fee split: 30% LP pool, 60% fee_vault, 10% insurance
+    // Fee split: 50% LP pool, 25% insurance, 25% platform (stays in fee_vault)
     let lp_portion = fee_amount
         .checked_mul(ctx.accounts.liquidity_pool.lp_fee_bps)
         .ok_or(ErrorCode::MathOverflow)?

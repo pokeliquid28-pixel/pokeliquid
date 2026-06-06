@@ -320,8 +320,8 @@ fn fuzz_precision_insurance_split_rounding() {
     // Insurance split with odd amounts
     let fee: u64 = 33_333; // 0.033333 USDC
     let insurance = fee * DEFAULT_INSURANCE_FUND_BPS / 10_000;
-    // 33_333 * 1000 / 10_000 = 3_333
-    assert_eq!(insurance, 3_333, "Insurance split truncates correctly");
+    // 33_333 * 2500 / 10_000 = 8_333
+    assert_eq!(insurance, 8_333, "Insurance split truncates correctly");
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -402,19 +402,21 @@ fn fuzz_oracle_extreme_price_spike() {
 #[test]
 fn fuzz_liquidation_reward_proportional() {
     // Liquidator reward should always be proportional to collateral
+    // Distribution: 2% liquidator, 44% LP, 44% insurance, 10% platform
     for collateral in [1_000_000u64, 10_000_000, 100_000_000, 1_000_000_000, u64::MAX / 10_000] {
         let reward = collateral * LIQUIDATOR_REWARD_BPS / 10_000;
+        let lp = collateral * LIQUIDATION_LP_BPS / 10_000;
         let insurance = collateral * LIQUIDATION_INSURANCE_BPS / 10_000;
-        let vault = collateral - reward - insurance;
+        let platform = collateral - reward - lp - insurance;
 
         // Verify distribution sums to collateral
         assert_eq!(
-            reward + insurance + vault, collateral,
+            reward + lp + insurance + platform, collateral,
             "Liquidation distribution must sum to collateral for {}",
             collateral
         );
-        // Reward is exactly 1%
-        assert_eq!(reward, collateral / 100, "Reward should be 1% for {}", collateral);
+        // Reward is exactly 2%
+        assert_eq!(reward, collateral / 50, "Reward should be 2% for {}", collateral);
     }
 }
 

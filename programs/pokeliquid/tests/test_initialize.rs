@@ -246,12 +246,14 @@ fn test_liquidation_distribution() {
     let collateral: u64 = 100_000_000; // 100 USDC
 
     let liquidator_reward = collateral * LIQUIDATOR_REWARD_BPS / 10_000;
+    let lp_portion = collateral * LIQUIDATION_LP_BPS / 10_000;
     let insurance_portion = collateral * LIQUIDATION_INSURANCE_BPS / 10_000;
-    let vault_remainder = collateral - liquidator_reward - insurance_portion;
+    let platform_remainder = collateral - liquidator_reward - lp_portion - insurance_portion;
 
-    assert_eq!(liquidator_reward, 1_000_000); // 1 USDC (1%)
-    assert_eq!(insurance_portion, 9_000_000); // 9 USDC (9%)
-    assert_eq!(vault_remainder, 90_000_000); // 90 USDC stays in vault
+    assert_eq!(liquidator_reward, 2_000_000); // 2 USDC (2%)
+    assert_eq!(lp_portion, 44_000_000); // 44 USDC (44%)
+    assert_eq!(insurance_portion, 44_000_000); // 44 USDC (44%)
+    assert_eq!(platform_remainder, 10_000_000); // 10 USDC (10%) stays in vault
 }
 
 // ── Settlement Edge Case Tests ─────────────────────────────────────────────────

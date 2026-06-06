@@ -103,49 +103,51 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
     let current_price = oracle.price;
 
     // ── Funding (per-market OI) ──────────────────────────────────────────────
-    let hours_open = ((now.saturating_sub(position.open_timestamp)) / 3600).max(0) as u64;
-
-    let total_exposure = market
-        .long_open_interest
-        .checked_add(market.short_open_interest)
-        .ok_or(ErrorCode::MathOverflow)?;
-
-    let skew_rate = if total_exposure > 0 {
-        let diff = if market.long_open_interest > market.short_open_interest {
-            market.long_open_interest - market.short_open_interest
-        } else {
-            market.short_open_interest - market.long_open_interest
-        };
-        diff.checked_mul(protocol.skew_factor)
-            .ok_or(ErrorCode::MathOverflow)?
-            .checked_div(total_exposure)
-            .ok_or(ErrorCode::MathOverflow)?
-    } else {
-        0u64
-    };
+    // Use last_funding_timestamp to avoid double-charging already-settled hours
+    let hours_open = ((now.saturating_sub(position.last_funding_timestamp)) / 3600).max(0) as u64;
 
     let on_majority_side = match position.direction {
         Direction::Long => market.long_open_interest >= market.short_open_interest,
         Direction::Short => market.short_open_interest >= market.long_open_interest,
     };
 
-    let hourly_rate = if on_majority_side {
-        protocol
+    // Minority side pays 0 funding
+    let funding_owed = if !on_majority_side || hours_open == 0 {
+        0u64
+    } else {
+        let total_exposure = market
+            .long_open_interest
+            .checked_add(market.short_open_interest)
+            .ok_or(ErrorCode::MathOverflow)?;
+
+        let skew_rate = if total_exposure > 0 {
+            let diff = if market.long_open_interest > market.short_open_interest {
+                market.long_open_interest - market.short_open_interest
+            } else {
+                market.short_open_interest - market.long_open_interest
+            };
+            diff.checked_mul(protocol.skew_factor)
+                .ok_or(ErrorCode::MathOverflow)?
+                .checked_div(total_exposure)
+                .ok_or(ErrorCode::MathOverflow)?
+        } else {
+            0u64
+        };
+
+        let hourly_rate = protocol
             .base_funding_rate_per_hour
             .checked_add(skew_rate)
-            .ok_or(ErrorCode::MathOverflow)?
-    } else {
-        protocol.base_funding_rate_per_hour.saturating_sub(skew_rate)
-    };
+            .ok_or(ErrorCode::MathOverflow)?;
 
-    let funding_owed = position
-        .notional
-        .checked_mul(hourly_rate)
-        .ok_or(ErrorCode::MathOverflow)?
-        .checked_mul(hours_open)
-        .ok_or(ErrorCode::MathOverflow)?
-        .checked_div(FUNDING_RATE_SCALE)
-        .unwrap_or(0);
+        position
+            .notional
+            .checked_mul(hourly_rate)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_mul(hours_open)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(FUNDING_RATE_SCALE)
+            .unwrap_or(0)
+    };
 
     // ── Raw PnL ───────────────────────────────────────────────────────────────
     let raw_pnl: i128 = compute_pnl(&position.direction, current_price, position.entry_price, position.notional)?;
@@ -168,7 +170,7 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         .checked_div(10_000)
         .ok_or(ErrorCode::MathOverflow)?;
 
-    // Fee split: 30% LP pool, 60% fee_vault, 10% insurance
+    // Trading fee split: 50% LP, 25% insurance, 25% platform (stays in fee_vault)
     let lp_portion = close_fee
         .checked_mul(ctx.accounts.liquidity_pool.lp_fee_bps)
         .ok_or(ErrorCode::MathOverflow)?
@@ -181,13 +183,29 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         .checked_div(10_000)
         .ok_or(ErrorCode::MathOverflow)?;
 
-    // Record LP fee portion
-    if lp_portion > 0 {
+    // Funding fee split: 30% LP, 20% insurance (majority side only)
+    let funding_lp_portion = funding_owed
+        .checked_mul(FUNDING_LP_BPS)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(10_000)
+        .ok_or(ErrorCode::MathOverflow)?;
+
+    let funding_insurance_portion = funding_owed
+        .checked_mul(FUNDING_INSURANCE_BPS)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(10_000)
+        .ok_or(ErrorCode::MathOverflow)?;
+
+    // Record LP fee portions (trading + funding)
+    let total_lp = lp_portion
+        .checked_add(funding_lp_portion)
+        .ok_or(ErrorCode::MathOverflow)?;
+    if total_lp > 0 {
         ctx.accounts.liquidity_pool.accumulated_fees = ctx
             .accounts
             .liquidity_pool
             .accumulated_fees
-            .checked_add(lp_portion)
+            .checked_add(total_lp)
             .ok_or(ErrorCode::MathOverflow)?;
     }
 
@@ -203,8 +221,11 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
     let seeds = &[PROTOCOL_SEED, &[protocol_bump]];
     let signer = &[&seeds[..]];
 
-    // Route insurance fee portion from fee_vault to insurance_fund
-    if insurance_portion > 0 {
+    // Route insurance portions (trading + funding) from fee_vault to insurance_fund
+    let total_insurance = insurance_portion
+        .checked_add(funding_insurance_portion)
+        .ok_or(ErrorCode::MathOverflow)?;
+    if total_insurance > 0 {
         let cpi_ctx = CpiContext::new_with_signer(
             ctx.accounts.token_program.key(),
             Transfer {
@@ -214,7 +235,7 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
             },
             signer,
         );
-        token::transfer(cpi_ctx, insurance_portion)?;
+        token::transfer(cpi_ctx, total_insurance)?;
     }
 
     // Transfer settlement to user: fee_vault → lp_vault → insurance_fund
