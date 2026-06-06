@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { getSessionPrivateKey } from "@/lib/session-wallet";
-import bs58 from "bs58";
 
 type Props = { onClose: () => void };
 
@@ -11,11 +10,12 @@ export function ExportKeyModal({ onClose }: Props) {
   const [copied, setCopied] = useState(false);
 
   const secretKey = getSessionPrivateKey();
-  const base58Key = secretKey ? bs58.encode(new Uint8Array(secretKey)) : null;
+  // Display as JSON array (importable into Solana CLI / Phantom)
+  const keyDisplay = secretKey ? JSON.stringify(secretKey) : null;
 
   function handleCopy() {
-    if (!base58Key) return;
-    navigator.clipboard.writeText(base58Key).then(() => {
+    if (!keyDisplay) return;
+    navigator.clipboard.writeText(keyDisplay).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -44,7 +44,7 @@ export function ExportKeyModal({ onClose }: Props) {
           Never share your private key with anyone. Anyone with this key has full control of your wallet and funds. Store it securely.
         </div>
 
-        {!base58Key ? (
+        {!keyDisplay ? (
           <div style={{ fontSize: 12, color: "#666" }}>
             No session wallet found. This feature is only available for generated wallets.
           </div>
@@ -68,7 +68,7 @@ export function ExportKeyModal({ onClose }: Props) {
               fontSize: 10, color: "#ccc", wordBreak: "break-all", lineHeight: 1.6,
               marginBottom: 12, userSelect: "all",
             }}>
-              {base58Key}
+              {keyDisplay}
             </div>
             <button
               onClick={handleCopy}
