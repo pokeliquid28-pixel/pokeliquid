@@ -21,6 +21,7 @@ const NAV = [
   { href: "/stats", label: "STATS" },
   { href: "/leaderboard", label: "LEADERBOARD" },
   { href: "/docs", label: "DOCS" },
+  { href: "/api-docs", label: "API" },
 ];
 
 // ─── Oracle health ──────────────────────────────────────────────────────────────

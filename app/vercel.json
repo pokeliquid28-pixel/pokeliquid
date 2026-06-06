@@ -3,6 +3,21 @@
     {
       "source": "/api/keeper/:path*",
       "destination": "http://157.180.67.25:3001/:path*"
+    },
+    {
+      "source": "/api/v1/:path*",
+      "destination": "http://157.180.67.25:3001/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/v1/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" },
+        { "key": "Cache-Control", "value": "public, s-maxage=10, stale-while-revalidate=30" }
+      ]
     }
   ]
 }
