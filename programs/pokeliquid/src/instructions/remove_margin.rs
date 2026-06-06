@@ -47,6 +47,9 @@ pub fn handler(ctx: Context<RemoveMargin>, position_index: u8, amount: u64) -> R
         .as_ref()
         .ok_or(ErrorCode::NoOpenPosition)?;
 
+    // Ensure the oracle matches the one used when position was opened
+    require!(oracle.key() == position.oracle, ErrorCode::MarketOracleMismatch);
+
     require!(position.collateral > amount, ErrorCode::InsufficientCollateral);
 
     // Check that remaining collateral keeps position above liquidation threshold

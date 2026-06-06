@@ -4,7 +4,7 @@ use crate::{
     constants::*,
     error::ErrorCode,
     events::OracleStale,
-    state::{OracleAccount, ProtocolState},
+    state::{MarketState, OracleAccount, ProtocolState},
 };
 
 #[derive(Accounts)]
@@ -19,6 +19,12 @@ pub struct CheckAndPause<'info> {
     pub protocol_state: Account<'info, ProtocolState>,
 
     pub oracle: Account<'info, OracleAccount>,
+
+    /// Proves the oracle belongs to a real market (Anchor owner+discriminator check)
+    #[account(
+        constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
+    )]
+    pub market_state: Account<'info, MarketState>,
 }
 
 pub fn handler(ctx: Context<CheckAndPause>) -> Result<()> {

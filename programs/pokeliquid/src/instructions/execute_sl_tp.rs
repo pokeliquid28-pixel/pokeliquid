@@ -89,6 +89,8 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
     let idx = position_index as usize;
     require!(idx < MAX_POSITIONS, ErrorCode::InvalidPositionIndex);
 
+    require!(!ctx.accounts.protocol_state.is_paused, ErrorCode::ProtocolPaused);
+
     let oracle = &ctx.accounts.oracle;
     let now = Clock::get()?.unix_timestamp;
 
@@ -105,6 +107,9 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
         .as_ref()
         .ok_or(ErrorCode::NoOpenPosition)?
         .clone();
+
+    // Ensure the oracle matches the one used when position was opened
+    require!(oracle.key() == position.oracle, ErrorCode::MarketOracleMismatch);
 
     let current_price = oracle.price;
 

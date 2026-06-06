@@ -90,6 +90,7 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     state.insurance_fund_bps = DEFAULT_INSURANCE_FUND_BPS;
     state.min_position_size = DEFAULT_MIN_POSITION_SIZE;
     state.is_paused = false;
+    state.manual_pause = false;
     state.secondary_authority = Pubkey::default();
     state.last_oracle_update = 0;
     state.auto_pause_threshold = DEFAULT_AUTO_PAUSE_THRESHOLD;

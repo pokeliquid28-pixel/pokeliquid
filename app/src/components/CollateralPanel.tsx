@@ -10,6 +10,7 @@ import { getProgram } from "@/lib/program";
 import {
   PROTOCOL_STATE,
   FEE_VAULT,
+  LIQUIDITY_POOL,
   USDC_MINT,
   getMarginAccountPDA,
 } from "@/lib/addresses";
@@ -145,6 +146,7 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
           marginAccount: marginPda,
           userTokenAccount: ata,
           feeVault: FEE_VAULT,
+          liquidityPool: LIQUIDITY_POOL,
           tokenProgram: TOKEN_PROGRAM_ID,
         });
 

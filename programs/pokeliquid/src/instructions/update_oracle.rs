@@ -31,7 +31,21 @@ pub struct UpdateOracle<'info> {
 }
 
 pub fn handler(ctx: Context<UpdateOracle>, price: u64) -> Result<()> {
+    require!(price > 0, ErrorCode::InvalidOraclePrice);
+
     let old_price = ctx.accounts.oracle.price;
+
+    // Max deviation check (skip on first update when old_price is 0)
+    if old_price > 0 {
+        let diff = if price > old_price { price - old_price } else { old_price - price };
+        let max_change = old_price
+            .checked_mul(MAX_ORACLE_DEVIATION_BPS)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(10_000)
+            .ok_or(ErrorCode::MathOverflow)?;
+        require!(diff <= max_change, ErrorCode::OraclePriceDeviation);
+    }
+
     let now = Clock::get()?.unix_timestamp;
 
     let oracle = &mut ctx.accounts.oracle;
@@ -41,8 +55,8 @@ pub fn handler(ctx: Context<UpdateOracle>, price: u64) -> Result<()> {
     let protocol = &mut ctx.accounts.protocol_state;
     protocol.last_oracle_update = now;
 
-    // Auto-unpause if protocol was paused due to stale oracle
-    if protocol.is_paused {
+    // Auto-unpause only if paused by staleness (not manual admin pause)
+    if protocol.is_paused && !protocol.manual_pause {
         protocol.is_paused = false;
         msg!("Protocol auto-unpaused by oracle update");
     }

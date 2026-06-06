@@ -27,11 +27,12 @@ pub struct ProtocolState {
     pub secondary_authority: Pubkey,
     pub last_oracle_update: i64,
     pub auto_pause_threshold: i64,
+    pub manual_pause: bool,
 }
 
 impl ProtocolState {
-    // 8 disc + 6*32 pub + 10*8 u64 + 1 bool + 4*1 bumps + 2*8 i64 + 16 padding
-    pub const SPACE: usize = 8 + 192 + 80 + 1 + 4 + 16 + 16;
+    // 8 disc + 6*32 pub + 10*8 u64 + 2 bool + 4*1 bumps + 2*8 i64 + 15 padding
+    pub const SPACE: usize = 8 + 192 + 80 + 2 + 4 + 16 + 15;
 }
 
 // ─── Oracle Account ───────────────────────────────────────────────────────────
@@ -140,11 +141,12 @@ pub struct LiquidityPool {
     pub lp_fee_bps: u64,
     pub bump: u8,
     pub vault_bump: u8,
+    pub total_fees_claimed: u64,
 }
 
 impl LiquidityPool {
-    // 8 disc + 4*8 u64 + 2*1 bumps + 32 padding
-    pub const SPACE: usize = 8 + 32 + 2 + 32;
+    // 8 disc + 5*8 u64 + 2*1 bumps + 24 padding
+    pub const SPACE: usize = 8 + 40 + 2 + 24;
 }
 
 // ─── LP Position ─────────────────────────────────────────────────────────

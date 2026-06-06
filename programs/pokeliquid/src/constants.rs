@@ -37,7 +37,10 @@ pub const LIQUIDATION_LP_BPS: u64 = 4_400; // 44% to LP
 pub const LIQUIDATION_INSURANCE_BPS: u64 = 4_400; // 44% to insurance
 // Remaining 10% stays in fee_vault (platform)
 
+// Oracle price bounds: max 50% deviation per update
+pub const MAX_ORACLE_DEVIATION_BPS: u64 = 5_000;
+
 // Funding fee split (majority side pays, minority pays 0)
-pub const FUNDING_LP_BPS: u64 = 3_000; // 30% of funding → LP
+pub const FUNDING_LP_BPS: u64 = 7_000; // 70% of funding → LP
 pub const FUNDING_INSURANCE_BPS: u64 = 2_000; // 20% of funding → insurance
-// Remaining ~50% stays in fee_vault (platform), minority side pays 0 (their 40% benefit)
+// Remaining 10% stays in fee_vault (platform), minority side pays 0

@@ -32,7 +32,21 @@ pub struct UpdateMarketOracle<'info> {
 }
 
 pub fn handler(ctx: Context<UpdateMarketOracle>, _market_id: String, price: u64) -> Result<()> {
+    require!(price > 0, ErrorCode::InvalidOraclePrice);
+
     let old_price = ctx.accounts.oracle.price;
+
+    // Max deviation check (skip on first update when old_price is 0)
+    if old_price > 0 {
+        let diff = if price > old_price { price - old_price } else { old_price - price };
+        let max_change = old_price
+            .checked_mul(MAX_ORACLE_DEVIATION_BPS)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(10_000)
+            .ok_or(ErrorCode::MathOverflow)?;
+        require!(diff <= max_change, ErrorCode::OraclePriceDeviation);
+    }
+
     let now = Clock::get()?.unix_timestamp;
 
     let oracle = &mut ctx.accounts.oracle;

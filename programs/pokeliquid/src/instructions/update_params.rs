@@ -55,6 +55,7 @@ pub fn handler(ctx: Context<UpdateProtocolParams>, params: ProtocolParams) -> Re
     }
     if let Some(v) = params.is_paused {
         state.is_paused = v;
+        state.manual_pause = v; // admin pause/unpause sets manual flag
     }
     if let Some(v) = params.staleness_threshold {
         ctx.accounts.oracle.staleness_threshold = v;

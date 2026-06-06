@@ -81,6 +81,8 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
     let idx = position_index as usize;
     require!(idx < MAX_POSITIONS, ErrorCode::InvalidPositionIndex);
 
+    require!(!ctx.accounts.protocol_state.is_paused, ErrorCode::ProtocolPaused);
+
     let oracle = &ctx.accounts.oracle;
     let now = Clock::get()?.unix_timestamp;
 
@@ -97,6 +99,9 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         .as_ref()
         .ok_or(ErrorCode::NoOpenPosition)?
         .clone();
+
+    // Ensure the oracle matches the one used when position was opened
+    require!(oracle.key() == position.oracle, ErrorCode::MarketOracleMismatch);
 
     let protocol = &ctx.accounts.protocol_state;
     let market = &ctx.accounts.market_state;
@@ -238,12 +243,20 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         token::transfer(cpi_ctx, total_insurance)?;
     }
 
+    // Track how much we've already spent from fee_vault (CPI doesn't refresh amount)
+    let mut vault_spent = total_insurance;
+
     // Transfer settlement to user: fee_vault → lp_vault → insurance_fund
     if settlement > 0 {
         let mut remaining = settlement;
 
-        // 1. Draw from fee_vault
-        let from_vault = remaining.min(ctx.accounts.fee_vault.amount);
+        // 1. Draw from fee_vault, reserving unclaimed LP fees
+        let lp_reserved = ctx.accounts.liquidity_pool.accumulated_fees
+            .saturating_sub(ctx.accounts.liquidity_pool.total_fees_claimed);
+        let vault_available = ctx.accounts.fee_vault.amount
+            .saturating_sub(vault_spent)
+            .saturating_sub(lp_reserved);
+        let from_vault = remaining.min(vault_available);
         if from_vault > 0 {
             let cpi_ctx = CpiContext::new_with_signer(
                 ctx.accounts.token_program.key(),
@@ -255,6 +268,7 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
                 signer,
             );
             token::transfer(cpi_ctx, from_vault)?;
+            vault_spent += from_vault;
             remaining -= from_vault;
         }
 

@@ -48,4 +48,8 @@ pub enum ErrorCode {
     NotTriggered,
     #[msg("Market state oracle does not match the provided oracle account")]
     MarketOracleMismatch,
+    #[msg("Oracle price cannot be zero")]
+    InvalidOraclePrice,
+    #[msg("Oracle price change exceeds maximum deviation")]
+    OraclePriceDeviation,
 }

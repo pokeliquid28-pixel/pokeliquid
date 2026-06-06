@@ -140,6 +140,7 @@ function PoolContent() {
           lpPosition: lpPositionPda,
           userTokenAccount: ata,
           lpVault: LP_VAULT,
+          feeVault: FEE_VAULT,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         });
@@ -179,6 +180,7 @@ function PoolContent() {
           lpPosition: lpPositionPda,
           userTokenAccount: ata,
           lpVault: LP_VAULT,
+          feeVault: FEE_VAULT,
           tokenProgram: TOKEN_PROGRAM_ID,
         });
 
@@ -323,7 +325,7 @@ function PoolContent() {
           <Section title="LP Fee Sources">
             <div className="space-y-0">
               <StatRow label="Trading Fees" value="50% of open & close fees" />
-              <StatRow label="Funding Fees" value="30% of majority-side funding" />
+              <StatRow label="Funding Fees" value="70% of majority-side funding" />
               <StatRow label="Liquidations" value="44% of liquidated collateral" />
             </div>
             <div className="mt-3 text-[10px] text-secondary/60 leading-relaxed">

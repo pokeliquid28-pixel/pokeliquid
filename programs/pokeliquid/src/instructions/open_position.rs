@@ -111,6 +111,24 @@ pub fn handler(
         }
     }
 
+    // Per-account per-market collateral cap ($100 USDC = 100_000_000)
+    let market_collateral_cap: u64 = 100_000_000;
+    let oracle_key = oracle.key();
+    let existing_market_collateral: u64 = ctx.accounts.margin_account.positions.iter()
+        .filter_map(|p| p.as_ref())
+        .filter(|p| p.oracle == oracle_key)
+        .map(|p| p.collateral)
+        .sum();
+    let post_fee_collateral = collateral
+        .checked_sub(
+            collateral.checked_mul(protocol.fee_bps).ok_or(ErrorCode::MathOverflow)?
+                .checked_div(10_000).ok_or(ErrorCode::MathOverflow)?
+        ).ok_or(ErrorCode::MathOverflow)?;
+    require!(
+        existing_market_collateral.checked_add(post_fee_collateral).ok_or(ErrorCode::MathOverflow)? <= market_collateral_cap,
+        ErrorCode::ExceedsMaxExposure
+    );
+
     // Notional = collateral * leverage
     let notional = collateral
         .checked_mul(leverage as u64)

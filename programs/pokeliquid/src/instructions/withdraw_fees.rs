@@ -4,7 +4,7 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::{
     constants::*,
     error::ErrorCode,
-    state::ProtocolState,
+    state::{LiquidityPool, ProtocolState},
 };
 
 #[derive(Accounts)]
@@ -34,12 +34,22 @@ pub struct WithdrawFees<'info> {
     )]
     pub admin_token_account: Account<'info, TokenAccount>,
 
+    #[account(
+        seeds = [LP_POOL_SEED],
+        bump = liquidity_pool.bump,
+    )]
+    pub liquidity_pool: Account<'info, LiquidityPool>,
+
     pub token_program: Program<'info, Token>,
 }
 
 pub fn handler(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
+    // Reserve unclaimed LP fees in fee_vault
+    let lp_reserved = ctx.accounts.liquidity_pool.accumulated_fees
+        .saturating_sub(ctx.accounts.liquidity_pool.total_fees_claimed);
+    let vault_available = ctx.accounts.fee_vault.amount.saturating_sub(lp_reserved);
     require!(
-        ctx.accounts.fee_vault.amount >= amount,
+        vault_available >= amount,
         ErrorCode::InsufficientVaultBalance
     );
 

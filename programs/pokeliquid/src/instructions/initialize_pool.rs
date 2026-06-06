@@ -56,6 +56,7 @@ pub fn handler(ctx: Context<InitializePool>) -> Result<()> {
     pool.lp_fee_bps = DEFAULT_LP_FEE_BPS;
     pool.bump = ctx.bumps.liquidity_pool;
     pool.vault_bump = ctx.bumps.lp_vault;
+    pool.total_fees_claimed = 0;
 
     msg!("Liquidity pool initialized. lp_vault: {}", ctx.accounts.lp_vault.key());
     Ok(())

@@ -95,6 +95,9 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
         .ok_or(ErrorCode::NoOpenPosition)?
         .clone();
 
+    // Ensure the oracle matches the one used when position was opened
+    require!(oracle.key() == position.oracle, ErrorCode::MarketOracleMismatch);
+
     let current_price = oracle.price;
 
     // ── Check liquidation condition ───────────────────────────────────────────

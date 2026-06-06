@@ -92,6 +92,13 @@ pub fn handler(ctx: Context<ClaimFees>) -> Result<()> {
     let lp = &mut ctx.accounts.lp_position;
     lp.fees_claimed = lp.fees_claimed.checked_add(actual_claim).ok_or(ErrorCode::MathOverflow)?;
 
+    // Track total claimed across all LPs for fee reservation
+    let pool = &mut ctx.accounts.liquidity_pool;
+    pool.total_fees_claimed = pool
+        .total_fees_claimed
+        .checked_add(actual_claim)
+        .ok_or(ErrorCode::MathOverflow)?;
+
     emit!(FeesClaimed {
         user: ctx.accounts.user.key(),
         amount: actual_claim,

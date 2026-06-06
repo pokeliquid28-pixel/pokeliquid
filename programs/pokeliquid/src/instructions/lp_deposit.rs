@@ -72,6 +72,19 @@ pub fn handler(ctx: Context<LpDeposit>, amount: u64) -> Result<()> {
 
     require!(shares > 0, ErrorCode::MathOverflow);
 
+    // Snapshot existing unclaimed fees before share changes
+    let lp = &ctx.accounts.lp_position;
+    let old_claimable = if lp.shares > 0 && pool.total_shares > 0 {
+        let old_entitled = (lp.shares as u128)
+            .checked_mul(pool.accumulated_fees as u128)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(pool.total_shares as u128)
+            .ok_or(ErrorCode::MathOverflow)? as u64;
+        old_entitled.saturating_sub(lp.fees_claimed)
+    } else {
+        0u64
+    };
+
     // Transfer USDC from user to lp_vault
     let cpi_ctx = CpiContext::new(
         ctx.accounts.token_program.key(),
@@ -99,6 +112,15 @@ pub fn handler(ctx: Context<LpDeposit>, amount: u64) -> Result<()> {
     let pool = &mut ctx.accounts.liquidity_pool;
     pool.total_usdc = pool.total_usdc.checked_add(amount).ok_or(ErrorCode::MathOverflow)?;
     pool.total_shares = pool.total_shares.checked_add(shares).ok_or(ErrorCode::MathOverflow)?;
+
+    // Set fees_claimed so new shares can't claim historical fees
+    // entitled_now - fees_claimed = old_claimable (preserve existing unclaimed)
+    let entitled_now = (lp.shares as u128)
+        .checked_mul(pool.accumulated_fees as u128)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(pool.total_shares as u128)
+        .ok_or(ErrorCode::MathOverflow)? as u64;
+    lp.fees_claimed = entitled_now.saturating_sub(old_claimable);
 
     emit!(LpDeposited {
         user: ctx.accounts.user.key(),

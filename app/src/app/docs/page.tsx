@@ -431,9 +431,9 @@ Minority side pays: 0 (benefits from being on the less crowded side)`}</Code>
             <Table
               headers={["Destination", "Share", "Description"]}
               rows={[
-                ["LP Pool", "30% (3,000 bps)", "Distributed to liquidity providers"],
+                ["LP Pool", "70% (7,000 bps)", "Distributed to liquidity providers"],
                 ["Insurance Fund", "20% (2,000 bps)", "Bad debt coverage"],
-                ["Platform", "~50%", "Protocol revenue (stays in fee vault)"],
+                ["Platform", "10%", "Protocol revenue (stays in fee vault)"],
               ]}
             />
 
@@ -550,7 +550,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
               headers={["Source", "LP Share", "Description"]}
               rows={[
                 ["Trading Fees", "50%", "From position open and close fees"],
-                ["Funding Fees", "30%", "From majority-side funding payments"],
+                ["Funding Fees", "70%", "From majority-side funding payments"],
                 ["Liquidations", "44%", "From liquidated position collateral"],
               ]}
             />
@@ -729,7 +729,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
 
             <FAQ q="Can I provide liquidity?">
               Yes. Go to the Pool page to deposit USDC. You receive LP shares and earn fees from trading (50%),
-              funding (30%), and liquidations (44%) proportional to your share. No lockup period.
+              funding (70%), and liquidations (44%) proportional to your share. No lockup period.
             </FAQ>
 
 

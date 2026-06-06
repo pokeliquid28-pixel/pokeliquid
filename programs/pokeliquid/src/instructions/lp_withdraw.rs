@@ -4,7 +4,7 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::{
     constants::*,
     error::ErrorCode,
-    events::LpWithdrawn,
+    events::{FeesClaimed, LpWithdrawn},
     state::{LiquidityPool, LpPosition, ProtocolState},
 };
 
@@ -24,7 +24,7 @@ pub struct LpWithdraw<'info> {
         seeds = [LP_POOL_SEED],
         bump = liquidity_pool.bump,
     )]
-    pub liquidity_pool: Account<'info, LiquidityPool>,
+    pub liquidity_pool: Box<Account<'info, LiquidityPool>>,
 
     #[account(
         mut,
@@ -32,14 +32,14 @@ pub struct LpWithdraw<'info> {
         bump = lp_position.bump,
         constraint = lp_position.owner == user.key() @ ErrorCode::Unauthorized,
     )]
-    pub lp_position: Account<'info, LpPosition>,
+    pub lp_position: Box<Account<'info, LpPosition>>,
 
     #[account(
         mut,
         token::mint = protocol_state.usdc_mint,
         token::authority = user,
     )]
-    pub user_token_account: Account<'info, TokenAccount>,
+    pub user_token_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -47,7 +47,15 @@ pub struct LpWithdraw<'info> {
         bump = liquidity_pool.vault_bump,
         token::mint = protocol_state.usdc_mint,
     )]
-    pub lp_vault: Account<'info, TokenAccount>,
+    pub lp_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        seeds = [FEE_VAULT_SEED],
+        bump = protocol_state.fee_vault_bump,
+        token::mint = protocol_state.usdc_mint,
+    )]
+    pub fee_vault: Box<Account<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token>,
 }
@@ -60,6 +68,54 @@ pub fn handler(ctx: Context<LpWithdraw>, shares: u64) -> Result<()> {
     require!(lp.shares >= shares, ErrorCode::InsufficientShares);
     require!(pool.total_shares > 0, ErrorCode::MathOverflow);
 
+    // ── Auto-claim unclaimed fees before burning shares ──────────────────
+    let total_entitled = (lp.shares as u128)
+        .checked_mul(pool.accumulated_fees as u128)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(pool.total_shares as u128)
+        .ok_or(ErrorCode::MathOverflow)? as u64;
+
+    let claimable = total_entitled.saturating_sub(lp.fees_claimed);
+
+    let protocol_bump = ctx.accounts.protocol_state.bump;
+    let seeds = &[PROTOCOL_SEED, &[protocol_bump]];
+    let signer = &[&seeds[..]];
+
+    if claimable > 0 {
+        let actual_claim = claimable.min(ctx.accounts.fee_vault.amount);
+        if actual_claim > 0 {
+            let cpi_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.key(),
+                Transfer {
+                    from: ctx.accounts.fee_vault.to_account_info(),
+                    to: ctx.accounts.user_token_account.to_account_info(),
+                    authority: ctx.accounts.protocol_state.to_account_info(),
+                },
+                signer,
+            );
+            token::transfer(cpi_ctx, actual_claim)?;
+
+            let lp = &mut ctx.accounts.lp_position;
+            lp.fees_claimed = lp.fees_claimed.checked_add(actual_claim).ok_or(ErrorCode::MathOverflow)?;
+
+            let pool = &mut ctx.accounts.liquidity_pool;
+            pool.total_fees_claimed = pool
+                .total_fees_claimed
+                .checked_add(actual_claim)
+                .ok_or(ErrorCode::MathOverflow)?;
+
+            emit!(FeesClaimed {
+                user: ctx.accounts.user.key(),
+                amount: actual_claim,
+            });
+
+            msg!("Auto-claimed {} USDC in LP fees before withdrawal", actual_claim);
+        }
+    }
+
+    // ── Withdraw USDC by burning shares ──────────────────────────────────
+    let pool = &ctx.accounts.liquidity_pool;
+
     // Calculate USDC to return: shares * total_usdc / total_shares
     let usdc_out = (shares as u128)
         .checked_mul(pool.total_usdc as u128)
@@ -71,11 +127,6 @@ pub fn handler(ctx: Context<LpWithdraw>, shares: u64) -> Result<()> {
         ctx.accounts.lp_vault.amount >= usdc_out,
         ErrorCode::InsufficientPoolBalance
     );
-
-    // Transfer USDC from lp_vault to user
-    let protocol_bump = ctx.accounts.protocol_state.bump;
-    let seeds = &[PROTOCOL_SEED, &[protocol_bump]];
-    let signer = &[&seeds[..]];
 
     let cpi_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.key(),
@@ -91,6 +142,19 @@ pub fn handler(ctx: Context<LpWithdraw>, shares: u64) -> Result<()> {
     // Update LP position
     let lp = &mut ctx.accounts.lp_position;
     lp.shares = lp.shares.checked_sub(shares).ok_or(ErrorCode::MathOverflow)?;
+
+    // Adjust fees_claimed proportionally so remaining shares keep correct entitlement
+    if lp.shares == 0 {
+        lp.fees_claimed = 0;
+    } else {
+        // Scale fees_claimed down by the fraction of shares remaining
+        let old_shares = shares.checked_add(lp.shares).ok_or(ErrorCode::MathOverflow)?;
+        lp.fees_claimed = (lp.fees_claimed as u128)
+            .checked_mul(lp.shares as u128)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(old_shares as u128)
+            .ok_or(ErrorCode::MathOverflow)? as u64;
+    }
 
     // Update pool
     let pool = &mut ctx.accounts.liquidity_pool;

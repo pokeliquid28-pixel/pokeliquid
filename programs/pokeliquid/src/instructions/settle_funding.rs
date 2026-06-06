@@ -268,6 +268,41 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
                 // Clear position
                 ctx.accounts.margin_account.positions[slot] = None;
 
+                // Distribute collateral: 44% LP, 44% insurance, 12% platform (no liquidator reward)
+                let lp_portion = collateral_lost
+                    .checked_mul(LIQUIDATION_LP_BPS)
+                    .ok_or(ErrorCode::MathOverflow)?
+                    .checked_div(10_000)
+                    .ok_or(ErrorCode::MathOverflow)?;
+
+                let insurance_portion = collateral_lost
+                    .checked_mul(LIQUIDATION_INSURANCE_BPS)
+                    .ok_or(ErrorCode::MathOverflow)?
+                    .checked_div(10_000)
+                    .ok_or(ErrorCode::MathOverflow)?;
+
+                if lp_portion > 0 {
+                    ctx.accounts.liquidity_pool.accumulated_fees = ctx
+                        .accounts
+                        .liquidity_pool
+                        .accumulated_fees
+                        .checked_add(lp_portion)
+                        .ok_or(ErrorCode::MathOverflow)?;
+                }
+
+                if insurance_portion > 0 {
+                    let cpi_ctx = CpiContext::new_with_signer(
+                        ctx.accounts.token_program.key(),
+                        Transfer {
+                            from: ctx.accounts.fee_vault.to_account_info(),
+                            to: ctx.accounts.insurance_fund.to_account_info(),
+                            authority: ctx.accounts.protocol_state.to_account_info(),
+                        },
+                        signer_seeds,
+                    );
+                    token::transfer(cpi_ctx, insurance_portion)?;
+                }
+
                 // Update global exposure
                 match direction {
                     Direction::Long => {
@@ -315,9 +350,11 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
                 });
 
                 msg!(
-                    "Position [{}] liquidated via funding drain. collateral_lost={}",
+                    "Position [{}] liquidated via funding drain. collateral_lost={} lp={} ins={}",
                     slot,
-                    collateral_lost
+                    collateral_lost,
+                    lp_portion,
+                    insurance_portion
                 );
             }
         }

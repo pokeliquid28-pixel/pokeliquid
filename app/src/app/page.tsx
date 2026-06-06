@@ -36,6 +36,7 @@ import {
   ORACLE_ACCOUNT,
   FEE_VAULT,
   INSURANCE_FUND,
+  LIQUIDITY_POOL,
   USDC_MINT,
   MARKET_SEED,
   PROGRAM_ID,
@@ -866,7 +867,7 @@ function OrderEntry({
         .depositCollateral(new BN(finalAmount))
         .accounts({
           user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
-          userTokenAccount: ata, feeVault: FEE_VAULT, tokenProgram: TOKEN_PROGRAM_ID,
+          userTokenAccount: ata, feeVault: FEE_VAULT, liquidityPool: LIQUIDITY_POOL, tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
@@ -906,7 +907,7 @@ function OrderEntry({
         .withdrawCollateral(new BN(withdrawRaw))
         .accounts({
           user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
-          userTokenAccount: ata, feeVault: FEE_VAULT, tokenProgram: TOKEN_PROGRAM_ID,
+          userTokenAccount: ata, feeVault: FEE_VAULT, liquidityPool: LIQUIDITY_POOL, tokenProgram: TOKEN_PROGRAM_ID,
         });
       if (needsCreate) {
         const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
