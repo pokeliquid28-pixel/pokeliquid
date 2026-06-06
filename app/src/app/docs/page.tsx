@@ -16,7 +16,6 @@ const SECTIONS = [
   { id: "protocol", label: "Protocol" },
   { id: "api", label: "API Reference" },
   { id: "faq", label: "FAQ" },
-  { id: "roadmap", label: "Roadmap" },
 ];
 
 // ─── Copy button ────────────────────────────────────────────────────────────
@@ -733,38 +732,6 @@ Price floor protection: if candidate < floor, update is rejected entirely.
               funding (30%), and liquidations (44%) proportional to your share. No lockup period.
             </FAQ>
 
-            {/* ════════════ ROADMAP ════════════ */}
-            <H2 id="roadmap">Roadmap</H2>
-
-            {[
-              { phase: "Phase 1", status: "LIVE", active: true, items: ["Mainnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool earning from trading fees (50%), funding (30%), and liquidations (44%)", "Adaptive EWMA oracle with spike protection", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset", "OHLC charts (1H / 1D candles)", "Mobile-responsive UI", "Custom domain (pokeliquid.xyz)", "Telegram monitoring & alerts"] },
-              { phase: "Phase 2", status: "Planned", active: false, items: ["25x max leverage", "Additional card markets", "Mobile-optimized UI"] },
-              { phase: "Phase 3", status: "Planned", active: false, items: ["50x max leverage", "Vintage card oracle committee", "Governance token"] },
-              { phase: "Phase 4", status: "Planned", active: false, items: ["100x max leverage", "BASE-SET-CHARIZARD-PERP", "$POKE governance live"] },
-            ].map((phase) => (
-              <div
-                key={phase.phase}
-                style={{
-                  border: phase.active ? "1px solid rgba(0,255,65,0.3)" : "1px solid #1a1a1a",
-                  background: phase.active ? "rgba(0,255,65,0.03)" : "#111",
-                  padding: 16,
-                  marginBottom: 12,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: phase.active ? "#00ff41" : "#333", display: "inline-block" }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{phase.phase}</span>
-                  <span style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", padding: "2px 8px", background: phase.active ? "rgba(0,255,65,0.15)" : "#1a1a1a", color: phase.active ? "#00ff41" : "#666" }}>
-                    {phase.status}
-                  </span>
-                </div>
-                <ul style={{ margin: 0, paddingLeft: 28 }}>
-                  {phase.items.map((item, i) => (
-                    <li key={i} style={{ fontSize: 12, color: "#888", lineHeight: 1.8 }}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
 
           </div>
         </main>
