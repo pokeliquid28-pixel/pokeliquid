@@ -26,6 +26,7 @@ const NAV = [
   { href: "/pool", label: "POOL" },
   { href: "/stats", label: "STATS" },
   { href: "/leaderboard", label: "LEADERBOARD" },
+  { href: "/positions", label: "POSITIONS" },
   { href: "/docs", label: "DOCS" },
   { href: "/api-docs", label: "API" },
 ];

@@ -94,13 +94,29 @@ export function useMarginAccount(): MarginAccountData {
         });
       } catch (e: any) {
         if (cancelled) return;
-        if (e?.message?.includes("Account does not exist") || e?.code === 3012) {
+        const msg = e?.message ?? "";
+        if (msg.includes("Account does not exist") || e?.code === 3012) {
+          // Account not initialized yet — normal state
           setData({ ...DEFAULT, isLoading: false, exists: false, error: null });
-        } else {
+        } else if (
+          msg.includes("Invalid account discriminator") ||
+          msg.includes("unexpected length") ||
+          msg.includes("borsh") ||
+          msg.includes("expected") && msg.includes("bytes")
+        ) {
+          // Schema mismatch — old account needs migration
           setData((prev) => ({
             ...prev,
             isLoading: false,
-            error: e?.message ?? "Failed to fetch margin account",
+            exists: true,
+            error: "schema_mismatch",
+          }));
+        } else {
+          // Transient error (RPC timeout, network issue) — don't show reset popup
+          setData((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: null,
           }));
         }
       }
