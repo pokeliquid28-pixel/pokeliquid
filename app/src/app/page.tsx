@@ -884,7 +884,7 @@ function OrderEntry({
   async function handleWithdraw() {
     if (!publicKey || !anchorWallet) return;
     const amt = parseFloat(collAmount) || 0;
-    if (amt <= 0 || amt > marginCollateralUsdc) return;
+    if (amt <= 0) return;
     setLoading(true);
     setTxStatus(null);
     try {
@@ -894,8 +894,16 @@ function OrderEntry({
       let needsCreate = false;
       try { await getAccount(connection, ata); } catch { needsCreate = true; }
 
+      // Cap to actual free collateral
+      const withdrawRaw = Math.min(usdcToRaw(amt), margin.collateral);
+      if (withdrawRaw <= 0) {
+        setTxStatus({ type: "error", msg: "No free collateral to withdraw." });
+        setLoading(false);
+        return;
+      }
+
       const txBuilder = (program.methods as any)
-        .withdrawCollateral(new BN(usdcToRaw(amt)))
+        .withdrawCollateral(new BN(withdrawRaw))
         .accounts({
           user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
           userTokenAccount: ata, feeVault: FEE_VAULT, tokenProgram: TOKEN_PROGRAM_ID,
@@ -1001,7 +1009,7 @@ function OrderEntry({
             <button
               onClick={() => {
                 if (collMode === "deposit" && walletUsdc !== null) setCollAmount(walletUsdc.toFixed(6));
-                else setCollAmount(marginCollateralUsdc.toFixed(2));
+                else setCollAmount(marginCollateralUsdc.toFixed(6));
               }}
               className="text-[9px] text-secondary hover:text-primary px-2"
             >
