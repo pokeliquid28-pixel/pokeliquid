@@ -403,28 +403,40 @@ Short PnL = notional * (entry_price - exit_price) / entry_price`}</Code>
               ]}
             />
 
-            <H3>Fee Distribution</H3>
+            <H3>Trading Fee Distribution</H3>
             <P>Trading fees collected on open and close are distributed:</P>
             <Table
               headers={["Destination", "Share", "Description"]}
               rows={[
-                ["LP Pool", "30% (3,000 bps)", "Distributed to liquidity providers"],
-                ["Fee Vault", "60%", "Protocol revenue"],
-                ["Insurance Fund", "10% (1,000 bps)", "Bad debt coverage"],
+                ["LP Pool", "50% (5,000 bps)", "Distributed to liquidity providers"],
+                ["Insurance Fund", "25% (2,500 bps)", "Bad debt coverage"],
+                ["Platform", "25%", "Protocol revenue (stays in fee vault)"],
               ]}
             />
 
             <H3>Funding Rate</H3>
             <P>
               Funding is settled hourly by the keeper via <code>settle_funding</code> (permissionless crank).
+              Only the <strong>majority side</strong> pays funding — the minority side pays nothing.
               The funding rate has two components:
             </P>
             <Code>{`Base Rate:  30 / 100,000 per hour = 0.03%/hr = 0.72%/day
 Skew Rate: skew_factor * (long_OI - short_OI) / (long_OI + short_OI)
            where skew_factor = 1,000 / 100,000 = 1%
 
-Total Funding = base_rate + skew_rate (per hour)
-Longs pay when long OI > short OI (and vice versa)`}</Code>
+Majority side pays: base_rate + skew_rate (per hour)
+Minority side pays: 0 (benefits from being on the less crowded side)`}</Code>
+
+            <H3>Funding Fee Distribution</H3>
+            <P>Funding fees collected from the majority side are distributed:</P>
+            <Table
+              headers={["Destination", "Share", "Description"]}
+              rows={[
+                ["LP Pool", "30% (3,000 bps)", "Distributed to liquidity providers"],
+                ["Insurance Fund", "20% (2,000 bps)", "Bad debt coverage"],
+                ["Platform", "~50%", "Protocol revenue (stays in fee vault)"],
+              ]}
+            />
 
             {/* ════════════ RISK ════════════ */}
             <H2 id="risk">Risk Management</H2>
@@ -449,9 +461,10 @@ Liquidation Price (Short):
             <Table
               headers={["Recipient", "Share", "Description"]}
               rows={[
-                ["Liquidator", "1% (100 bps)", "Reward for calling liquidate"],
-                ["Insurance Fund", "9% (900 bps)", "Bad debt reserve"],
-                ["Fee Vault", "90%", "Remaining collateral"],
+                ["Liquidator", "2% (200 bps)", "Reward for calling liquidate"],
+                ["LP Pool", "44% (4,400 bps)", "Distributed to liquidity providers"],
+                ["Insurance Fund", "44% (4,400 bps)", "Bad debt reserve"],
+                ["Platform", "10%", "Protocol revenue (stays in fee vault)"],
               ]}
             />
 
@@ -532,8 +545,18 @@ Price floor protection: if candidate < floor, update is rejected entirely.
 
             <H3>Earning Fees</H3>
             <P>
-              <strong>30% of all trading fees</strong> are directed to the LP pool.
-              LPs can claim their proportional share of accumulated fees via <code>claim_fees</code> at any time.
+              LPs earn fees from three sources:
+            </P>
+            <Table
+              headers={["Source", "LP Share", "Description"]}
+              rows={[
+                ["Trading Fees", "50%", "From position open and close fees"],
+                ["Funding Fees", "30%", "From majority-side funding payments"],
+                ["Liquidations", "44%", "From liquidated position collateral"],
+              ]}
+            />
+            <P>
+              All LP fees accumulate in the fee vault and are claimable proportionally via <code>claim_fees</code> at any time.
             </P>
 
             <H3>Withdrawing</H3>
@@ -706,15 +729,15 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             </FAQ>
 
             <FAQ q="Can I provide liquidity?">
-              Yes. Go to the Pool page to deposit USDC. You receive LP shares and earn 30% of all trading
-              fees proportional to your share. No lockup period.
+              Yes. Go to the Pool page to deposit USDC. You receive LP shares and earn fees from trading (50%),
+              funding (30%), and liquidations (44%) proportional to your share. No lockup period.
             </FAQ>
 
             {/* ════════════ ROADMAP ════════════ */}
             <H2 id="roadmap">Roadmap</H2>
 
             {[
-              { phase: "Phase 1", status: "LIVE", active: true, items: ["Mainnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool with 30% fee share", "Adaptive EWMA oracle with spike protection", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset", "OHLC charts (1H / 1D candles)", "Mobile-responsive UI", "Custom domain (pokeliquid.xyz)", "Telegram monitoring & alerts"] },
+              { phase: "Phase 1", status: "LIVE", active: true, items: ["Mainnet deployment", "4 live markets (ETB, Charizard X, Charmander, Pikachu)", "10x max leverage", "Session wallet \u2014 no extension needed", "LP pool earning from trading fees (50%), funding (30%), and liquidations (44%)", "Adaptive EWMA oracle with spike protection", "Automated keeper (liquidations, funding, SL/TP)", "Email/password auth with password reset", "OHLC charts (1H / 1D candles)", "Mobile-responsive UI", "Custom domain (pokeliquid.xyz)", "Telegram monitoring & alerts"] },
               { phase: "Phase 2", status: "Planned", active: false, items: ["25x max leverage", "Additional card markets", "Mobile-optimized UI"] },
               { phase: "Phase 3", status: "Planned", active: false, items: ["50x max leverage", "Vintage card oracle committee", "Governance token"] },
               { phase: "Phase 4", status: "Planned", active: false, items: ["100x max leverage", "BASE-SET-CHARIZARD-PERP", "$POKE governance live"] },
