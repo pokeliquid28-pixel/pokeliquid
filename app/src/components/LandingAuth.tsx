@@ -246,6 +246,10 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                   No wallets detected. Install{" "}
                   <a href="https://phantom.app" target="_blank" rel="noopener noreferrer" style={{ color: "#00ff41" }}>
                     Phantom
+                  </a>
+                  ,{" "}
+                  <a href="https://jup.ag/download" target="_blank" rel="noopener noreferrer" style={{ color: "#00ff41" }}>
+                    Jupiter
                   </a>{" "}
                   or{" "}
                   <a href="https://solflare.com" target="_blank" rel="noopener noreferrer" style={{ color: "#00ff41" }}>
