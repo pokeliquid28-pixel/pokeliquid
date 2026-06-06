@@ -238,7 +238,7 @@ function PoolContent() {
       <div className="mb-4 md:mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-primary">Liquidity Pool</h1>
         <p className="text-secondary text-xs md:text-sm mt-1">
-          Provide liquidity and earn 30% of all trading fees.
+          Provide liquidity and earn fees from trading, funding, and liquidations.
         </p>
       </div>
 
@@ -313,11 +313,22 @@ function PoolContent() {
                 <StatRow label="Total USDC" value={`$${tvl.toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
                 <StatRow label="Total Shares" value={pool.totalShares.toLocaleString()} mono />
                 <StatRow label="Share Price" value={`$${rawToUsdc(sharePrice).toFixed(6)}`} mono />
-                <StatRow label="LP Fee Rate" value={bpsToPercent(pool.lpFeeBps) + " of trade fees"} mono />
                 <StatRow label="Accumulated Fees" value={`$${rawToUsdc(pool.accumulatedFees).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
                 <StatRow label="Est. APY" value={`${estApy.toFixed(1)}%`} mono />
               </div>
             )}
+          </Section>
+
+          {/* LP Fee Breakdown */}
+          <Section title="LP Fee Sources">
+            <div className="space-y-0">
+              <StatRow label="Trading Fees" value="50% of open & close fees" />
+              <StatRow label="Funding Fees" value="30% of majority-side funding" />
+              <StatRow label="Liquidations" value="44% of liquidated collateral" />
+            </div>
+            <div className="mt-3 text-[10px] text-secondary/60 leading-relaxed">
+              All LP fees accumulate in the fee vault and are claimable proportional to your pool share.
+            </div>
           </Section>
 
           {/* Protocol Open Interest */}
