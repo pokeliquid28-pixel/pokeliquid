@@ -842,23 +842,36 @@ function OrderEntry({
       }
 
       const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
-      let needsCreate = false;
-      try { await getAccount(connection, ata); } catch { needsCreate = true; }
 
-      const txBuilder = (program.methods as any)
-        .depositCollateral(new BN(usdcToRaw(amt)))
+      // Fetch actual on-chain balance and cap deposit to it
+      let actualRaw = 0;
+      try {
+        const acc = await getAccount(connection, ata);
+        actualRaw = Number(acc.amount);
+      } catch {
+        setTxStatus({ type: "error", msg: "No USDC token account found. Swap SOL → USDC first." });
+        setLoading(false);
+        return;
+      }
+
+      const depositRaw = usdcToRaw(amt);
+      const finalAmount = Math.min(depositRaw, actualRaw);
+      if (finalAmount <= 0) {
+        setTxStatus({ type: "error", msg: `Insufficient USDC. Wallet has ${(actualRaw / 1e6).toFixed(6)}.` });
+        setLoading(false);
+        return;
+      }
+
+      await (program.methods as any)
+        .depositCollateral(new BN(finalAmount))
         .accounts({
           user: publicKey, protocolState: PROTOCOL_STATE, marginAccount: marginPda,
           userTokenAccount: ata, feeVault: FEE_VAULT, tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-        });
-      if (needsCreate) {
-        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
-        await txBuilder.preInstructions([createIx]).rpc();
-      } else {
-        await txBuilder.rpc();
-      }
-      setTxStatus({ type: "success", msg: `Deposited $${amt.toFixed(2)}` });
+        })
+        .rpc();
+
+      setTxStatus({ type: "success", msg: `Deposited $${(finalAmount / 1e6).toFixed(2)}` });
       setCollAmount("");
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
@@ -987,7 +1000,7 @@ function OrderEntry({
             />
             <button
               onClick={() => {
-                if (collMode === "deposit" && walletUsdc !== null) setCollAmount(walletUsdc.toFixed(2));
+                if (collMode === "deposit" && walletUsdc !== null) setCollAmount(walletUsdc.toFixed(6));
                 else setCollAmount(marginCollateralUsdc.toFixed(2));
               }}
               className="text-[9px] text-secondary hover:text-primary px-2"
