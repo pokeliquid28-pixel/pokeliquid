@@ -950,16 +950,6 @@ function OrderEntry({
 
   return (
     <div className="space-y-3">
-      {/* Migration notice */}
-      {margin.error === "schema_mismatch" && connected && (
-        <div className="border border-short p-3 bg-short/5 space-y-2">
-          <p className="text-[11px] text-short">Account needs reset for multi-position support.</p>
-          <button onClick={handleCloseMarginAccount} disabled={loading} className="btn-red w-full py-2 text-[10px]">
-            {loading ? "..." : "Reset Account"}
-          </button>
-        </div>
-      )}
-
       {/* Collateral bar */}
       <div className="text-[11px] border border-border p-2.5 bg-bg space-y-2">
         <div className="flex items-center gap-3">

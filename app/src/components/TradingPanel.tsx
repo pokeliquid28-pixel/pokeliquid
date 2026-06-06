@@ -198,21 +198,6 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh, oracleAddres
 
   return (
     <div className="border border-border bg-panel p-4 md:p-6 space-y-4 md:space-y-5">
-      {/* Migration notice for old accounts */}
-      {margin.error === "schema_mismatch" && connected && (
-        <div className="border border-short bg-short/10 p-4 space-y-3">
-          <p className="text-xs text-short font-medium">
-            Your margin account uses an old format and needs to be reset for multi-position support.
-          </p>
-          <button
-            onClick={handleCloseMarginAccount}
-            disabled={loading}
-            className="w-full py-2 text-xs font-bold border border-short text-short hover:bg-short/20 transition-colors disabled:opacity-50"
-          >
-            {loading ? "Closing..." : "Reset Margin Account"}
-          </button>
-        </div>
-      )}
 
       {/* Long / Short toggle */}
       <div className="flex">
