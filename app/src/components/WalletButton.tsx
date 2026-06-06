@@ -7,6 +7,8 @@ import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getSavedEmail, clearSessionWallet, createGuestWallet, SessionWalletName } from "@/lib/session-wallet";
 import { AuthModal } from "./AuthModal";
 import { SwapModal } from "./SwapModal";
+import { SendModal } from "./SendModal";
+import { ExportKeyModal } from "./ExportKeyModal";
 
 export function WalletButton() {
   const { connected, publicKey, disconnect, select } = useWallet();
@@ -18,6 +20,8 @@ export function WalletButton() {
   const [copied, setCopied] = useState(false);
   const [solBalance, setSolBalance] = useState<number | null>(null);
   const [showSwap, setShowSwap] = useState(false);
+  const [showSend, setShowSend] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   // Poll SOL balance
   useEffect(() => {
@@ -65,6 +69,16 @@ export function WalletButton() {
   function handleSwap() {
     setDropdownOpen(false);
     setShowSwap(true);
+  }
+
+  function handleSend() {
+    setDropdownOpen(false);
+    setShowSend(true);
+  }
+
+  function handleExport() {
+    setDropdownOpen(false);
+    setShowExport(true);
   }
 
   if (connected && publicKey) {
@@ -196,6 +210,58 @@ export function WalletButton() {
                 Swap SOL → USDC
               </button>
 
+              {/* Send */}
+              <button
+                onClick={handleSend}
+                className="w-full text-left uppercase tracking-wider"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "11px",
+                  padding: "6px 10px",
+                  background: "transparent",
+                  color: "#888",
+                  border: "1px solid transparent",
+                  cursor: "pointer",
+                  transition: "color .15s, border-color .15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#00ff41";
+                  e.currentTarget.style.borderColor = "#00ff41";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#888";
+                  e.currentTarget.style.borderColor = "transparent";
+                }}
+              >
+                Send / Withdraw
+              </button>
+
+              {/* Export Key */}
+              <button
+                onClick={handleExport}
+                className="w-full text-left uppercase tracking-wider"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "11px",
+                  padding: "6px 10px",
+                  background: "transparent",
+                  color: "#888",
+                  border: "1px solid transparent",
+                  cursor: "pointer",
+                  transition: "color .15s, border-color .15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#ffaa00";
+                  e.currentTarget.style.borderColor = "#ffaa00";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#888";
+                  e.currentTarget.style.borderColor = "transparent";
+                }}
+              >
+                Export Key
+              </button>
+
               {/* Disconnect */}
               <button
                 onClick={handleDisconnect}
@@ -232,6 +298,8 @@ export function WalletButton() {
           />
         )}
         {showSwap && <SwapModal onClose={() => setShowSwap(false)} />}
+        {showSend && <SendModal onClose={() => setShowSend(false)} />}
+        {showExport && <ExportKeyModal onClose={() => setShowExport(false)} />}
       </>
     );
   }

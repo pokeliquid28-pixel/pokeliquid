@@ -33,19 +33,25 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
   const [loading, setLoading] = useState(false);
   const [txStatus, setTxStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletBalanceRaw, setWalletBalanceRaw] = useState<number>(0);
 
   // Fetch wallet USDC balance
   useEffect(() => {
-    if (!publicKey) { setWalletBalance(null); return; }
+    if (!publicKey) { setWalletBalance(null); setWalletBalanceRaw(0); return; }
 
     let cancelled = false;
     const fetchBalance = async () => {
       try {
         const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
         const acc = await getAccount(connection, ata);
-        if (!cancelled) setWalletBalance(Number(acc.amount) / 1e6);
+        if (!cancelled) {
+          const raw = Number(acc.amount);
+          setWalletBalanceRaw(raw);
+          setWalletBalance(raw / 1e6);
+        }
       } catch {
-        if (!cancelled) setWalletBalance(0);
+        // Don't overwrite a known balance on transient RPC errors
+        if (!cancelled) setWalletBalance((prev) => prev ?? 0);
       }
     };
     fetchBalance();
@@ -146,7 +152,7 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
 
   const withdrawWarning = mode === "withdraw" && inputUsdc > 0 && (freeCollateral - inputUsdc) < 5 && (freeCollateral - inputUsdc) >= 0;
   const withdrawBlocked = mode === "withdraw" && inputUsdc > freeCollateral;
-  const depositBlocked = mode === "deposit" && walletBalance !== null && inputUsdc > walletBalance;
+  const depositBlocked = mode === "deposit" && walletBalance !== null && usdcToRaw(inputUsdc) > walletBalanceRaw;
 
   return (
     <div className="border border-border bg-panel p-4 md:p-5 space-y-3 md:space-y-4">
@@ -178,7 +184,7 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
 
       {walletBalance !== null && (
         <div className="text-xs text-secondary font-mono">
-          Wallet: ${walletBalance.toFixed(2)} USDC
+          Wallet: ${walletBalance < 0.01 ? walletBalance.toFixed(6) : walletBalance.toFixed(2)} USDC
         </div>
       )}
 
@@ -207,7 +213,7 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
             <span
               className="cursor-pointer hover:text-primary"
               onClick={() => {
-                if (mode === "deposit" && walletBalance !== null) setAmount(walletBalance.toFixed(2));
+                if (mode === "deposit" && walletBalance !== null) setAmount((walletBalanceRaw / 1e6).toFixed(6));
                 if (mode === "withdraw") setAmount(freeCollateral.toFixed(2));
               }}
             >
