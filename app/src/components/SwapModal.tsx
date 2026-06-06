@@ -41,7 +41,7 @@ export function SwapModal({ onClose }: Props) {
     const timeout = setTimeout(async () => {
       try {
         const res = await fetch(
-          `https://quote-api.jup.ag/v6/quote?inputMint=${SOL_MINT}&outputMint=${USDC_MINT}&amount=${lamports}&slippageBps=50`
+          `https://api.jup.ag/swap/v1/quote?inputMint=${SOL_MINT}&outputMint=${USDC_MINT}&amount=${lamports}&slippageBps=50`
         );
         if (!res.ok) throw new Error("Quote failed");
         const data = await res.json();
@@ -62,7 +62,7 @@ export function SwapModal({ onClose }: Props) {
 
     try {
       // Get swap transaction from Jupiter
-      const res = await fetch("https://quote-api.jup.ag/v6/swap", {
+      const res = await fetch("https://api.jup.ag/swap/v1/swap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
