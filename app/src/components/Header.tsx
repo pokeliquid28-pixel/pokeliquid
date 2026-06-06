@@ -12,6 +12,12 @@ import { useOracle, OracleHealth } from "@/hooks/useOracle";
 import { getSavedEmail, clearSessionWallet, SessionWalletName } from "@/lib/session-wallet";
 import { clearLastWallet } from "@/providers/SessionWalletProvider";
 import { MARKETS } from "@/lib/markets";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { SwapModal } from "./SwapModal";
+import { SendModal } from "./SendModal";
+import { ExportKeyModal } from "./ExportKeyModal";
+import { AuthModal } from "./AuthModal";
 
 // ─── Nav config ────────────────────────────────────────────────────────────────
 
@@ -168,6 +174,38 @@ function TickerBar() {
 
 // ─── Mobile Hamburger Menu ────────────────────────────────────────────────────
 
+function MobileMenuAction({
+  label,
+  onClick,
+  color = "#ccc",
+}: {
+  label: string;
+  onClick: () => void;
+  color?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "block",
+        width: "100%",
+        textAlign: "left",
+        fontSize: 12,
+        fontWeight: 500,
+        letterSpacing: "0.04em",
+        padding: "12px 24px",
+        background: "none",
+        border: "none",
+        color,
+        cursor: "pointer",
+        fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
 function MobileMenu({
   open,
   onClose,
@@ -179,7 +217,15 @@ function MobileMenu({
 }) {
   const { price, lastUpdated, isLoading } = useOracle();
   const { publicKey, connected, disconnect, wallet } = useWallet();
+  const { connection } = useConnection();
   const [email, setEmail] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [solBalance, setSolBalance] = useState<number | null>(null);
+  const [showSwap, setShowSwap] = useState(false);
+  const [showSend, setShowSend] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const isExternal = connected && wallet && wallet.adapter.name !== SessionWalletName;
 
   useEffect(() => {
@@ -189,6 +235,19 @@ function MobileMenu({
       setEmail(getSavedEmail());
     }
   }, [connected, isExternal]);
+
+  // Poll SOL balance
+  useEffect(() => {
+    if (!connected || !publicKey) { setSolBalance(null); return; }
+    let cancelled = false;
+    const fetch_ = () =>
+      connection.getBalance(publicKey).then((b) => {
+        if (!cancelled) setSolBalance(b / LAMPORTS_PER_SOL);
+      }).catch(() => {});
+    fetch_();
+    const id = setInterval(fetch_, 15_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [connected, publicKey, connection]);
 
   const priceUsd = price / 1_000_000;
   const ago = lastUpdated
@@ -208,6 +267,14 @@ function MobileMenu({
   if (!open) return null;
 
   const addr = publicKey ? publicKey.toBase58() : null;
+
+  function handleCopy() {
+    if (!addr) return;
+    navigator.clipboard.writeText(addr).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <>
@@ -259,7 +326,7 @@ function MobileMenu({
         </div>
 
         {/* Nav items */}
-        <nav style={{ flex: 1, padding: "8px 0" }}>
+        <nav style={{ padding: "8px 0" }}>
           {NAV.map(({ href, label }) => {
             const active = pathname === href;
             return (
@@ -310,25 +377,70 @@ function MobileMenu({
         {/* Divider */}
         <div style={{ height: 1, background: "#1a1a1a", margin: "0 24px" }} />
 
-        {/* User info */}
+        {/* User info + wallet actions */}
         {connected && addr && (
-          <div style={{ padding: "16px 24px" }}>
-            {email && (
-              <div style={{ fontSize: 11, color: "#ccc", marginBottom: 4 }}>{email}</div>
-            )}
-            <div style={{ fontSize: 10, color: "#666", fontFamily: "monospace" }}>
-              {addr.slice(0, 4)}...{addr.slice(-4)}
-            </div>
-            {isExternal && wallet && (
-              <div style={{ fontSize: 11, color: "#00ff41", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
-                {wallet.adapter.icon && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={wallet.adapter.icon} alt="" width={14} height={14} style={{ borderRadius: 2 }} />
-                )}
-                {wallet.adapter.name}
+          <div style={{ padding: "16px 0" }}>
+            {/* Wallet identity */}
+            <div style={{ padding: "0 24px", marginBottom: 12 }}>
+              {isExternal && wallet && (
+                <div style={{ fontSize: 11, color: "#00ff41", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {wallet.adapter.icon && (
+                    <img src={wallet.adapter.icon} alt="" width={14} height={14} style={{ borderRadius: 2 }} />
+                  )}
+                  {wallet.adapter.name}
+                </div>
+              )}
+              {email && (
+                <div style={{ fontSize: 11, color: "#ccc", marginBottom: 4 }}>{email}</div>
+              )}
+              <div style={{ fontSize: 10, color: "#666", fontFamily: "monospace" }}>
+                {addr.slice(0, 4)}...{addr.slice(-4)}
               </div>
+              {solBalance !== null && (
+                <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
+                  <span style={{ color: "#666" }}>SOL:</span> {solBalance.toFixed(4)}
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: "#1a1a1a", margin: "0 24px 4px" }} />
+
+            {/* Wallet actions */}
+            <MobileMenuAction
+              label={copied ? "Copied!" : "Copy Address"}
+              onClick={handleCopy}
+              color={copied ? "#00ff41" : "#ccc"}
+            />
+            <MobileMenuAction
+              label="Swap SOL > USDC"
+              onClick={() => { onClose(); setShowSwap(true); }}
+            />
+            <MobileMenuAction
+              label="Send / Withdraw"
+              onClick={() => { onClose(); setShowSend(true); }}
+            />
+            {!isExternal && (
+              <MobileMenuAction
+                label="Export Key"
+                onClick={() => { onClose(); setShowExport(true); }}
+                color="#ffaa00"
+              />
             )}
-            <button
+            {!isExternal && !email && (
+              <MobileMenuAction
+                label="Save Account"
+                onClick={() => { onClose(); setAuthMode("signup"); setShowAuth(true); }}
+                color="#00ff41"
+              />
+            )}
+
+            {/* Divider */}
+            <div style={{ height: 1, background: "#1a1a1a", margin: "4px 24px" }} />
+
+            <MobileMenuAction
+              label="Log Out"
               onClick={() => {
                 if (isExternal) {
                   clearLastWallet();
@@ -340,23 +452,22 @@ function MobileMenu({
                 onClose();
                 window.location.href = "/";
               }}
-              style={{
-                marginTop: 12,
-                fontSize: 10,
-                color: "#ff4444",
-                background: "none",
-                border: "1px solid rgba(255,68,68,0.3)",
-                padding: "6px 16px",
-                cursor: "pointer",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-              }}
-            >
-              Log Out
-            </button>
+              color="#ff4444"
+            />
           </div>
         )}
       </div>
+
+      {/* Modals rendered outside the panel so they overlay properly */}
+      {showSwap && <SwapModal onClose={() => setShowSwap(false)} />}
+      {showSend && <SendModal onClose={() => setShowSend(false)} />}
+      {showExport && <ExportKeyModal onClose={() => setShowExport(false)} />}
+      {showAuth && (
+        <AuthModal
+          onClose={() => { setShowAuth(false); setEmail(getSavedEmail()); }}
+          defaultMode={authMode}
+        />
+      )}
     </>
   );
 }
