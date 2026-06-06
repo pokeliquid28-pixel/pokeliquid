@@ -6,6 +6,7 @@ import { useProtocolState } from "@/hooks/useProtocolState";
 import { useLiquidityPool } from "@/hooks/useLiquidityPool";
 import { Skeleton } from "@/components/Skeleton";
 import { AuthGuard } from "@/components/AuthGuard";
+import { MARKETS } from "@/lib/markets";
 import {
   rawToPrice,
   rawToUsdc,
@@ -67,39 +68,42 @@ function useProtocolStats() {
   return { stats, loading };
 }
 
-function useHealthData() {
+function useHealthData(marketApiKey: string) {
   const [health, setHealth] = useState<HealthData | null>(null);
 
   useEffect(() => {
     const load = () =>
       fetch(`${API_BASE}/health`)
         .then((r) => r.json())
-        .then((data) => setHealth({
-          status: data.status,
-          last_update: data.oracle?.seconds_since_update ? Math.floor(Date.now() / 1000) - data.oracle.seconds_since_update : 0,
-          seconds_since_update: data.oracle?.seconds_since_update ?? 0,
-          ewma: data.oracle?.ewma ?? 0,
-          keeper_uptime_minutes: data.keeper?.uptime_minutes ?? 0,
-          oracle_updates_1h: data.oracle?.updates_1h ?? 0,
-          liquidation_checks_1h: data.liquidation?.checks_1h ?? 0,
-          funding_settlements_24h: data.funding?.settlements_24h ?? 0,
-        }))
+        .then((data) => {
+          const marketData = data.markets?.[marketApiKey];
+          setHealth({
+            status: data.status,
+            last_update: marketData?.seconds_since_update ? Math.floor(Date.now() / 1000) - marketData.seconds_since_update : (data.oracle?.seconds_since_update ? Math.floor(Date.now() / 1000) - data.oracle.seconds_since_update : 0),
+            seconds_since_update: marketData?.seconds_since_update ?? data.oracle?.seconds_since_update ?? 0,
+            ewma: marketData?.ewma ?? data.oracle?.ewma ?? 0,
+            keeper_uptime_minutes: data.keeper?.uptime_minutes ?? 0,
+            oracle_updates_1h: data.oracle?.updates_1h ?? 0,
+            liquidation_checks_1h: data.liquidation?.checks_1h ?? 0,
+            funding_settlements_24h: data.funding?.settlements_24h ?? 0,
+          });
+        })
         .catch(() => {});
 
     load();
     const id = setInterval(load, 15_000);
     return () => clearInterval(id);
-  }, []);
+  }, [marketApiKey]);
 
   return health;
 }
 
-function usePriceHistory(limit: number = 288) {
+function usePriceHistory(marketApiKey: string, limit: number = 288) {
   const [prices, setPrices] = useState<PriceRow[]>([]);
 
   useEffect(() => {
     const load = () =>
-      fetch(`${API_BASE}/prices?limit=${limit}`)
+      fetch(`${API_BASE}/prices?market=${marketApiKey}&limit=${limit}`)
         .then((r) => r.json())
         .then((data: PriceRow[]) => setPrices(data))
         .catch(() => {});
@@ -107,7 +111,7 @@ function usePriceHistory(limit: number = 288) {
     load();
     const id = setInterval(load, 60_000);
     return () => clearInterval(id);
-  }, [limit]);
+  }, [marketApiKey, limit]);
 
   return prices;
 }
@@ -282,35 +286,6 @@ function PriceChart({ prices }: { prices: PriceRow[] }) {
   );
 }
 
-// ── Roadmap ──────────────────────────────────────────────────────────────────
-
-const ROADMAP = [
-  {
-    phase: "Phase 1",
-    status: "LIVE",
-    active: true,
-    items: ["Devnet, 10x max", "4 live markets"],
-  },
-  {
-    phase: "Phase 2",
-    status: "Planned",
-    active: false,
-    items: ["Mainnet, 25x max", "+ CHARIZARD-151-PERP"],
-  },
-  {
-    phase: "Phase 3",
-    status: "Planned",
-    active: false,
-    items: ["50x max", "+ Vintage card oracle committee"],
-  },
-  {
-    phase: "Phase 4",
-    status: "Planned",
-    active: false,
-    items: ["100x max", "+ BASE-SET-CHARIZARD-PERP", "+ $POKE governance live"],
-  },
-];
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StatsPage() {
@@ -318,12 +293,15 @@ export default function StatsPage() {
 }
 
 function StatsContent() {
-  const oracle = useOracle();
+  const [selectedMarketIdx, setSelectedMarketIdx] = useState(0);
+  const market = MARKETS[selectedMarketIdx];
+
+  const oracle = useOracle(market.oracleAddress, market.priceApiMarket);
   const protocol = useProtocolState();
   const pool = useLiquidityPool();
   const { stats, loading: statsLoading } = useProtocolStats();
-  const healthData = useHealthData();
-  const priceHistory = usePriceHistory(288);
+  const healthData = useHealthData(market.priceApiMarket);
+  const priceHistory = usePriceHistory(market.priceApiMarket, 288);
 
   const currentPrice = rawToPrice(oracle.price);
 
@@ -360,8 +338,25 @@ function StatsContent() {
         </p>
       </div>
 
+      {/* ── Market Selector ──────────────────────────────────────── */}
+      <div className="flex gap-2 mb-4 md:mb-6 overflow-x-auto pb-1">
+        {MARKETS.filter((m) => m.live).map((m, idx) => (
+          <button
+            key={m.id}
+            onClick={() => setSelectedMarketIdx(idx)}
+            className={`px-3 py-2 text-xs font-mono whitespace-nowrap border transition-colors ${
+              idx === selectedMarketIdx
+                ? "border-long text-long bg-long/10"
+                : "border-border text-secondary hover:text-primary hover:border-primary/50"
+            }`}
+          >
+            {m.priceApiMarket}
+          </button>
+        ))}
+      </div>
+
       {/* ── Section 1: Oracle Status ──────────────────────────────────── */}
-      <Section title="Oracle Status">
+      <Section title={`Oracle Status — ${market.name}`}>
         {oracle.isLoading ? (
           <Skeleton height="h-48" />
         ) : (
@@ -379,7 +374,9 @@ function StatsContent() {
                   <span className="hidden md:inline">TCGPlayer (Playwright)</span>
                   <span className="md:hidden">TCGPlayer</span>
                 </div>
-                <div className="text-[10px] text-secondary mt-0.5">Product 593355</div>
+                {market.tcgplayerId && (
+                  <div className="text-[10px] text-secondary mt-0.5">Product {market.tcgplayerId}</div>
+                )}
               </div>
               <div>
                 <div className="text-[10px] md:text-xs text-secondary mb-1">Last Update</div>
@@ -544,47 +541,6 @@ function StatsContent() {
             </div>
           </div>
         )}
-      </Section>
-
-      {/* ── Section 4: Roadmap ────────────────────────────────────────── */}
-      <Section title="Roadmap">
-        <div className="space-y-3">
-          {ROADMAP.map((phase) => (
-            <div
-              key={phase.phase}
-              className={`border p-4 ${
-                phase.active
-                  ? "border-long/40 bg-long/5"
-                  : "border-border bg-bg"
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <span
-                  className={`inline-block w-2.5 h-2.5 rounded-full ${
-                    phase.active ? "bg-long" : "bg-border"
-                  }`}
-                />
-                <span className="text-sm font-bold text-primary">{phase.phase}</span>
-                <span
-                  className={`text-xs font-mono px-2 py-0.5 ${
-                    phase.active
-                      ? "bg-long/20 text-long"
-                      : "bg-border text-secondary"
-                  }`}
-                >
-                  {phase.status}
-                </span>
-              </div>
-              <div className="ml-5 space-y-0.5">
-                {phase.items.map((item, i) => (
-                  <div key={i} className="text-sm text-secondary">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       </Section>
     </div>
   );
