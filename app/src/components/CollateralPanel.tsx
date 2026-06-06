@@ -71,15 +71,16 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
     if (!publicKey || !anchorWallet || inputUsdc <= 0) return;
     setLoading(true);
     setTxStatus(null);
+    let actualRaw = 0;
+    let finalAmount = 0;
     try {
       const program = getProgram(connection, anchorWallet);
       const marginPda = getMarginAccountPDA(publicKey);
       const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
 
       // Re-fetch actual balance right before deposit
-      let actualRaw = 0;
       try {
-        const acc = await getAccount(connection, ata);
+        const acc = await getAccount(connection, ata, "confirmed");
         actualRaw = Number(acc.amount);
       } catch {
         setTxStatus({ type: "error", msg: "No USDC token account found. Swap SOL → USDC first." });
@@ -88,10 +89,10 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
       }
 
       const depositRaw = usdcToRaw(inputUsdc);
-      // Cap to actual balance to avoid rounding errors
-      const finalAmount = Math.min(depositRaw, actualRaw);
+      // Always cap to actual on-chain balance
+      finalAmount = Math.min(depositRaw, actualRaw);
       if (finalAmount <= 0) {
-        setTxStatus({ type: "error", msg: `Insufficient USDC. Wallet has ${(actualRaw / 1e6).toFixed(6)} USDC.` });
+        setTxStatus({ type: "error", msg: `Insufficient USDC. Have ${(actualRaw / 1e6).toFixed(6)} on-chain.` });
         setLoading(false);
         return;
       }
@@ -117,7 +118,8 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
       setWalletBalance((prev) => prev !== null ? (prev - finalAmount / 1e6) : null);
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
-      setTxStatus({ type: "error", msg: e?.message ?? "Deposit failed" });
+      const msg = e?.message ?? "Deposit failed";
+      setTxStatus({ type: "error", msg: `[v2] Tried ${finalAmount} raw of ${actualRaw} available: ${msg}` });
     } finally {
       setLoading(false);
     }
