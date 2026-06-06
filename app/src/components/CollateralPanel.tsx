@@ -109,9 +109,12 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
         })
         .rpc();
 
-      setTxStatus({ type: "success", msg: `Deposited $${inputUsdc.toFixed(2)} USDC` });
+      setTxStatus({ type: "success", msg: `Deposited $${(finalAmount / 1e6).toFixed(2)} USDC` });
       setAmount("");
       setMode("idle");
+      // Immediately refresh wallet balance
+      setWalletBalanceRaw((prev) => prev - finalAmount);
+      setWalletBalance((prev) => prev !== null ? (prev - finalAmount / 1e6) : null);
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Deposit failed" });
@@ -150,9 +153,13 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
         await txBuilder.rpc();
       }
 
+      const withdrawnRaw = usdcToRaw(inputUsdc);
       setTxStatus({ type: "success", msg: `Withdrew $${inputUsdc.toFixed(2)} USDC` });
       setAmount("");
       setMode("idle");
+      // Immediately update wallet balance
+      setWalletBalanceRaw((prev) => prev + withdrawnRaw);
+      setWalletBalance((prev) => prev !== null ? (prev + inputUsdc) : null);
       setTimeout(onRefresh, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Withdrawal failed" });
