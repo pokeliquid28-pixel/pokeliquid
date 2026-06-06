@@ -5,13 +5,34 @@ import { getSessionPrivateKey } from "@/lib/session-wallet";
 
 type Props = { onClose: () => void };
 
+// Base58 encode using the same alphabet as Solana
+const BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function toBase58(bytes: Uint8Array): string {
+  const digits = [0];
+  for (let k = 0; k < bytes.length; k++) {
+    let carry = bytes[k];
+    for (let j = 0; j < digits.length; j++) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = (carry / 58) | 0;
+    }
+    while (carry > 0) {
+      digits.push(carry % 58);
+      carry = (carry / 58) | 0;
+    }
+  }
+  let str = "";
+  for (let i = 0; i < bytes.length && bytes[i] === 0; i++) str += "1";
+  for (let i = digits.length - 1; i >= 0; i--) str += BASE58_ALPHABET[digits[i]];
+  return str;
+}
+
 export function ExportKeyModal({ onClose }: Props) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const secretKey = getSessionPrivateKey();
-  // Display as JSON array (importable into Solana CLI / Phantom)
-  const keyDisplay = secretKey ? JSON.stringify(secretKey) : null;
+  const keyDisplay = secretKey ? toBase58(new Uint8Array(secretKey)) : null;
 
   function handleCopy() {
     if (!keyDisplay) return;

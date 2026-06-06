@@ -76,11 +76,28 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
       const marginPda = getMarginAccountPDA(publicKey);
       const ata = await getAssociatedTokenAddress(USDC_MINT, publicKey);
 
-      let needsCreate = false;
-      try { await getAccount(connection, ata); } catch { needsCreate = true; }
+      // Re-fetch actual balance right before deposit
+      let actualRaw = 0;
+      try {
+        const acc = await getAccount(connection, ata);
+        actualRaw = Number(acc.amount);
+      } catch {
+        setTxStatus({ type: "error", msg: "No USDC token account found. Swap SOL → USDC first." });
+        setLoading(false);
+        return;
+      }
 
-      const txBuilder = (program.methods as any)
-        .depositCollateral(new BN(usdcToRaw(inputUsdc)))
+      const depositRaw = usdcToRaw(inputUsdc);
+      // Cap to actual balance to avoid rounding errors
+      const finalAmount = Math.min(depositRaw, actualRaw);
+      if (finalAmount <= 0) {
+        setTxStatus({ type: "error", msg: `Insufficient USDC. Wallet has ${(actualRaw / 1e6).toFixed(6)} USDC.` });
+        setLoading(false);
+        return;
+      }
+
+      await (program.methods as any)
+        .depositCollateral(new BN(finalAmount))
         .accounts({
           user: publicKey,
           protocolState: PROTOCOL_STATE,
@@ -89,14 +106,8 @@ export function CollateralPanel({ margin, onRefresh }: Props) {
           feeVault: FEE_VAULT,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-        });
-
-      if (needsCreate) {
-        const createIx = createAssociatedTokenAccountInstruction(publicKey, ata, publicKey, USDC_MINT);
-        await txBuilder.preInstructions([createIx]).rpc();
-      } else {
-        await txBuilder.rpc();
-      }
+        })
+        .rpc();
 
       setTxStatus({ type: "success", msg: `Deposited $${inputUsdc.toFixed(2)} USDC` });
       setAmount("");
