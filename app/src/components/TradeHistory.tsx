@@ -46,26 +46,16 @@ function formatTimeShort(ts: number) {
 }
 
 function marketLabel(t: Trade): string {
-  if (t.market) {
-    // Shorten labels like "PRISMATIC-ETB" -> "ETB", "CHARMANDER-038-MEP" -> "CHARMANDER"
-    const map: Record<string, string> = {
-      "PRISMATIC-ETB": "ETB",
-      "CHARIZARD-125/094-PFL": "CHARIZARD",
-      "CHARMANDER-038-MEP": "CHARMANDER",
-      "PIKACHU-276/217-AH": "PIKACHU",
-      "GRENINJA-116/086-CR": "GRENINJA",
-      "ASCENDED-HEROES-ETB": "AH-ETB",
-    };
-    return map[t.market] || t.market;
-  }
-  // Fallback: infer from entry price for old trades
-  const p = t.entry_price;
-  if (!p) return "—";
-  if (p > 800) return "ETB";
-  if (p > 300) return "GRENINJA";
-  if (p > 100) return "PIKACHU";
-  if (p > 50) return "AH-ETB";
-  return "CHARMANDER";
+  if (!t.market) return "—";
+  const map: Record<string, string> = {
+    "PRISMATIC-ETB": "ETB",
+    "CHARIZARD-125/094-PFL": "CHARIZARD",
+    "CHARMANDER-038-MEP": "CHARMANDER",
+    "PIKACHU-276/217-AH": "PIKACHU",
+    "GRENINJA-116/086-CR": "GRENINJA",
+    "ASCENDED-HEROES-ETB": "AH-ETB",
+  };
+  return map[t.market] || t.market;
 }
 
 function actionBadge(action: string, reason: string | null) {
