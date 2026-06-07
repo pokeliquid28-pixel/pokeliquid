@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { getReadonlyProgram } from "@/lib/program";
 import { getMarginAccountPDA } from "@/lib/addresses";
@@ -43,10 +43,12 @@ function decodeDirection(dir: any): "Long" | "Short" {
   return "Short";
 }
 
-export function useMarginAccount(): MarginAccountData {
+export function useMarginAccount(): MarginAccountData & { refresh: () => void } {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const [data, setData] = useState<MarginAccountData>(DEFAULT);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const refresh = useCallback(() => setRefreshTrigger((n) => n + 1), []);
 
   useEffect(() => {
     if (!publicKey) {
@@ -128,7 +130,7 @@ export function useMarginAccount(): MarginAccountData {
       cancelled = true;
       clearInterval(id);
     };
-  }, [connection, publicKey]);
+  }, [connection, publicKey, refreshTrigger]);
 
-  return data;
+  return { ...data, refresh };
 }

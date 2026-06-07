@@ -95,6 +95,7 @@ type BonusWinner = { pubkey: string; pnl: number; timestamp: number; paid?: bool
 // Wallets that have been paid out already
 const PAID_WALLETS = new Set([
   "26FUVaUHbRmMvYM64UWG28HyxoYZoRW4uWbvB5yiPFaP",
+  "F1pVGJtAuXbKXVfCAsfbZ82ZZZbzndw98eznW6EcF9RE",
 ]);
 
 function useLeaderboard() {

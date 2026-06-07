@@ -237,7 +237,7 @@ export default function TradePage() {
   const [marketSearch, setMarketSearch] = useState("");
   const [mobileTab, setMobileTab] = useState<"trade" | "positions">("trade");
 
-  const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const handleRefresh = useCallback(() => { setRefreshKey((k) => k + 1); margin.refresh(); }, [margin]);
 
   // Always show landing page on first load / refresh.
   // Module-level flag resets on page reload but persists across in-app navigation.
@@ -1346,7 +1346,9 @@ function PositionRow({
       }
       addNotification(pnl >= 0 ? "success" : "warning", `Position #${pos.index} Closed`, `PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}`);
       setConfirmClose(false);
-      setTimeout(onRefresh, 2000);
+      // Immediately refresh margin account, then again after confirmation
+      margin.refresh();
+      setTimeout(() => { margin.refresh(); onRefresh(); }, 2000);
     } catch (e: any) {
       addNotification("error", "Close Failed", e?.message ?? "Transaction failed");
     } finally {

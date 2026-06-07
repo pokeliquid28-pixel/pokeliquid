@@ -67,7 +67,7 @@ function useLiveTimer(openTimestamp: number) {
 
 // ── Position Card ────────────────────────────────────────────────────────────
 
-function PositionCardStandalone({ pos, freeCollateral }: { pos: Position; freeCollateral: number }) {
+function PositionCardStandalone({ pos, freeCollateral, onMarginRefresh }: { pos: Position; freeCollateral: number; onMarginRefresh: () => void }) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const anchorWallet = useAnchorWallet();
@@ -177,6 +177,8 @@ function PositionCardStandalone({ pos, freeCollateral }: { pos: Position; freeCo
       setTxStatus({ type: "success", msg: `Closed. PnL: ${isProfit ? "+" : ""}$${pnlUsdc.toFixed(2)}` });
       addNotification(isProfit ? "success" : "warning", "Position Closed", `PnL: ${isProfit ? "+" : ""}$${pnlUsdc.toFixed(2)}`);
       setConfirmClose(false);
+      onMarginRefresh();
+      setTimeout(onMarginRefresh, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Failed" });
     } finally {
@@ -643,6 +645,7 @@ function PositionsContent() {
               key={pos.index}
               pos={pos}
               freeCollateral={margin.collateral}
+              onMarginRefresh={margin.refresh}
             />
           ))
         )}
