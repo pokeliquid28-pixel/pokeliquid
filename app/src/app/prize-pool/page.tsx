@@ -90,7 +90,12 @@ function useCountdown() {
 
 // ── Leaderboard hook ─────────────────────────────────────────────────────────
 
-type BonusWinner = { pubkey: string; pnl: number; timestamp: number };
+type BonusWinner = { pubkey: string; pnl: number; timestamp: number; paid?: boolean };
+
+// Wallets that have been paid out already
+const PAID_WALLETS = new Set([
+  "26FUVaUHbRmMvYM64UWG28HyxoYZoRW4uWbvB5yiPFaP",
+]);
 
 function useLeaderboard() {
   const [rows, setRows] = useState<TraderRow[]>([]);
@@ -114,7 +119,7 @@ function useLeaderboard() {
           for (const t of closed) {
             if (!seen.has(t.user_pubkey) && winners.length < 4) {
               seen.add(t.user_pubkey);
-              winners.push({ pubkey: t.user_pubkey, pnl: t.pnl!, timestamp: (t as any).timestamp ?? 0 });
+              winners.push({ pubkey: t.user_pubkey, pnl: t.pnl!, timestamp: (t as any).timestamp ?? 0, paid: PAID_WALLETS.has(t.user_pubkey) });
             }
           }
           setBonusWinners(winners);
@@ -354,7 +359,7 @@ function PrizePoolContent() {
                 letterSpacing: "0.08em",
               }}
             >
-              {bonusWinners.length}/4 CLAIMED
+              {bonusWinners.filter(w => w.paid).length} PAID · {bonusWinners.length}/4 CLAIMED
             </div>
           </div>
           <div style={{ fontSize: 12, color: "#999999", lineHeight: 1.6, marginBottom: 20 }}>
@@ -371,8 +376,8 @@ function PrizePoolContent() {
                 <div
                   key={i}
                   style={{
-                    border: winner ? "1px solid #00ff41" : "1px solid #222222",
-                    backgroundColor: winner ? "rgba(0, 255, 65, 0.03)" : "#0a0a0a",
+                    border: winner ? (winner.paid ? "1px solid #ffaa00" : "1px solid #00ff41") : "1px solid #222222",
+                    backgroundColor: winner ? (winner.paid ? "rgba(255, 170, 0, 0.05)" : "rgba(0, 255, 65, 0.03)") : "#0a0a0a",
                     padding: "14px 16px",
                     textAlign: "center",
                   }}
@@ -382,8 +387,8 @@ function PrizePoolContent() {
                   </div>
                   {winner ? (
                     <>
-                      <div style={{ fontSize: 12, color: "#00ff41", fontWeight: 700, marginBottom: 4 }}>
-                        CLAIMED
+                      <div style={{ fontSize: 12, color: winner.paid ? "#ffaa00" : "#00ff41", fontWeight: 700, marginBottom: 4 }}>
+                        {winner.paid ? "PAID ✓" : "CLAIMED"}
                       </div>
                       <div style={{ fontSize: 11, color: "#cccccc" }} title={winner.pubkey}>
                         {truncateWallet(winner.pubkey)}
@@ -391,6 +396,11 @@ function PrizePoolContent() {
                       <div style={{ fontSize: 10, color: "#00ff41", marginTop: 4 }}>
                         +${winner.pnl.toFixed(2)} PnL
                       </div>
+                      {winner.paid && (
+                        <div style={{ fontSize: 9, color: "#ffaa00", marginTop: 2 }}>
+                          $100 USDC sent
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
