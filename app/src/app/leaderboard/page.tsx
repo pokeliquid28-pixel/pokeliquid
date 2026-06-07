@@ -361,13 +361,6 @@ function LeaderboardContent() {
           loading={loading}
           sortBy="pnl"
         />
-        <LeaderboardTable
-          title="VOLUME LEADERBOARD"
-          subtitle="Top traders by trading volume"
-          rows={rows}
-          loading={loading}
-          sortBy="volume"
-        />
       </div>
     </div>
   );
