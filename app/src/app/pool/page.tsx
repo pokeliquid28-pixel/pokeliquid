@@ -65,6 +65,7 @@ function PoolContent() {
   const pool = useLiquidityPool();
   const lpPos = useLpPosition();
   const walletBalances = useWalletBalances();
+  const refreshBalances = walletBalances.refresh;
 
   const [depositInput, setDepositInput] = useState("");
   const [withdrawSharesInput, setWithdrawSharesInput] = useState("");
@@ -153,6 +154,7 @@ function PoolContent() {
       }
       setTxStatus({ type: "success", msg: `Deposited $${depositInput} USDC into LP pool` });
       setDepositInput("");
+      setTimeout(refreshBalances, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "LP deposit failed" });
     } finally {
@@ -192,6 +194,7 @@ function PoolContent() {
       }
       setTxStatus({ type: "success", msg: `Withdrew ${shares} shares from LP pool` });
       setWithdrawSharesInput("");
+      setTimeout(refreshBalances, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "LP withdraw failed" });
     } finally {
@@ -228,6 +231,7 @@ function PoolContent() {
         await txBuilder.rpc();
       }
       setTxStatus({ type: "success", msg: `Claimed $${rawToUsdc(claimable).toFixed(2)} USDC in fees` });
+      setTimeout(refreshBalances, 2000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Claim fees failed" });
     } finally {

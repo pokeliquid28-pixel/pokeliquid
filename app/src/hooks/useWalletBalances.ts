@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { USDC_MINT } from "@/lib/addresses";
@@ -12,13 +12,16 @@ export type WalletBalances = {
   isLoading: boolean;
 };
 
-export function useWalletBalances(): WalletBalances {
+export function useWalletBalances(): WalletBalances & { refresh: () => void } {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const [solLamports, setSolLamports] = useState(0);
   const [usdcRaw, setUsdcRaw] = useState(0);
   const [usdcAta, setUsdcAta] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refresh = useCallback(() => setRefreshTrigger((n) => n + 1), []);
 
   useEffect(() => {
     if (!publicKey) {
@@ -62,12 +65,12 @@ export function useWalletBalances(): WalletBalances {
     };
 
     fetch();
-    const id = setInterval(fetch, 30_000);
+    const id = setInterval(fetch, 10_000);
     return () => {
       cancelled = true;
       clearInterval(id);
     };
-  }, [connection, publicKey]);
+  }, [connection, publicKey, refreshTrigger]);
 
-  return { solLamports, usdcRaw, usdcAta, isLoading };
+  return { solLamports, usdcRaw, usdcAta, isLoading, refresh };
 }
