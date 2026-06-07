@@ -31,14 +31,17 @@ pub struct InitMarketOracle<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitMarketOracle>, market_id: String) -> Result<()> {
+pub fn handler(ctx: Context<InitMarketOracle>, market_id: String, seed_price: u64) -> Result<()> {
+    require!(seed_price > 0, ErrorCode::InvalidOraclePrice);
+
+    let now = Clock::get()?.unix_timestamp;
     let oracle = &mut ctx.accounts.oracle;
-    oracle.price = 0;
-    oracle.last_updated = 0;
+    oracle.price = seed_price;
+    oracle.last_updated = now;
     oracle.staleness_threshold = DEFAULT_STALENESS_THRESHOLD;
     oracle.bump = ctx.bumps.oracle;
 
-    msg!("Market oracle initialized: {}", market_id);
+    msg!("Market oracle initialized: {} at price {}", market_id, seed_price);
     msg!("Oracle PDA: {}", oracle.key());
     Ok(())
 }

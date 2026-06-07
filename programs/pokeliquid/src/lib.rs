@@ -121,8 +121,8 @@ pub mod pokeliquid {
     }
 
     /// Admin: initialize a market-specific oracle account.
-    pub fn init_market_oracle(ctx: Context<InitMarketOracle>, market_id: String) -> Result<()> {
-        init_market_oracle::handler(ctx, market_id)
+    pub fn init_market_oracle(ctx: Context<InitMarketOracle>, market_id: String, seed_price: u64) -> Result<()> {
+        init_market_oracle::handler(ctx, market_id, seed_price)
     }
 
     /// Admin: initialize a per-market state account (tracks OI per market).

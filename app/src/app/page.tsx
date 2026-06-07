@@ -173,15 +173,18 @@ function MarketListItem({
     if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
   }
 
+  const noPrice = !isLoading && price === 0;
+  const disabled = !m.live || noPrice;
+
   return (
     <button
-      onClick={() => m.live && onSelect()}
-      disabled={!m.live}
+      onClick={() => !disabled && onSelect()}
+      disabled={disabled}
       className={`w-full text-left p-3 border-b border-border/50 transition-colors ${
         selected
           ? "border-l-2 border-l-long bg-long/5"
           : "border-l-2 border-l-transparent hover:bg-white/[.02]"
-      } ${!m.live ? "opacity-40 cursor-not-allowed" : ""}`}
+      } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
     >
       <div className="flex items-center gap-2 mb-1">
         {m.image && (
@@ -194,7 +197,10 @@ function MarketListItem({
             {!m.live && (
               <span className="text-[8px] px-1.5 py-0.5 border border-secondary text-secondary uppercase flex-shrink-0 ml-1">Soon</span>
             )}
-            {m.badge && m.live && (
+            {noPrice && m.live && (
+              <span className="text-[8px] px-1.5 py-0.5 border border-yellow-500/40 text-yellow-500 uppercase flex-shrink-0 ml-1">Awaiting Price</span>
+            )}
+            {m.badge && m.live && !noPrice && (
               <span className="text-[8px] px-1.5 py-0.5 border border-long/40 text-long uppercase flex-shrink-0 ml-1">{m.badge}</span>
             )}
           </div>
@@ -202,11 +208,13 @@ function MarketListItem({
           {m.live && (
             <div className="flex items-center gap-2 mt-1">
               <span className="text-[11px] font-bold text-primary">
-                {isLoading ? "-.--" : `$${priceUsd.toFixed(2)}`}
+                {isLoading ? "-.--" : noPrice ? "—" : `$${priceUsd.toFixed(2)}`}
               </span>
-              <span className={`text-[10px] font-bold ${pctChange >= 0 ? "text-long" : "text-short"}`}>
-                {isLoading ? "--" : `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`}
-              </span>
+              {!isLoading && !noPrice && (
+                <span className={`text-[10px] font-bold ${pctChange >= 0 ? "text-long" : "text-short"}`}>
+                  {`${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`}
+                </span>
+              )}
             </div>
           )}
         </div>
