@@ -6,19 +6,6 @@ const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type Trade = {
-  user_pubkey: string;
-  action: string;
-  pnl: number | null;
-  notional: number;
-  direction: string;
-};
-
-type TradesResponse = {
-  trades: Trade[];
-  total: number;
-};
-
 type TraderRow = {
   pubkey: string;
   totalPnl: number;
@@ -49,33 +36,6 @@ function formatVolume(vol: number): string {
   return `$${vol.toFixed(2)}`;
 }
 
-function aggregateTrades(trades: Trade[]): TraderRow[] {
-  const map = new Map<string, TraderRow>();
-
-  for (const trade of trades) {
-    const existing = map.get(trade.user_pubkey);
-    const pnl = trade.pnl ?? 0;
-    const isWin = trade.pnl !== null && trade.pnl > 0;
-
-    if (existing) {
-      existing.totalPnl += pnl;
-      existing.wins += isWin ? 1 : 0;
-      existing.trades += 1;
-      existing.volume += trade.notional;
-    } else {
-      map.set(trade.user_pubkey, {
-        pubkey: trade.user_pubkey,
-        totalPnl: pnl,
-        wins: isWin ? 1 : 0,
-        trades: 1,
-        volume: trade.notional,
-      });
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) => b.totalPnl - a.totalPnl);
-}
-
 function rankColor(rank: number): string {
   if (rank === 1) return "#ffaa00";
   if (rank === 2) return "#c0c0c0";
@@ -91,10 +51,17 @@ function useLeaderboard() {
 
   useEffect(() => {
     const load = () => {
-      fetch(`${API_BASE}/trades/recent?limit=200`)
+      fetch(`${API_BASE}/leaderboard`)
         .then((r) => r.json())
-        .then((data: TradesResponse) => {
-          setRows(aggregateTrades(data.trades ?? []));
+        .then((data) => {
+          const traders = (data.traders ?? []).map((t: { user_pubkey: string; total_pnl: number; wins: number; trades: number; volume: number }) => ({
+            pubkey: t.user_pubkey,
+            totalPnl: t.total_pnl,
+            wins: t.wins,
+            trades: t.trades,
+            volume: t.volume,
+          }));
+          setRows(traders);
         })
         .catch(() => {})
         .finally(() => setLoading(false));
