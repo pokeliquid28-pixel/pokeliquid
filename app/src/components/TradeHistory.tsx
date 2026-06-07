@@ -54,6 +54,16 @@ function marketLabel(t: Trade): string {
     "PIKACHU-276/217-AH": "PIKACHU",
     "GRENINJA-116/086-CR": "GRENINJA",
     "ASCENDED-HEROES-ETB": "AH-ETB",
+    "PSYDUCK-226/217-AH": "PSYDUCK",
+    "MEOWTH-106/094-PFL": "MEOWTH",
+    "BLACK-BOLT-ETB": "BB-ETB",
+    "MAGNETON-159-PROMO": "MAGNETON",
+    "CHARIZARD-199/165-151": "ZARD-151",
+    "MISTYS-PSYDUCK-193/182-DR": "M-PSYDUCK",
+    "UMBREON-161/131-PE": "UMBREON",
+    "MEW-232/091-PF": "MEW",
+    "PIKACHU-238/191-SS": "PIKA-SS",
+    "GIRATINA-GG69/GG70-CZ": "GIRATINA",
   };
   return map[t.market] || t.market;
 }
