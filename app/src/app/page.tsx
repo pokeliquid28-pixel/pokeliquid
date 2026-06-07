@@ -550,8 +550,9 @@ export default function TradePage() {
 // CHART SECTION
 // ═════════════════════════════════════════════════════════════════════════════
 
-type ChartPoint = { timestamp: number; price: number };
+type ChartPoint = { timestamp: number; price: number; open: number; high: number; low: number; close: number };
 type Timeframe = "1h" | "1d";
+type ChartMode = "line" | "candle";
 
 const TF_CONFIG: Record<Timeframe, { resolution: string }> = {
   "1h": { resolution: "1h" },  // 1-hour candles, 7 days
@@ -562,9 +563,11 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
+  const [chartMode, setChartMode] = useState<ChartMode>("line");
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [insufficient, setInsufficient] = useState(false);
+  const [hoveredCandle, setHoveredCandle] = useState<ChartPoint | null>(null);
 
   // Fetch price data from keeper API
   useEffect(() => {
@@ -574,7 +577,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       const { resolution } = TF_CONFIG[timeframe];
       fetch(`${API_BASE}/candles?market=${priceApiMarket}&resolution=${resolution}`)
         .then((r) => r.json())
-        .then((data: { timestamp: number; close: number }[]) => {
+        .then((data: { timestamp: number; open: number; high: number; low: number; close: number }[]) => {
           if (cancelled) return;
           if (!Array.isArray(data) || data.length === 0) {
             console.warn("[Chart] No data from API");
@@ -585,6 +588,10 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
           const points: ChartPoint[] = data.map((d) => ({
             timestamp: d.timestamp,
             price: d.close,
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
           }));
           points.sort((a, b) => a.timestamp - b.timestamp);
           console.log(`[Chart ${timeframe}] ${points.length} candles, first:`, points[0], "last:", points[points.length - 1]);
@@ -626,14 +633,16 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
     const cw = w - pad.left - pad.right;
     const ch = h - pad.top - pad.bottom;
 
-    const prices = chartData.map((p) => p.price);
-    // Live oracle price for dashed line (oracle stores u64 scaled by 1e6)
     const livePrice = oracle.price / 1_000_000;
-    // Include live price in min/max so dashed line is always visible
-    const allPrices = [...prices, livePrice];
-    const minP = Math.min(...allPrices) * 0.98;
-    const maxP = Math.max(...allPrices) * 1.02;
+
+    // For candlestick mode, use high/low for range; for line, use close
+    const allHighs = chartData.map((p) => chartMode === "candle" ? p.high : p.price);
+    const allLows = chartData.map((p) => chartMode === "candle" ? p.low : p.price);
+    const minP = Math.min(...allLows, livePrice) * 0.98;
+    const maxP = Math.max(...allHighs, livePrice) * 1.02;
     const range = maxP - minP || 1;
+
+    const toY = (price: number) => pad.top + ch - ((price - minP) / range) * ch;
 
     ctx.clearRect(0, 0, w, h);
 
@@ -654,12 +663,11 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       ctx.fillText(`$${priceVal.toFixed(2)}`, w - pad.right + 6, y + 3);
     }
 
-    // X-axis time labels — one per candle, skip to avoid overlap
+    // X-axis time labels
     ctx.fillStyle = "rgba(255,255,255,0.2)";
     ctx.font = "9px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
     const n = chartData.length;
-    // Show ~6-8 labels max
     const labelSkip = Math.max(1, Math.floor(n / 7));
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     for (let i = 0; i < n; i += labelSkip) {
@@ -674,7 +682,6 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       }
       ctx.fillText(label, x, h - 4);
     }
-    // Always show last label
     if ((n - 1) % labelSkip !== 0) {
       const lastX = pad.left + cw;
       const lastD = new Date(chartData[n - 1].timestamp * 1000);
@@ -688,38 +695,72 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       ctx.fillText(label, lastX, h - 4);
     }
 
-    // Fill area
-    const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
-    gradient.addColorStop(0, "rgba(0,255,65,0.12)");
-    gradient.addColorStop(1, "rgba(0,255,65,0)");
+    if (chartMode === "candle") {
+      // ── Candlestick rendering ──
+      const candleWidth = Math.max(3, Math.floor(cw / n) - 2);
+      for (let i = 0; i < n; i++) {
+        const c = chartData[i];
+        const x = pad.left + (i / (n - 1)) * cw;
+        const bullish = c.close >= c.open;
+        const bodyColor = bullish ? "#00ff41" : "#ff3333";
+        const wickColor = bullish ? "rgba(0,255,65,0.6)" : "rgba(255,51,51,0.6)";
 
-    ctx.beginPath();
-    for (let i = 0; i < prices.length; i++) {
-      const x = pad.left + (i / (prices.length - 1)) * cw;
-      const y = pad.top + ch - ((prices[i] - minP) / range) * ch;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.lineTo(pad.left + cw, pad.top + ch);
-    ctx.lineTo(pad.left, pad.top + ch);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
+        // Wick (high to low)
+        ctx.strokeStyle = wickColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, toY(c.high));
+        ctx.lineTo(x, toY(c.low));
+        ctx.stroke();
 
-    // Line
-    ctx.beginPath();
-    for (let i = 0; i < prices.length; i++) {
-      const x = pad.left + (i / (prices.length - 1)) * cw;
-      const y = pad.top + ch - ((prices[i] - minP) / range) * ch;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+        // Body (open to close)
+        const bodyTop = toY(Math.max(c.open, c.close));
+        const bodyBot = toY(Math.min(c.open, c.close));
+        const bodyH = Math.max(1, bodyBot - bodyTop);
+
+        if (bullish) {
+          ctx.fillStyle = bodyColor;
+          ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyH);
+        } else {
+          ctx.fillStyle = bodyColor;
+          ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyH);
+        }
+      }
+    } else {
+      // ── Line chart rendering ──
+      const prices = chartData.map((p) => p.price);
+
+      const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+      gradient.addColorStop(0, "rgba(0,255,65,0.12)");
+      gradient.addColorStop(1, "rgba(0,255,65,0)");
+
+      ctx.beginPath();
+      for (let i = 0; i < prices.length; i++) {
+        const x = pad.left + (i / (prices.length - 1)) * cw;
+        const y = toY(prices[i]);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.lineTo(pad.left + cw, pad.top + ch);
+      ctx.lineTo(pad.left, pad.top + ch);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.beginPath();
+      for (let i = 0; i < prices.length; i++) {
+        const x = pad.left + (i / (prices.length - 1)) * cw;
+        const y = toY(prices[i]);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = "#00ff41";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
-    ctx.strokeStyle = "#00ff41";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
 
     // Live oracle price dashed line
-    const curY = pad.top + ch - ((livePrice - minP) / range) * ch;
+    const curY = toY(livePrice);
     ctx.setLineDash([4, 4]);
     ctx.strokeStyle = "rgba(0,255,65,0.4)";
     ctx.lineWidth = 1;
@@ -734,7 +775,38 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
     ctx.arc(pad.left + cw, curY, 3, 0, Math.PI * 2);
     ctx.fillStyle = "#00ff41";
     ctx.fill();
-  }, [chartData, timeframe, oracle.price]);
+  }, [chartData, timeframe, chartMode, oracle.price]);
+
+  // Hover handler for candlestick tooltip
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container || chartData.length < 2) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (chartMode !== "candle") { setHoveredCandle(null); return; }
+      const rect = container.getBoundingClientRect();
+      const pad = { left: 8, right: 60 };
+      const cw = rect.width - pad.left - pad.right;
+      const mouseX = e.clientX - rect.left - pad.left;
+      const n = chartData.length;
+      const idx = Math.round((mouseX / cw) * (n - 1));
+      if (idx >= 0 && idx < n) {
+        setHoveredCandle(chartData[idx]);
+      } else {
+        setHoveredCandle(null);
+      }
+    };
+
+    const handleMouseLeave = () => setHoveredCandle(null);
+
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
+    return () => {
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [chartData, chartMode]);
 
   const timeframes: Timeframe[] = ["1h", "1d"];
 
@@ -754,6 +826,26 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
             {tf}
           </button>
         ))}
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => setChartMode("line")}
+            className={`px-2 py-1 text-[10px] transition-colors ${
+              chartMode === "line" ? "text-long bg-long/10" : "text-secondary hover:text-primary"
+            }`}
+            title="Line chart"
+          >
+            ━
+          </button>
+          <button
+            onClick={() => setChartMode("candle")}
+            className={`px-2 py-1 text-[10px] transition-colors ${
+              chartMode === "candle" ? "text-long bg-long/10" : "text-secondary hover:text-primary"
+            }`}
+            title="Candlestick chart"
+          >
+            ┃╋
+          </button>
+        </div>
       </div>
       <div ref={containerRef} className="h-[200px] md:h-[280px] relative">
         {chartLoading ? (
@@ -770,6 +862,21 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
             {insufficient && (
               <div className="absolute bottom-2 left-4 text-[9px] text-secondary/60">
                 Collecting price history...
+              </div>
+            )}
+            {hoveredCandle && chartMode === "candle" && (
+              <div className="absolute top-2 left-3 bg-panel/90 border border-border px-3 py-2 pointer-events-none">
+                <div className="text-[10px] text-secondary mb-1">
+                  {new Date(hoveredCandle.timestamp * 1000).toLocaleDateString("en-US", {
+                    month: "short", day: "numeric", ...(timeframe === "1h" ? { hour: "2-digit", minute: "2-digit" } : {}),
+                  })}
+                </div>
+                <div className="grid grid-cols-4 gap-x-3 text-[10px] font-mono">
+                  <div><span className="text-secondary">O </span><span className="text-primary">${hoveredCandle.open.toFixed(2)}</span></div>
+                  <div><span className="text-secondary">H </span><span className="text-long">${hoveredCandle.high.toFixed(2)}</span></div>
+                  <div><span className="text-secondary">L </span><span className="text-short">${hoveredCandle.low.toFixed(2)}</span></div>
+                  <div><span className="text-secondary">C </span><span className="text-primary">${hoveredCandle.close.toFixed(2)}</span></div>
+                </div>
               </div>
             )}
           </>
