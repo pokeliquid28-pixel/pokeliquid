@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useConnection, useWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { SystemProgram, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, getAccount, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
@@ -10,6 +10,7 @@ import { getProgram } from "@/lib/program";
 import {
   PROTOCOL_STATE,
   FEE_VAULT,
+  INSURANCE_FUND,
   USDC_MINT,
   LIQUIDITY_POOL,
   LP_VAULT,
@@ -66,6 +67,27 @@ function PoolContent() {
   const lpPos = useLpPosition();
   const walletBalances = useWalletBalances();
   const refreshBalances = walletBalances.refresh;
+
+  const [feeVaultBalance, setFeeVaultBalance] = useState<number | null>(null);
+  const [insuranceBalance, setInsuranceBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchVaultBalances = async () => {
+      try {
+        const [feeAcc, insAcc] = await Promise.all([
+          connection.getTokenAccountBalance(FEE_VAULT),
+          connection.getTokenAccountBalance(INSURANCE_FUND),
+        ]);
+        if (cancelled) return;
+        setFeeVaultBalance(Number(feeAcc.value.amount));
+        setInsuranceBalance(Number(insAcc.value.amount));
+      } catch {}
+    };
+    fetchVaultBalances();
+    const id = setInterval(fetchVaultBalances, 15_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [connection]);
 
   const [depositInput, setDepositInput] = useState("");
   const [withdrawSharesInput, setWithdrawSharesInput] = useState("");
@@ -357,6 +379,30 @@ function PoolContent() {
                 </div>
               </div>
             )}
+          </Section>
+
+          {/* Protocol Vaults */}
+          <Section title="Protocol Vaults">
+            <div className="grid grid-cols-3 gap-3 md:gap-4">
+              <div className="bg-bg border border-border p-3 md:p-4">
+                <div className="text-[10px] md:text-xs text-secondary mb-1">LP Vault</div>
+                <div className="text-primary font-mono font-semibold text-sm md:text-base">
+                  {pool.isLoading ? "..." : `$${tvl.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                </div>
+              </div>
+              <div className="bg-bg border border-border p-3 md:p-4">
+                <div className="text-[10px] md:text-xs text-secondary mb-1">Fee Vault</div>
+                <div className="text-primary font-mono font-semibold text-sm md:text-base">
+                  {feeVaultBalance === null ? "..." : `$${rawToUsdc(feeVaultBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                </div>
+              </div>
+              <div className="bg-bg border border-border p-3 md:p-4">
+                <div className="text-[10px] md:text-xs text-secondary mb-1">Insurance Fund</div>
+                <div className="text-primary font-mono font-semibold text-sm md:text-base">
+                  {insuranceBalance === null ? "..." : `$${rawToUsdc(insuranceBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                </div>
+              </div>
+            </div>
           </Section>
         </div>
 

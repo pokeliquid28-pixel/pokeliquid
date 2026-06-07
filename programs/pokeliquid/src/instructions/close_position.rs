@@ -243,6 +243,46 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         token::transfer(cpi_ctx, total_insurance)?;
     }
 
+    // ── PnL USDC movement between LP vault and fee vault ───────────────────
+    if capped_pnl > 0 {
+        // Trader won: LP pays the profit — transfer from lp_vault → fee_vault
+        let pnl_amount = capped_pnl as u64;
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.key(),
+            Transfer {
+                from: ctx.accounts.lp_vault.to_account_info(),
+                to: ctx.accounts.fee_vault.to_account_info(),
+                authority: ctx.accounts.protocol_state.to_account_info(),
+            },
+            signer,
+        );
+        token::transfer(cpi_ctx, pnl_amount)?;
+        ctx.accounts.liquidity_pool.total_usdc = ctx
+            .accounts
+            .liquidity_pool
+            .total_usdc
+            .saturating_sub(pnl_amount);
+    } else if capped_pnl < 0 {
+        // Trader lost: LP captures the loss — transfer from fee_vault → lp_vault
+        let loss_amount = (-capped_pnl) as u64;
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.key(),
+            Transfer {
+                from: ctx.accounts.fee_vault.to_account_info(),
+                to: ctx.accounts.lp_vault.to_account_info(),
+                authority: ctx.accounts.protocol_state.to_account_info(),
+            },
+            signer,
+        );
+        token::transfer(cpi_ctx, loss_amount)?;
+        ctx.accounts.liquidity_pool.total_usdc = ctx
+            .accounts
+            .liquidity_pool
+            .total_usdc
+            .checked_add(loss_amount)
+            .ok_or(ErrorCode::MathOverflow)?;
+    }
+
     // Credit settlement back to margin account (USDC stays in fee_vault for later withdrawal)
     if settlement > 0 {
         ctx.accounts.margin_account.collateral = ctx
