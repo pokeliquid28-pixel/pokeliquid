@@ -812,6 +812,10 @@ function OrderEntry({
       setSlInput("");
       setTpInput("");
       setTimeout(onRefresh, 2000);
+      // Scroll to positions table after data refreshes
+      setTimeout(() => {
+        document.getElementById("positions-table")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 2500);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Transaction failed" });
       addNotification("error", "Open Position Failed", e?.message ?? "Transaction failed");
@@ -1238,6 +1242,7 @@ function PositionRow({
   const [tpInput, setTpInput] = useState("");
   const [marginMode, setMarginMode] = useState<"idle" | "add" | "remove">("idle");
   const [marginInput, setMarginInput] = useState("");
+  const rowRef = useRef<HTMLDivElement>(null);
 
   // Each row fetches its OWN market price
   const markPriceRaw = usePositionPrice(pos.oracle);
@@ -1365,6 +1370,9 @@ function PositionRow({
       setTpInput(pos.tpPrice ? rawToPrice(pos.tpPrice).toFixed(2) : "");
       setMarginMode("idle");
       setMarginInput("");
+      setTimeout(() => {
+        rowRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 50);
     }
   }
 
@@ -1580,7 +1588,7 @@ function PositionRow({
     </div>
   );
 
-  return <>{desktopRow}{mobileRow}</>;
+  return <div ref={rowRef}>{desktopRow}{mobileRow}</div>;
 }
 
 // ── Positions panel container ───────────────────────────────────────────────
@@ -1601,7 +1609,7 @@ function PositionsTable({
   const needsScroll = count >= 4;
 
   return (
-    <div className="border-t border-border bg-panel">
+    <div id="positions-table" className="border-t border-border bg-panel">
       <div className="px-4 py-1.5 border-b border-border flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-wider text-secondary">Open Positions ({count})</span>
       </div>
