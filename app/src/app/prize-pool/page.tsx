@@ -6,7 +6,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
-const CONTEST_END = new Date("2026-07-20T23:59:59Z");
+const CONTEST_END = new Date("2026-06-20T23:59:59Z");
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -234,7 +234,7 @@ function PrizePoolContent() {
               </div>
             )}
             <div style={{ fontSize: 11, color: "#999999", marginTop: 12 }}>
-              Ends July 20, 2026 at 11:59:59 PM UTC
+              Ends June 20, 2026 at 11:59:59 PM UTC
             </div>
           </div>
         </div>
