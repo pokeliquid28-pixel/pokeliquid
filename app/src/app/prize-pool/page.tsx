@@ -91,15 +91,35 @@ function useCountdown() {
 
 // ── Leaderboard hook ─────────────────────────────────────────────────────────
 
+type BonusWinner = { pubkey: string; pnl: number; timestamp: number };
+
 function useLeaderboard() {
   const [rows, setRows] = useState<TraderRow[]>([]);
+  const [bonusWinners, setBonusWinners] = useState<BonusWinner[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = () => {
       fetch(`${API_BASE}/trades/recent?limit=200`)
         .then((r) => r.json())
-        .then((data) => setRows(aggregateTrades(data.trades ?? [])))
+        .then((data) => {
+          const trades: Trade[] = data.trades ?? [];
+          setRows(aggregateTrades(trades));
+
+          // Find first 4 unique wallets to close a trade with PnL > $5
+          const winners: BonusWinner[] = [];
+          const seen = new Set<string>();
+          const closed = trades
+            .filter((t) => t.action === "close" && t.pnl !== null && t.pnl > 5)
+            .sort((a, b) => (a as any).timestamp - (b as any).timestamp);
+          for (const t of closed) {
+            if (!seen.has(t.user_pubkey) && winners.length < 4) {
+              seen.add(t.user_pubkey);
+              winners.push({ pubkey: t.user_pubkey, pnl: t.pnl!, timestamp: (t as any).timestamp ?? 0 });
+            }
+          }
+          setBonusWinners(winners);
+        })
         .catch(() => {})
         .finally(() => setLoading(false));
     };
@@ -108,7 +128,7 @@ function useLeaderboard() {
     return () => clearInterval(id);
   }, []);
 
-  return { rows, loading };
+  return { rows, bonusWinners, loading };
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -119,7 +139,7 @@ export default function PrizePoolPage() {
 
 function PrizePoolContent() {
   const { days, hours, minutes, seconds, ended } = useCountdown();
-  const { rows, loading } = useLeaderboard();
+  const { rows, bonusWinners, loading } = useLeaderboard();
 
   return (
     <div
@@ -309,6 +329,87 @@ function PrizePoolContent() {
             Only positions opened during the competition period count.
             One winner. No wash trading — suspicious activity will be disqualified.
             Winner will be contacted via on-chain message or Twitter/X DM to arrange shipping.
+          </div>
+        </div>
+
+        {/* Bonus Prize */}
+        <div
+          style={{
+            border: "1px solid #1a1a1a",
+            backgroundColor: "#111111",
+            padding: "24px",
+            marginBottom: 40,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#ffffff", letterSpacing: "0.05em" }}>
+              BONUS: $100 USDC BOUNTY
+            </div>
+            <div
+              style={{
+                fontSize: 9,
+                fontWeight: 700,
+                backgroundColor: "#00ff41",
+                color: "#000000",
+                padding: "2px 8px",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {bonusWinners.length}/4 CLAIMED
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: "#999999", lineHeight: 1.6, marginBottom: 20 }}>
+            The first <span style={{ color: "#ffffff", fontWeight: 600 }}>4 traders</span> to close a position
+            with a realized PnL greater than <span style={{ color: "#00ff41", fontWeight: 600 }}>$5.00</span> each
+            win <span style={{ color: "#ffaa00", fontWeight: 600 }}>$100 USDC</span>, sent directly to their wallet.
+          </div>
+
+          {/* Slots */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+            {[0, 1, 2, 3].map((i) => {
+              const winner = bonusWinners[i];
+              return (
+                <div
+                  key={i}
+                  style={{
+                    border: winner ? "1px solid #00ff41" : "1px solid #222222",
+                    backgroundColor: winner ? "rgba(0, 255, 65, 0.03)" : "#0a0a0a",
+                    padding: "14px 16px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 10, color: "#666666", letterSpacing: "0.08em", marginBottom: 8 }}>
+                    SLOT #{i + 1}
+                  </div>
+                  {winner ? (
+                    <>
+                      <div style={{ fontSize: 12, color: "#00ff41", fontWeight: 700, marginBottom: 4 }}>
+                        CLAIMED
+                      </div>
+                      <div style={{ fontSize: 11, color: "#cccccc" }} title={winner.pubkey}>
+                        {truncateWallet(winner.pubkey)}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#00ff41", marginTop: 4 }}>
+                        +${winner.pnl.toFixed(2)} PnL
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 16, color: "#ffaa00", fontWeight: 800, marginBottom: 4 }}>
+                        $100
+                      </div>
+                      <div style={{ fontSize: 10, color: "#666666" }}>
+                        UNCLAIMED
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ fontSize: 10, color: "#666666", marginTop: 12, lineHeight: 1.5 }}>
+            First come, first served. One claim per wallet. Close any position with {">"}$5 realized profit to qualify.
           </div>
         </div>
 
