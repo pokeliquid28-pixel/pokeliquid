@@ -9,6 +9,7 @@ export type LpPositionData = {
   shares: number;
   usdcDeposited: number;
   feesClaimed: number;
+  rewardDebt: number;
   exists: boolean;
   isLoading: boolean;
 };
@@ -17,6 +18,7 @@ const DEFAULT: LpPositionData = {
   shares: 0,
   usdcDeposited: 0,
   feesClaimed: 0,
+  rewardDebt: 0,
   exists: false,
   isLoading: true,
 };
@@ -52,6 +54,7 @@ export function useLpPosition(): LpPositionData {
           shares: safeBn(lp.shares),
           usdcDeposited: safeBn(lp.usdcDeposited),
           feesClaimed: safeBn(lp.feesClaimed),
+          rewardDebt: Number(lp.rewardDebt?.toString?.() ?? "0"),
           exists: true,
           isLoading: false,
         });
@@ -71,6 +74,7 @@ export function useLpPosition(): LpPositionData {
             shares: safeBn(lp.shares),
             usdcDeposited: safeBn(lp.usdcDeposited),
             feesClaimed: safeBn(lp.feesClaimed),
+            rewardDebt: Number(lp.rewardDebt?.toString?.() ?? "0"),
             exists: true,
             isLoading: false,
           });

@@ -280,7 +280,7 @@
         {
           "name": "margin_account",
           "docs": [
-            "with both old (125-byte) and new (296-byte) margin account layouts."
+            "with any margin account layout size."
           ],
           "writable": true,
           "pda": {
@@ -866,6 +866,10 @@
         {
           "name": "market_id",
           "type": "string"
+        },
+        {
+          "name": "seed_price",
+          "type": "u64"
         }
       ]
     },
@@ -3236,6 +3240,14 @@
           {
             "name": "total_fees_claimed",
             "type": "u64"
+          },
+          {
+            "name": "acc_fee_per_share",
+            "docs": [
+              "MasterChef-style accumulator: total fees per share (scaled by 1e12).",
+              "Monotonically increasing. Used for fair fee distribution across LPs."
+            ],
+            "type": "u128"
           }
         ]
       }
@@ -3288,6 +3300,13 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "reward_debt",
+            "docs": [
+              "MasterChef reward_debt = shares * acc_fee_per_share at last deposit/withdraw."
+            ],
+            "type": "u128"
           }
         ]
       }

@@ -10,6 +10,8 @@ export type LiquidityPoolData = {
   totalShares: number;
   accumulatedFees: number;
   lpFeeBps: number;
+  totalFeesClaimed: number;
+  accFeePerShare: number;
   isLoading: boolean;
   error: string | null;
 };
@@ -19,6 +21,8 @@ const DEFAULT: LiquidityPoolData = {
   totalShares: 0,
   accumulatedFees: 0,
   lpFeeBps: 3000,
+  totalFeesClaimed: 0,
+  accFeePerShare: 0,
   isLoading: true,
   error: null,
 };
@@ -26,6 +30,18 @@ const DEFAULT: LiquidityPoolData = {
 function safeBn(bn: any): number {
   try {
     return bn.toNumber();
+  } catch {
+    return 0;
+  }
+}
+
+function safeBn128(bn: any): number {
+  try {
+    if (typeof bn === "number") return bn;
+    if (bn && typeof bn.toString === "function") {
+      return Number(bn.toString());
+    }
+    return 0;
   } catch {
     return 0;
   }
@@ -48,6 +64,8 @@ export function useLiquidityPool(): LiquidityPoolData {
           totalShares: safeBn(pool.totalShares),
           accumulatedFees: safeBn(pool.accumulatedFees),
           lpFeeBps: safeBn(pool.lpFeeBps),
+          totalFeesClaimed: safeBn(pool.totalFeesClaimed),
+          accFeePerShare: safeBn128(pool.accFeePerShare),
           isLoading: false,
           error: null,
         });
@@ -73,6 +91,8 @@ export function useLiquidityPool(): LiquidityPoolData {
             totalShares: safeBn(pool.totalShares),
             accumulatedFees: safeBn(pool.accumulatedFees),
             lpFeeBps: safeBn(pool.lpFeeBps),
+            totalFeesClaimed: safeBn(pool.totalFeesClaimed),
+            accFeePerShare: safeBn128(pool.accFeePerShare),
             isLoading: false,
             error: null,
           });

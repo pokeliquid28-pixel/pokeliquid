@@ -100,11 +100,14 @@ function PoolContent() {
   const userShareValue = lpPos.shares * sharePrice;
   const userPoolPct = pool.totalShares > 0 ? (lpPos.shares / pool.totalShares) * 100 : 0;
 
-  // Claimable fees: user's proportional share of accumulated_fees minus already claimed
-  const totalEntitled = pool.totalShares > 0
-    ? Math.floor((lpPos.shares / pool.totalShares) * pool.accumulatedFees)
-    : 0;
-  const claimable = Math.max(0, totalEntitled - lpPos.feesClaimed);
+  // Claimable fees: matches on-chain MasterChef logic
+  // If acc_fee_per_share > 0 (post-upgrade), use: shares * accFeePerShare / 1e12 - rewardDebt
+  // Otherwise legacy fallback: proportional share of unclaimed fees
+  const claimable = pool.accFeePerShare > 0
+    ? Math.max(0, Math.floor(lpPos.shares * pool.accFeePerShare / 1e12 - lpPos.rewardDebt))
+    : pool.totalShares > 0
+      ? Math.max(0, Math.floor((lpPos.shares / pool.totalShares) * (pool.accumulatedFees - pool.totalFeesClaimed)))
+      : 0;
 
   // APY estimate: (accumulated_fees / tvl) * annualized
   // Simple estimate assuming fees accumulated since pool inception
