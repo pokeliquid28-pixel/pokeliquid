@@ -10,7 +10,7 @@ import { NotificationBell } from "./NotificationBell";
 import { Logo } from "./Logo";
 import { useOracle, OracleHealth } from "@/hooks/useOracle";
 import { getSavedEmail, clearSessionWallet, SessionWalletName } from "@/lib/session-wallet";
-import { clearLastWallet } from "@/providers/SessionWalletProvider";
+import { clearLastWallet, setForceDisconnect } from "@/providers/SessionWalletProvider";
 import { MARKETS } from "@/lib/markets";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -480,14 +480,14 @@ function MobileMenu({
 
             <MobileMenuAction
               label="Log Out"
-              onClick={() => {
-                if (isExternal) {
-                  clearLastWallet();
-                } else {
+              onClick={async () => {
+                setForceDisconnect();
+                clearLastWallet();
+                if (!isExternal) {
                   clearSessionWallet();
                   fetch("/api/logout", { method: "POST" }).catch(() => {});
                 }
-                disconnect();
+                try { await disconnect(); } catch {}
                 onClose();
                 window.location.href = "/";
               }}

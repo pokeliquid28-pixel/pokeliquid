@@ -9,6 +9,7 @@ import {
 } from "@/lib/session-wallet";
 
 const LAST_WALLET_KEY = "pokeliquid_last_wallet";
+const FORCE_DISCONNECT_KEY = "pokeliquid_force_disconnect";
 
 /** Persist which wallet the user last connected with. */
 export function saveLastWallet(name: string) {
@@ -22,6 +23,18 @@ export function getLastWallet(): string | null {
 
 export function clearLastWallet() {
   if (typeof window !== "undefined") localStorage.removeItem(LAST_WALLET_KEY);
+}
+
+/** Flag to prevent auto-reconnect after explicit disconnect. */
+export function setForceDisconnect() {
+  if (typeof window !== "undefined") localStorage.setItem(FORCE_DISCONNECT_KEY, "1");
+}
+
+export function consumeForceDisconnect(): boolean {
+  if (typeof window === "undefined") return false;
+  const val = localStorage.getItem(FORCE_DISCONNECT_KEY);
+  if (val) localStorage.removeItem(FORCE_DISCONNECT_KEY);
+  return !!val;
 }
 
 /** Returns true if the user last used an external wallet (Phantom, Solflare, etc.) */
@@ -45,6 +58,9 @@ export function SessionWalletProvider({ children }: { children: React.ReactNode 
     if (connected) return;
 
     attempted.current = true;
+
+    // If user explicitly disconnected, don't auto-reconnect
+    if (consumeForceDisconnect()) return;
 
     const lastWallet = getLastWallet();
 

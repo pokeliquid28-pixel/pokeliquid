@@ -6,7 +6,7 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { WalletReadyState } from "@solana/wallet-adapter-base";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getSavedEmail, clearSessionWallet, createGuestWallet, SessionWalletName } from "@/lib/session-wallet";
-import { clearLastWallet, isExternalWallet } from "@/providers/SessionWalletProvider";
+import { clearLastWallet, isExternalWallet, setForceDisconnect } from "@/providers/SessionWalletProvider";
 import { AuthModal } from "./AuthModal";
 import { SwapModal } from "./SwapModal";
 import { SendModal } from "./SendModal";
@@ -68,20 +68,16 @@ export function WalletButton() {
       .catch(() => {});
   }, [connected, isExternal]);
 
-  function handleDisconnect() {
-    if (isExternal) {
-      clearLastWallet();
-      disconnect();
-      setDropdownOpen(false);
-      window.location.href = "/";
-    } else {
+  async function handleDisconnect() {
+    setForceDisconnect();
+    clearLastWallet();
+    setDropdownOpen(false);
+    if (!isExternal) {
       clearSessionWallet();
-      clearLastWallet();
-      disconnect();
-      setDropdownOpen(false);
       fetch("/api/logout", { method: "POST" }).catch(() => {});
-      window.location.href = "/";
     }
+    try { await disconnect(); } catch {}
+    window.location.href = "/";
   }
 
   function handleCopyAddress() {
