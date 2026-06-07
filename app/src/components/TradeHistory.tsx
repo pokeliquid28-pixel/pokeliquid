@@ -64,6 +64,11 @@ function marketLabel(t: Trade): string {
     "MEW-232/091-PF": "MEW",
     "PIKACHU-238/191-SS": "PIKA-SS",
     "GIRATINA-GG69/GG70-CZ": "GIRATINA",
+    "CHAOS-RISING-BB": "CR-BB",
+    "KABUTO-FOSSIL-1E": "KABUTO",
+    "GENGAR-284/217-AH": "GENGAR",
+    "DRAGONITE-290/217-AH": "DRAGONITE",
+    "CLEFAIRY-094/088-PO": "CLEFAIRY",
   };
   return map[t.market] || t.market;
 }
