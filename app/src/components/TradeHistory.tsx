@@ -22,6 +22,7 @@ type Trade = {
   fee_paid: number;
   tx_signature: string;
   close_reason: string | null;
+  market: string | null;
 };
 
 type Filter = "all" | "open" | "close" | "liquidation";
@@ -42,6 +43,29 @@ function formatTimeShort(ts: number) {
     month: "short",
     day: "numeric",
   });
+}
+
+function marketLabel(t: Trade): string {
+  if (t.market) {
+    // Shorten labels like "PRISMATIC-ETB" -> "ETB", "CHARMANDER-038-MEP" -> "CHARMANDER"
+    const map: Record<string, string> = {
+      "PRISMATIC-ETB": "ETB",
+      "CHARIZARD-125/094-PFL": "CHARIZARD",
+      "CHARMANDER-038-MEP": "CHARMANDER",
+      "PIKACHU-276/217-AH": "PIKACHU",
+      "GRENINJA-116/086-CR": "GRENINJA",
+      "ASCENDED-HEROES-ETB": "AH-ETB",
+    };
+    return map[t.market] || t.market;
+  }
+  // Fallback: infer from entry price for old trades
+  const p = t.entry_price;
+  if (!p) return "—";
+  if (p > 800) return "ETB";
+  if (p > 300) return "GRENINJA";
+  if (p > 100) return "PIKACHU";
+  if (p > 50) return "AH-ETB";
+  return "CHARMANDER";
 }
 
 function actionBadge(action: string, reason: string | null) {
@@ -128,9 +152,10 @@ export function TradeHistory() {
         <>
           {/* Desktop table */}
           <div className="hidden md:block">
-            <div className="grid grid-cols-8 gap-2 text-xs text-secondary uppercase tracking-wider font-semibold border-b border-border pb-2 mb-2">
+            <div className="grid grid-cols-9 gap-2 text-xs text-secondary uppercase tracking-wider font-semibold border-b border-border pb-2 mb-2">
               <div>Time</div>
               <div>Type</div>
+              <div>Market</div>
               <div>Dir</div>
               <div>Size</div>
               <div>Entry</div>
@@ -144,7 +169,7 @@ export function TradeHistory() {
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-8 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10"
+                  className="grid grid-cols-9 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10"
                 >
                   <div className="text-secondary truncate">{formatTime(t.timestamp)}</div>
                   <div>
@@ -152,6 +177,7 @@ export function TradeHistory() {
                       {badge.label}
                     </span>
                   </div>
+                  <div className="text-primary truncate">{marketLabel(t)}</div>
                   <div className={t.direction === "long" ? "text-long" : "text-short"}>
                     {t.direction.toUpperCase()}
                   </div>
@@ -178,6 +204,7 @@ export function TradeHistory() {
                       <span className={`px-1.5 py-0.5 text-[10px] font-bold border ${badge.color}`}>
                         {badge.label}
                       </span>
+                      <span className="text-xs font-mono text-primary">{marketLabel(t)}</span>
                       <span className={`text-xs font-mono font-bold ${t.direction === "long" ? "text-long" : "text-short"}`}>
                         {t.direction.toUpperCase()}
                       </span>
