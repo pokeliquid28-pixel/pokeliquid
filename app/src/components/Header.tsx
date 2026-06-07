@@ -371,6 +371,30 @@ function MobileMenu({
           })}
         </nav>
 
+        {/* Token CA */}
+        <div style={{ padding: "12px 24px" }}>
+          <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Token CA</div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText("6TPQEMKviAYz3h7gWwtTZJSACMtF2tbofNnPwSyLpump");
+            }}
+            style={{
+              background: "rgba(0,255,65,0.06)",
+              border: "1px solid rgba(0,255,65,0.15)",
+              borderRadius: 4,
+              padding: "8px 12px",
+              cursor: "pointer",
+              width: "100%",
+              textAlign: "left",
+            }}
+          >
+            <span style={{ fontSize: 10, color: "#00ff41", fontFamily: "monospace", wordBreak: "break-all" }}>
+              6TPQEMKviAYz3h7gWwtTZJSACMtF2tbofNnPwSyLpump
+            </span>
+            <span style={{ fontSize: 9, color: "#555", display: "block", marginTop: 4 }}>Tap to copy</span>
+          </button>
+        </div>
+
         {/* Divider */}
         <div style={{ height: 1, background: "#1a1a1a", margin: "0 24px" }} />
 
@@ -484,6 +508,45 @@ function MobileMenu({
         />
       )}
     </>
+  );
+}
+
+// ─── Token CA (desktop) ──────────────────────────────────────────────────────────
+
+const TOKEN_CA = "6TPQEMKviAYz3h7gWwtTZJSACMtF2tbofNnPwSyLpump";
+
+function DesktopCA() {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(TOKEN_CA);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      title="Copy token CA"
+      style={{
+        background: "none",
+        border: "1px solid #222",
+        borderRadius: 4,
+        padding: "3px 8px",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        transition: "border-color 0.15s",
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#00ff41"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#222"; }}
+    >
+      <span style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.05em" }}>CA</span>
+      <span style={{ fontSize: 10, color: "#888", fontFamily: "monospace" }}>
+        {TOKEN_CA.slice(0, 4)}...{TOKEN_CA.slice(-4)}
+      </span>
+      <span style={{ fontSize: 9, color: copied ? "#00ff41" : "#555" }}>
+        {copied ? "Copied!" : "Copy"}
+      </span>
+    </button>
   );
 }
 
@@ -662,7 +725,7 @@ export function Header() {
             })}
           </nav>
 
-          {/* Right: oracle dot + DEVNET badge + bell + wallet */}
+          {/* Right: CA + oracle dot + bell + wallet */}
           <div
             style={{
               display: "flex",
@@ -671,6 +734,7 @@ export function Header() {
               flexShrink: 0,
             }}
           >
+            <DesktopCA />
             <OracleDot />
             <NotificationBell />
             <WalletButton />
