@@ -29,6 +29,7 @@ import {
   calcLiqPriceShort,
 } from "@/lib/utils";
 import { MARKETS } from "@/lib/markets";
+import { TradeHistory } from "@/components/TradeHistory";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -649,6 +650,9 @@ function PositionsContent() {
             />
           ))
         )}
+
+        {/* Trade History */}
+        {connected && <TradeHistory />}
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ import { getProgram } from "@/lib/program";
 import { MARKETS, Market } from "@/lib/markets";
 import { LandingAuth } from "@/components/LandingAuth";
 import { SwapModal } from "@/components/SwapModal";
+import { TradeHistory } from "@/components/TradeHistory";
 import { Skeleton } from "@/components/Skeleton";
 import {
   rawToPrice,
@@ -325,8 +326,8 @@ export default function TradePage() {
 
         {/* ── CENTER COLUMN: Chart + Order Entry ────────────────────── */}
         <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
-          {/* Mobile tab bar: Trade / Positions */}
-          {connected && margin.positions.length > 0 && (
+          {/* Mobile tab bar: Trade / Positions — always visible when connected */}
+          {connected && (
             <div className="md:hidden flex border-b border-border bg-panel sticky top-0 z-20">
               <button
                 onClick={() => setMobileTab("trade")}
@@ -350,15 +351,18 @@ export default function TradePage() {
             </div>
           )}
           {/* Mobile: full-screen positions view */}
-          {mobileTab === "positions" && connected && margin.positions.length > 0 && (
+          {mobileTab === "positions" && connected && (
             <div className="md:hidden flex-1">
-              <PositionsTable
-                positions={margin.positions}
-                protocol={protocol}
-                margin={margin}
-                onRefresh={handleRefresh}
-                fullHeight
-              />
+              {margin.positions.length > 0 && (
+                <PositionsTable
+                  positions={margin.positions}
+                  protocol={protocol}
+                  margin={margin}
+                  onRefresh={handleRefresh}
+                  fullHeight
+                />
+              )}
+              <TradeHistory />
             </div>
           )}
 
@@ -535,6 +539,13 @@ export default function TradePage() {
           margin={margin}
           onRefresh={handleRefresh}
         />
+      )}
+
+      {/* ── TRADE HISTORY (desktop, below positions) ──────────────────── */}
+      {connected && (
+        <div className="hidden md:block">
+          <TradeHistory />
+        </div>
       )}
     </div>
   );
