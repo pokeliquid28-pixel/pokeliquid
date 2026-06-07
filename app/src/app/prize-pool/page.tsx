@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { AuthGuard } from "@/components/AuthGuard";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
@@ -134,7 +133,7 @@ function useLeaderboard() {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PrizePoolPage() {
-  return <AuthGuard><PrizePoolContent /></AuthGuard>;
+  return <PrizePoolContent />;
 }
 
 function PrizePoolContent() {

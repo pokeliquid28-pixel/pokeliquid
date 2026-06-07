@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AuthGuard } from "@/components/AuthGuard";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
@@ -112,7 +111,7 @@ function useLeaderboard() {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
-  return <AuthGuard><LeaderboardContent /></AuthGuard>;
+  return <LeaderboardContent />;
 }
 
 function LeaderboardTable({
