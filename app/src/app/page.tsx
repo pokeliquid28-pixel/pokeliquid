@@ -247,6 +247,13 @@ export default function TradePage() {
 
   const handleRefresh = useCallback(() => { setRefreshKey((k) => k + 1); margin.refresh(); }, [margin]);
 
+  // Auto-switch mobile tab back to trade when all positions are closed
+  useEffect(() => {
+    if (mobileTab === "positions" && margin.positions.length === 0) {
+      setMobileTab("trade");
+    }
+  }, [mobileTab, margin.positions.length]);
+
   // Always show landing page on first load / refresh.
   // Module-level flag resets on page reload but persists across in-app navigation.
   const [passedLanding, setPassedLanding] = useState(_passedLanding);
