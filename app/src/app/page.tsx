@@ -18,6 +18,7 @@ import { incrementTradeCount } from "@/components/SaveWalletSheet";
 import { getProgram } from "@/lib/program";
 import { MARKETS, Market } from "@/lib/markets";
 import { LandingAuth } from "@/components/LandingAuth";
+import { SwapModal } from "@/components/SwapModal";
 import { Skeleton } from "@/components/Skeleton";
 import {
   rawToPrice,
@@ -813,6 +814,7 @@ function OrderEntry({
   const [showCollateral, setShowCollateral] = useState(false);
   const [collMode, setCollMode] = useState<"deposit" | "withdraw">("deposit");
   const [collAmount, setCollAmount] = useState("");
+  const [showSwap, setShowSwap] = useState(false);
 
   const collateralUsdc = parseFloat(collateralInput) || 0;
   const collateralRaw = usdcToRaw(collateralUsdc);
@@ -1028,6 +1030,12 @@ function OrderEntry({
         </div>
         <div className="flex items-center gap-1.5">
           <button
+            onClick={() => setShowSwap(true)}
+            className="btn-outline text-[9px] py-1.5 px-2"
+          >
+            Swap SOL → USDC
+          </button>
+          <button
             onClick={() => { setShowCollateral(!showCollateral); setCollMode("deposit"); }}
             className="btn-outline text-[9px] py-1.5 px-2 flex-1 md:flex-none"
           >
@@ -1035,6 +1043,7 @@ function OrderEntry({
           </button>
         </div>
       </div>
+      {showSwap && <SwapModal onClose={() => setShowSwap(false)} />}
 
       {/* Collateral deposit/withdraw panel */}
       {showCollateral && (
