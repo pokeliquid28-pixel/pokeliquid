@@ -243,76 +243,14 @@ pub fn handler(ctx: Context<ClosePosition>, position_index: u8) -> Result<()> {
         token::transfer(cpi_ctx, total_insurance)?;
     }
 
-    // Track how much we've already spent from fee_vault (CPI doesn't refresh amount)
-    let mut vault_spent = total_insurance;
-
-    // Transfer settlement to user: fee_vault → lp_vault → insurance_fund
+    // Credit settlement back to margin account (USDC stays in fee_vault for later withdrawal)
     if settlement > 0 {
-        let mut remaining = settlement;
-
-        // 1. Draw from fee_vault, reserving unclaimed LP fees
-        let lp_reserved = ctx.accounts.liquidity_pool.accumulated_fees
-            .saturating_sub(ctx.accounts.liquidity_pool.total_fees_claimed);
-        let vault_available = ctx.accounts.fee_vault.amount
-            .saturating_sub(vault_spent)
-            .saturating_sub(lp_reserved);
-        let from_vault = remaining.min(vault_available);
-        if from_vault > 0 {
-            let cpi_ctx = CpiContext::new_with_signer(
-                ctx.accounts.token_program.key(),
-                Transfer {
-                    from: ctx.accounts.fee_vault.to_account_info(),
-                    to: ctx.accounts.user_token_account.to_account_info(),
-                    authority: ctx.accounts.protocol_state.to_account_info(),
-                },
-                signer,
-            );
-            token::transfer(cpi_ctx, from_vault)?;
-            vault_spent += from_vault;
-            remaining -= from_vault;
-        }
-
-        // 2. Draw from lp_vault if fee_vault insufficient
-        if remaining > 0 {
-            let from_lp = remaining.min(ctx.accounts.lp_vault.amount);
-            if from_lp > 0 {
-                let cpi_ctx = CpiContext::new_with_signer(
-                    ctx.accounts.token_program.key(),
-                    Transfer {
-                        from: ctx.accounts.lp_vault.to_account_info(),
-                        to: ctx.accounts.user_token_account.to_account_info(),
-                        authority: ctx.accounts.protocol_state.to_account_info(),
-                    },
-                    signer,
-                );
-                token::transfer(cpi_ctx, from_lp)?;
-                // Reduce pool TVL tracking
-                ctx.accounts.liquidity_pool.total_usdc =
-                    ctx.accounts.liquidity_pool.total_usdc.saturating_sub(from_lp);
-                remaining -= from_lp;
-            }
-        }
-
-        // 3. Draw from insurance_fund as last resort
-        if remaining > 0 {
-            let from_ins = remaining.min(ctx.accounts.insurance_fund.amount);
-            if from_ins > 0 {
-                let cpi_ctx = CpiContext::new_with_signer(
-                    ctx.accounts.token_program.key(),
-                    Transfer {
-                        from: ctx.accounts.insurance_fund.to_account_info(),
-                        to: ctx.accounts.user_token_account.to_account_info(),
-                        authority: ctx.accounts.protocol_state.to_account_info(),
-                    },
-                    signer,
-                );
-                token::transfer(cpi_ctx, from_ins)?;
-                remaining -= from_ins;
-            }
-            if remaining > 0 {
-                msg!("Warning: all funds depleted, settlement capped");
-            }
-        }
+        ctx.accounts.margin_account.collateral = ctx
+            .accounts
+            .margin_account
+            .collateral
+            .checked_add(settlement)
+            .ok_or(ErrorCode::MathOverflow)?;
     }
 
     // ── Clear position ────────────────────────────────────────────────────────

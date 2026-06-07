@@ -235,6 +235,7 @@ export default function TradePage() {
   const { addNotification } = useNotifications();
   const [refreshKey, setRefreshKey] = useState(0);
   const [marketSearch, setMarketSearch] = useState("");
+  const [mobileTab, setMobileTab] = useState<"trade" | "positions">("trade");
 
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -308,6 +309,45 @@ export default function TradePage() {
 
         {/* ── CENTER COLUMN: Chart + Order Entry ────────────────────── */}
         <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
+          {/* Mobile tab bar: Trade / Positions */}
+          {connected && margin.positions.length > 0 && (
+            <div className="md:hidden flex border-b border-border bg-panel sticky top-0 z-20">
+              <button
+                onClick={() => setMobileTab("trade")}
+                className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                  mobileTab === "trade" ? "text-primary border-b-2 border-long" : "text-secondary"
+                }`}
+              >
+                Trade
+              </button>
+              <button
+                onClick={() => setMobileTab("positions")}
+                className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-colors relative ${
+                  mobileTab === "positions" ? "text-primary border-b-2 border-long" : "text-secondary"
+                }`}
+              >
+                Positions ({margin.positions.length})
+                {margin.positions.length > 0 && mobileTab !== "positions" && (
+                  <span className="absolute top-1.5 right-[calc(50%-40px)] w-2 h-2 bg-long rounded-full" />
+                )}
+              </button>
+            </div>
+          )}
+          {/* Mobile: full-screen positions view */}
+          {mobileTab === "positions" && connected && margin.positions.length > 0 && (
+            <div className="md:hidden flex-1">
+              <PositionsTable
+                positions={margin.positions}
+                protocol={protocol}
+                margin={margin}
+                onRefresh={handleRefresh}
+                fullHeight
+              />
+            </div>
+          )}
+
+          {/* Trade content (hidden on mobile when positions tab active) */}
+          <div className={mobileTab === "positions" ? "hidden md:contents" : "contents"}>
           {/* Market header bar */}
           <div className="flex items-center gap-4 md:gap-6 px-4 py-3 border-b border-border bg-panel flex-wrap">
             {/* Mobile: market selector dropdown */}
@@ -390,8 +430,10 @@ export default function TradePage() {
               onRefresh={handleRefresh}
               oracleAddress={selectedMarket.oracleAddress}
               marketId={selectedMarket.id}
+              onPositionOpened={() => setMobileTab("positions")}
             />
           </div>
+          </div>{/* end trade content wrapper */}
         </div>
 
         {/* ── RIGHT COLUMN: Order Book + Recent Trades ──────────────── */}
@@ -727,6 +769,7 @@ function OrderEntry({
   onRefresh,
   oracleAddress,
   marketId,
+  onPositionOpened,
 }: {
   oracle: ReturnType<typeof useOracle>;
   protocol: ReturnType<typeof useProtocolState>;
@@ -735,6 +778,7 @@ function OrderEntry({
   onRefresh: () => void;
   oracleAddress?: string;
   marketId?: string;
+  onPositionOpened?: () => void;
 }) {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
@@ -812,7 +856,8 @@ function OrderEntry({
       setSlInput("");
       setTpInput("");
       setTimeout(onRefresh, 2000);
-      // Scroll to positions table after data refreshes
+      // Switch to positions tab on mobile, scroll on desktop
+      if (onPositionOpened) onPositionOpened();
       setTimeout(() => {
         document.getElementById("positions-table")?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 2500);
@@ -1506,33 +1551,45 @@ function PositionRow({
   const mobileRow = (
     <div key={`m-${pos.index}`} className="md:hidden">
       <div
-        className="grid grid-cols-4 text-[11px] px-3 h-[36px] border-b border-border/30 hover:bg-white/[.02] items-center cursor-pointer select-none"
+        className="px-3 py-2.5 border-b border-border/30 hover:bg-white/[.02] cursor-pointer select-none"
         onClick={toggleExpand}
       >
-        <span className="text-primary truncate text-[10px]">{market?.name?.replace("-PERP", "") ?? "—"}</span>
-        <span className={pos.direction === "Long" ? "text-long" : "text-short"}>
-          {pos.direction[0]}{pos.leverage}x
-        </span>
-        <span className={isProfit ? "text-long" : "text-short"}>
-          {isProfit ? "+" : ""}${pnl.toFixed(2)}
-        </span>
-        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-          {confirmClose ? (
-            <div className="flex gap-1 items-center">
-              <button onClick={handleClose} disabled={loading} className="text-[9px] btn-red py-0.5 px-1.5">
-                {loading ? "..." : "OK"}
+        {/* Row 1: Market, Direction, PnL, Close */}
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <span className={`text-[11px] font-bold ${pos.direction === "Long" ? "text-long" : "text-short"}`}>
+              {pos.direction[0]}{pos.leverage}x
+            </span>
+            <span className="text-[11px] text-primary">{market?.name?.replace("-PERP", "") ?? "—"}</span>
+          </div>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <span className={`text-[12px] font-bold ${isProfit ? "text-long" : "text-short"}`}>
+              {isProfit ? "+" : ""}${pnl.toFixed(2)}
+            </span>
+            {confirmClose ? (
+              <div className="flex gap-1 items-center">
+                <button onClick={handleClose} disabled={loading} className="text-[10px] btn-red py-0.5 px-2">
+                  {loading ? "..." : "OK"}
+                </button>
+                <button onClick={() => setConfirmClose(false)} className="text-[10px] text-secondary px-1">x</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmClose(true)}
+                disabled={loading || markPriceRaw === 0}
+                className="text-[10px] text-short hover:bg-short/10 border border-short/40 px-2 py-0.5 disabled:opacity-40"
+              >
+                Close
               </button>
-              <button onClick={() => setConfirmClose(false)} className="text-[9px] text-secondary px-0.5">x</button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmClose(true)}
-              disabled={loading || markPriceRaw === 0}
-              className="text-[9px] text-short hover:bg-short/10 border border-short/40 px-1.5 py-0.5 disabled:opacity-40"
-            >
-              Close
-            </button>
-          )}
+            )}
+          </div>
+        </div>
+        {/* Row 2: Entry, Mark, Size */}
+        <div className="flex items-center gap-3 text-[10px]">
+          <span className="text-secondary">Entry <span className="text-primary">${entryUsd.toFixed(2)}</span></span>
+          <span className="text-secondary">Mark <span className="text-primary">{markPriceRaw > 0 ? `$${markPriceUsd.toFixed(2)}` : "..."}</span></span>
+          <span className="text-secondary">Size <span className="text-primary">${rawToUsdc(pos.notional).toFixed(0)}</span></span>
+          <span className="text-secondary">Liq <span className="text-short">${liq.toFixed(2)}</span></span>
         </div>
       </div>
 
@@ -1598,15 +1655,17 @@ function PositionsTable({
   protocol,
   margin,
   onRefresh,
+  fullHeight,
 }: {
   positions: Position[];
   protocol: ReturnType<typeof useProtocolState>;
   margin: ReturnType<typeof useMarginAccount>;
   onRefresh: () => void;
+  fullHeight?: boolean;
 }) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const count = positions.length;
-  const needsScroll = count >= 4;
+  const needsScroll = !fullHeight && count >= 4;
 
   return (
     <div id="positions-table" className="border-t border-border bg-panel">
@@ -1631,11 +1690,9 @@ function PositionsTable({
         </div>
 
         {/* Mobile header */}
-        <div className="md:hidden grid grid-cols-4 text-[9px] uppercase text-secondary px-3 h-[24px] items-center border-b border-border/50 sticky top-0 bg-panel z-10">
-          <span>Market</span>
-          <span>Side</span>
+        <div className="md:hidden flex justify-between text-[9px] uppercase text-secondary px-3 h-[24px] items-center border-b border-border/50 sticky top-0 bg-panel z-10">
+          <span>Position</span>
           <span>PnL</span>
-          <span className="text-right">Actions</span>
         </div>
 
         {positions.map((pos) => (
