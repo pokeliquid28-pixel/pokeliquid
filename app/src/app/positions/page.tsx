@@ -17,6 +17,8 @@ import {
   FEE_VAULT,
   INSURANCE_FUND,
   USDC_MINT,
+  MARKET_SEED,
+  PROGRAM_ID,
   getMarginAccountPDA,
 } from "@/lib/addresses";
 import {
@@ -34,6 +36,18 @@ const FUNDING_RATE_SCALE = 100_000;
 
 function getMarketForOracle(oracleAddr: string) {
   return MARKETS.find((m) => m.oracleAddress === oracleAddr) ?? null;
+}
+
+function getMarketStatePDA(marketId: string): PublicKey {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [MARKET_SEED, Buffer.from(marketId)],
+    PROGRAM_ID
+  );
+  return pda;
+}
+
+function getMarketIdForOracle(oracleAddr: string): string {
+  return getMarketForOracle(oracleAddr)?.id ?? "PRISMATIC-ETB";
 }
 
 function useLiveTimer(openTimestamp: number) {
@@ -139,15 +153,19 @@ function PositionCardStandalone({ pos, freeCollateral }: { pos: Position; freeCo
       let needsCreate = false;
       try { await getAccount(connection, ata); } catch { needsCreate = true; }
 
+      const marketIdForPos = getMarketIdForOracle(oracleAddr);
       const txBuilder = (program.methods as any).closePosition(pos.index).accounts({
         user: publicKey,
         protocolState: PROTOCOL_STATE,
         marginAccount: marginPda,
         oracle: new PublicKey(oracleAddr),
+        marketState: getMarketStatePDA(marketIdForPos),
         feeVault: FEE_VAULT,
         insuranceFund: INSURANCE_FUND,
         userTokenAccount: ata,
         tokenProgram: TOKEN_PROGRAM_ID,
+        liquidityPool: PublicKey.findProgramAddressSync([Buffer.from("liquidity_pool")], PROGRAM_ID)[0],
+        lpVault: PublicKey.findProgramAddressSync([Buffer.from("lp_vault")], PROGRAM_ID)[0],
       });
 
       if (needsCreate) {
