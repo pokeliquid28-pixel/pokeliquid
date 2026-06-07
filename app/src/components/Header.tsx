@@ -266,9 +266,22 @@ function MobileMenu({
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  if (!open) return null;
-
   const addr = publicKey ? publicKey.toBase58() : null;
+
+  // Always render modals even when menu is closed
+  if (!open) return (
+    <>
+      {showSwap && <SwapModal onClose={() => setShowSwap(false)} />}
+      {showSend && <SendModal onClose={() => setShowSend(false)} />}
+      {showExport && <ExportKeyModal onClose={() => setShowExport(false)} />}
+      {showAuth && (
+        <AuthModal
+          onClose={() => { setShowAuth(false); setEmail(getSavedEmail()); }}
+          defaultMode={authMode}
+        />
+      )}
+    </>
+  );
 
   function handleCopy() {
     if (!addr) return;
