@@ -939,60 +939,79 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketImage, showCardInf
               );
             })()}
             {showCardInfo && cardInfo && (
-              <div className="absolute inset-0 bg-bg/95 z-10 overflow-y-auto p-4">
-                <div className="flex gap-4 md:gap-6 max-w-3xl mx-auto">
-                  {/* Card image */}
-                  {marketImage && (
-                    <div className="shrink-0">
-                      <img
-                        src={marketImage}
-                        alt={cardInfo.productName || "Card"}
-                        className="w-[100px] md:w-[140px] border border-border"
-                      />
+              <div className="absolute inset-0 bg-bg/95 z-10 overflow-y-auto p-2 md:p-4">
+                {/* Mobile: vertical stack. Desktop: horizontal */}
+                <div className="flex flex-col md:flex-row gap-2 md:gap-6 max-w-3xl mx-auto h-full">
+                  {/* Top row on mobile: image + name + market stats inline */}
+                  <div className="flex gap-3 md:gap-4 items-start">
+                    {marketImage && (
+                      <div className="shrink-0">
+                        <img
+                          src={marketImage}
+                          alt={cardInfo.productName || "Card"}
+                          className="w-[60px] md:w-[140px] border border-border"
+                        />
+                      </div>
+                    )}
+                    {/* On mobile: name + key market stats. On desktop: just name */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[11px] md:text-sm font-bold text-primary truncate">
+                        {cardInfo.productName}
+                      </h3>
+                      {/* Mobile-only compact market stats */}
+                      <div className="md:hidden mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] font-mono">
+                        <div className="flex justify-between"><span className="text-secondary">Mkt Price</span><span className="text-primary font-bold">{cardInfo.marketPrice}</span></div>
+                        <div className="flex justify-between"><span className="text-secondary">Last Sale</span><span className="text-primary">{cardInfo.mostRecentSale}</span></div>
+                        {cardInfo.lowSalePrice && <div className="flex justify-between"><span className="text-secondary">Low</span><span className="text-short">{cardInfo.lowSalePrice}</span></div>}
+                        {cardInfo.highSalePrice && <div className="flex justify-between"><span className="text-secondary">High</span><span className="text-long">{cardInfo.highSalePrice}</span></div>}
+                        {cardInfo.totalSold && <div className="flex justify-between"><span className="text-secondary">Sold</span><span className="text-primary">{cardInfo.totalSold}</span></div>}
+                        {cardInfo.avgDailySold && <div className="flex justify-between"><span className="text-secondary">Avg/Day</span><span className="text-primary">{cardInfo.avgDailySold}</span></div>}
+                      </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Card details */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xs md:text-sm font-bold text-primary mb-2 truncate">
+                    {/* Desktop name (hidden on mobile since it's above) */}
+                    <h3 className="hidden md:block text-sm font-bold text-primary mb-2 truncate">
                       {cardInfo.productName}
                     </h3>
 
-                    <div className="space-y-1 text-[10px] md:text-xs font-mono">
+                    <div className="space-y-0.5 md:space-y-1 text-[9px] md:text-xs font-mono">
                       {cardInfo.cardNumber && (
                         <div className="flex gap-2">
-                          <span className="text-secondary w-20 shrink-0">Number</span>
+                          <span className="text-secondary w-16 md:w-20 shrink-0">Number</span>
                           <span className="text-primary">{cardInfo.cardNumber} · {cardInfo.rarity}</span>
                         </div>
                       )}
                       {cardInfo.type && (
                         <div className="flex gap-2">
-                          <span className="text-secondary w-20 shrink-0">Type</span>
+                          <span className="text-secondary w-16 md:w-20 shrink-0">Type</span>
                           <span className="text-primary">{cardInfo.type} / {cardInfo.hp} HP / {cardInfo.stage}</span>
                         </div>
                       )}
                       {cardInfo.attacks.map((atk, i) => (
                         <div key={i} className="flex gap-2">
-                          <span className="text-secondary w-20 shrink-0">Attack {i + 1}</span>
-                          <span className="text-primary">{atk}</span>
+                          <span className="text-secondary w-16 md:w-20 shrink-0">Atk {i + 1}</span>
+                          <span className="text-primary truncate">{atk}</span>
                         </div>
                       ))}
                       {cardInfo.weakness && (
                         <div className="flex gap-2">
-                          <span className="text-secondary w-20 shrink-0">Weakness</span>
+                          <span className="text-secondary w-16 md:w-20 shrink-0">Weakness</span>
                           <span className="text-primary">{cardInfo.weakness}</span>
                         </div>
                       )}
                       {cardInfo.artist && (
                         <div className="flex gap-2">
-                          <span className="text-secondary w-20 shrink-0">Artist</span>
+                          <span className="text-secondary w-16 md:w-20 shrink-0">Artist</span>
                           <span className="text-primary">{cardInfo.artist}</span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Market stats */}
+                  {/* Desktop market stats */}
                   <div className="shrink-0 hidden md:block">
                     <div className="border border-border bg-panel p-3 space-y-2 text-[10px] md:text-xs font-mono min-w-[160px]">
                       <div className="flex justify-between">
