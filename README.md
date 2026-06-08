@@ -1,6 +1,6 @@
 # Pokeliquid — Pokemon Card Perps
 
-A perpetual futures DEX on Solana for trading **Pokemon TCG products** — real-world cards and sealed product priced via live TCGPlayer market data. Four markets live on mainnet.
+A perpetual futures DEX on Solana for trading **Pokemon TCG products** — real-world cards and sealed product priced via live TCGPlayer market data. 21 markets live on mainnet.
 
 ```
 TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana Program (Anchor)
@@ -8,13 +8,17 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
                          ├── Liquidation loop (10s)               │
                          ├── SL/TP execution (10s)                │
                          ├── Funding settlement (1hr)             │
+                         ├── Trade parsing (30s)                  │
                          ├── SQLite price history                 │
+                         ├── Telegram alerts                      │
                          └── HTTP API (:3001)                     │
                                                                   │
                       Next.js Frontend <──RPC──────────────────────┘
                            │
                            ├── Session wallet (localStorage keypair)
                            ├── Email + password auth (Supabase Postgres)
+                           ├── PnL export cards (per-trade + overall)
+                           ├── Prize pool + leaderboard
                            └── Vercel proxy → Keeper API
 ```
 
@@ -28,6 +32,7 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 | **Keeper API** | `http://157.180.67.25:3001` (Hetzner CX23, Helsinki) |
 | **Program** | `5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6` (mainnet) |
 | **Keeper proxy** | Frontend routes `/api/keeper/*` → Hetzner keeper (avoids mixed content) |
+| **Verified source** | `github.com/pokeliquid28-create/pokeliquid` (for on-chain program verification) |
 
 ---
 
@@ -37,26 +42,41 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 |---------|---------|
 | **Program ID** | `5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6` |
 | **ProtocolState** | `6yAYSsp863889v7bhMEwj6tVq5DvFTi1gwzwHFrqwLFL` |
-| **Oracle (PRISMATIC-ETB)** | `FbPBfXaCY1Chm23pyVv7gcesRVK7FxFXHgd5xNb84r4Q` |
-| **Oracle (CHARIZARD-125/094-PFL)** | `8KU9oyrCAhX58Mz73z8MjKH8P88CyqPcx8zCm61HWzeP` |
-| **Oracle (CHARMANDER-038-MEP)** | `EN3Y7vWu2a2PXma2V5vfm6swFed8YTFHCG75EQxoHETY` |
-| **Oracle (PIKACHU-276/217-AH)** | `Fx1rYyuEz91rqgpEWHs8MyH7kiLpNeXuDdcAJiSjhN87` |
 | **FeeVault** | `BFm4z6Z2H84GrpcKkydmE1qZVidwuj2sP3N3wTNZemJt` |
 | **InsuranceFund** | `266CZZpRb1PFDGQf4bNE5ASPVxAUkon6tv6BvRYpP7x9` |
 | **LiquidityPool** | (derived from LP_POOL_SEED) |
 | **LP Vault** | (derived from LP_VAULT_SEED) |
 | **USDC Mint** | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (real USDC) |
+| **Admin** | Squads v4 multisig vault (`2iVcXi6XXkm1X6w4qLbVvzC1fZ3yS57HxEyn5ghWopak` original, transferred to multisig) |
+| **Secondary Auth** | `2XsE4rWJa7LRjFWfMFUmWFxBeqNaKmuXdfJk5iWy1ssH` |
 
 ---
 
-## Markets
+## Markets (21 live)
 
-| Market | Card / Product | TCGPlayer ID |
-|--------|---------------|--------------|
-| PRISMATIC-ETB-PERP | Prismatic Evolutions Elite Trainer Box | 593355 |
-| CHARIZARD-125/094-PFL-PERP | Mega Charizard X ex 125/094 (Phantasmal Flames) | 662184 |
-| CHARMANDER-038-MEP-PERP | Charmander #038 (Mega Evolution Promo) | 684462 |
-| PIKACHU-276/217-AH-PERP | Pikachu ex 276/217 (Ascended Heroes) | 676088 |
+| Market ID | Card / Product | Oracle PDA |
+|-----------|---------------|------------|
+| PRISMATIC-ETB | Prismatic Evolutions ETB | `FbPBfXaCY1Chm23pyVv7gcesRVK7FxFXHgd5xNb84r4Q` |
+| CHARIZARD-125/094-PFL | Mega Charizard X ex (Phantasmal Flames) | `8KU9oyrCAhX58Mz73z8MjKH8P88CyqPcx8zCm61HWzeP` |
+| CHARMANDER-038-MEP | Charmander (Mega Evolution Promo) | `EN3Y7vWu2a2PXma2V5vfm6swFed8YTFHCG75EQxoHETY` |
+| PIKACHU-276/217-AH | Pikachu ex (Ascended Heroes) | `Fx1rYyuEz91rqgpEWHs8MyH7kiLpNeXuDdcAJiSjhN87` |
+| GRENINJA-116/086-CR | Mega Greninja ex (Chaos Rising) | `CVZ3Uy33JMmofNP8F6sc8MXDRcPqx5tCseYkMjFqo9Bs` |
+| ASCENDED-HEROES-ETB | Ascended Heroes ETB | `AELYcbqH4bznFEHXV14B65VVDyjJ3wxGYSs4r6ZDwXZR` |
+| PSYDUCK-226/217-AH | Psyduck (Ascended Heroes) | `4MgTDnKZoLfvy6uLEDAhCb4xZQhMKL7Tui9iJRYFPKff` |
+| MEOWTH-106/094-PFL | Meowth (Phantasmal Flames) | `FLidEWgSD9wTi11Yhvq8XeJSmxCgEYm8D49moULPS73V` |
+| BLACK-BOLT-ETB | Black Bolt ETB | `AQRbdjv87zu2Yiyfva1JyR5P7oABLRBW2VV8ghM3ay7M` |
+| MAGNETON-159-PROMO | Magneton SV Promo | `E6uxuj3rQTsoNpFGejsufWLrskfbmnCybBbLRfoxmdXs` |
+| CHARIZARD-199/165-151 | Charizard ex (SV 151) | `CafH2Edbo1D3FSt9svayAEYfGGRN8KthJYUF3QqZ3fqB` |
+| MISTYS-PSYDUCK-193/182-DR | Misty's Psyduck (Destined Rivals) | `7yd9fu8B4P9WztqKsr2aavpPYqUw4ajaZYaaRsQXr9w7` |
+| UMBREON-161/131-PE | Umbreon ex (Prismatic Evolutions) | `3yzynV61LLLsWMtPR5Gnjxfng1GCB9esfwS6DMVNdkAK` |
+| MEW-232/091-PF | Mew ex (Paldean Fates) | `GNhqrci8F9q8pKUd8SDtpSAs6TpTsBA2axZbz9uDWR2Q` |
+| PIKACHU-238/191-SS | Pikachu ex (Surging Sparks) | `5hkDDGy2n4YCteRYCLdkjGwYSFJckPpdoip36aGLUWWd` |
+| GIRATINA-GG69/GG70-CZ | Giratina VSTAR (Crown Zenith) | `CKErhqbVGZUdTCw9P2jnG2AeQDZFqvxDpw1MXyAgb2R6` |
+| CHAOS-RISING-BB | Chaos Rising Booster Box | `7UMQL2z31YpqbQ4zfbosixHQPrUK9BFAEAyg8ujoQAvW` |
+| KABUTO-FOSSIL-1E | Kabuto Fossil 1st Edition | `CFSh1kDfAkpGbC9E5RG5zqdG36RqtkZZvqHC7FczzzMU` |
+| GENGAR-284/217-AH | Mega Gengar ex (Ascended Heroes) | `4KnytCXdBfU9tTkrZFVEXb7J75BuXnUyKuq58MCq2Ydz` |
+| DRAGONITE-290/217-AH | Mega Dragonite ex (Ascended Heroes) | `GDqkhQjYvCtVavis6wEGpbkozrHu18khJgTCYTkGKxvj` |
+| CLEFAIRY-094/088-PO | Clefairy (Perfect Order) | `Cjps4TodWqzqwi48LmTh3dxSX2XJ3eEebbcJsDeYw7BH` |
 
 ## Market Spec
 - **Collateral:** USDC (real SPL Token, 6 decimals)
@@ -91,17 +111,31 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 | `settle_funding` | Anyone | Settle accrued funding on all positions in a margin account. |
 | `update_oracle(price)` | Admin/Secondary | Push new price to oracle account. Auto-unpauses if protocol was paused. |
 | `check_and_pause` | Anyone | Pause protocol if oracle stale > auto_pause_threshold. |
-| `update_params(params)` | Admin | Update any protocol parameter. |
-| `withdraw_fees(amount)` | Admin | Withdraw from fee vault. |
+| `update_params(params)` | Admin | Update any protocol parameter (including admin transfer). |
+| `withdraw_fees(amount)` | Admin | Withdraw from fee vault (reserves LP unclaimed fees). |
 | `withdraw_insurance(amount)` | Admin | Withdraw from insurance fund. |
-| `mint_devnet_usdc` | Anyone | Mint 1,000 devnet USDC to caller. |
+| `claim_fees` | User (LP) | Claim LP fee share (MasterChef-style accumulator). |
+| `mint_devnet_usdc` | Anyone | Mint 1,000 devnet USDC to caller (disabled on mainnet). |
 | `realloc_margin` | User | Reallocate margin account to new size (546 bytes). |
 | `init_market_state` | Admin | Initialize per-market state (OI tracking). |
 | `init_market_oracle(market)` | Admin | Create a new oracle account for a market. |
 | `update_market_oracle(market, price)` | Admin/Secondary | Push price to a specific market oracle. |
 | `init_liquidity_pool` | Admin | Initialize LP pool + vault. |
 | `lp_deposit(amount)` | User | Deposit USDC into LP pool. |
-| `lp_withdraw(amount)` | User | Withdraw USDC from LP pool. |
+| `lp_withdraw(shares)` | User | Withdraw USDC from LP pool (auto-claims pending fees). |
+
+---
+
+## LP Fee Distribution (MasterChef-style)
+
+LP fees use a SushiSwap MasterChef-style accumulator for fair distribution:
+
+- `LiquidityPool.acc_fee_per_share` (u128, scaled by 1e12) — monotonically increasing accumulator
+- `LpPosition.reward_debt` (u128) — set on deposit/withdraw to prevent claiming historical fees
+- Every fee accrual (open, close, liquidate, SL/TP, funding) increments `acc_fee_per_share`
+- Claimable = `shares * acc_fee_per_share / 1e12 - reward_debt`
+- Legacy fallback for pre-upgrade accounts (proportional share of unclaimed)
+- `lp_withdraw` auto-claims pending fees before burning shares
 
 ---
 
@@ -109,18 +143,20 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 
 ```
 programs/pokeliquid/src/
-  lib.rs                    # Entry point, instruction declarations
+  lib.rs                    # Entry point, security.txt, instruction declarations
   state.rs                  # ProtocolState, OracleAccount, MarginAccount, Position, LiquidityPool, LpPosition
   error.rs                  # ErrorCode enum
   events.rs                 # All program events
   constants.rs              # Seeds, defaults, rates
-  instructions/             # 20 instruction handlers (one file each)
+  instructions/             # 25 instruction handlers (one file each)
 
 programs/pokeliquid/tests/
-  fuzz_tests.rs             # 38 fuzz/property-based tests (math, attacks, random inputs)
+  test_initialize.rs        # Integration tests
+  fuzz_tests.rs             # 38 fuzz/property-based tests
 
 keeper/
-  keeper.js                 # Oracle + liquidation + SL/TP + funding keeper
+  keeper.js                 # Oracle + liquidation + SL/TP + funding + trade parsing keeper
+  telegram.js               # Telegram alert module
   prices.db                 # SQLite price history (auto-created)
   prices.json               # EWMA state persistence
   pm2.config.js             # pm2 process config
@@ -131,8 +167,17 @@ app/                        # Next.js 14 frontend
   src/
     app/
       page.tsx              # Trade page (gates behind auth — shows LandingAuth if not connected)
-      stats/page.tsx        # Protocol statistics + charts
+      trades/page.tsx       # Dedicated trade history page (expanded view)
+      positions/page.tsx    # Open positions + trade history
       pool/page.tsx         # Liquidity pool page
+      stats/page.tsx        # Protocol statistics + charts
+      leaderboard/page.tsx  # Top traders leaderboard
+      prize-pool/page.tsx   # Prize pool with bonus winners
+      docs/page.tsx         # Documentation
+      api-docs/             # API documentation
+      privacy/page.tsx      # Privacy policy
+      terms/page.tsx        # Terms of service
+      reset-password/page.tsx # Password reset page
       api/
         create-session-wallet/  # POST — Generate + fund session wallet
         signup/                 # POST — Create account, set JWT session cookie
@@ -144,34 +189,49 @@ app/                        # Next.js 14 frontend
         reset-password-with-token/ # POST — Reset password via emailed token
     components/
       LandingAuth.tsx       # Login / signup / reset password landing page
+      AuthGuard.tsx         # Route guard — redirects unauthenticated users
       AuthModal.tsx         # In-app auth modal (save account from header)
       TradingPanel.tsx      # Order entry (long/short, collateral, leverage, SL/TP)
       PositionPanel.tsx     # Open positions with margin mgmt, SL/TP, close confirm
       CollateralPanel.tsx   # Deposit/withdraw collateral (auto-airdrops SOL if needed)
+      TradeHistory.tsx      # Trade history with market filter, auto-refresh, per-trade PnL export
+      PnlExport.tsx         # PnL export cards (overall stats + per-trade) — save/copy as PNG
       SaveWalletSheet.tsx   # Bottom sheet after first trade prompts account creation
       WalletButton.tsx      # Header wallet button (login/email/address/disconnect)
-      TradeHistory.tsx      # Trade history from keeper API
-    app/
-      reset-password/
-        page.tsx            # Forgot password / token-based reset page
-      NotificationBell.tsx  # Header notification dropdown
-      ToastContainer.tsx    # Ephemeral toast notifications
       Header.tsx            # Nav + oracle indicator + wallet button
+      Footer.tsx            # Site footer
       OracleChart.tsx       # Price chart (canvas, OHLC candles via /candles endpoint)
       LongShortBar.tsx      # OI visualization
+      Logo.tsx              # Brand logo component
+      SwapModal.tsx         # Token swap modal
+      SendModal.tsx         # Send tokens modal
+      ExportKeyModal.tsx    # Export private key modal
+      NotificationBell.tsx  # Header notification dropdown
+      ToastContainer.tsx    # Ephemeral toast notifications
+      ErrorBoundary.tsx     # React error boundary
+      RiskDisclaimer.tsx    # Risk disclaimer
+      Skeleton.tsx          # Loading skeleton
     hooks/
+      useAuth.ts            # Authentication state
       useOracle.ts          # On-chain oracle + price history from keeper API
       useProtocolState.ts   # Protocol state polling
       useMarginAccount.ts   # Margin account + positions
+      useMarket.ts          # Market selection + data
+      useMarketState.ts     # Per-market state (OI)
       useLiquidityPool.ts   # LP pool data
+      useLpPosition.ts      # User's LP position
+      useOrderBook.ts       # Order book data
+      usePositionPrice.ts   # Position-specific price tracking
+      useWalletBalances.ts  # SOL + USDC balances
     lib/
+      markets.ts            # 21 market definitions (IDs, oracle addresses, TCGPlayer IDs, images)
       session-wallet.ts     # SessionWalletAdapter (custom wallet adapter, only wallet option)
-      crypto.ts             # AES-256-GCM encrypt/decrypt
-      auth.ts               # Argon2id hashing, JWT session tokens (jose)
-      db.ts                 # Supabase Postgres via pg (wallets, reset tokens)
       addresses.ts          # PDA derivation
       program.ts            # Anchor program setup
       utils.ts              # Price formatting, PnL calc
+      crypto.ts             # AES-256-GCM encrypt/decrypt
+      auth.ts               # Argon2id hashing, JWT session tokens (jose)
+      db.ts                 # Supabase Postgres via pg (wallets, reset tokens)
       pokeliquid.idl.json   # Anchor IDL
     providers/
       AppProviders.tsx      # Session wallet adapter only (no Phantom/Solflare)
@@ -190,7 +250,7 @@ app/                        # Next.js 14 frontend
 
 ### Build & Deploy
 ```bash
-anchor build
+anchor build --features mainnet
 solana program deploy target/deploy/pokeliquid.so \
   --program-id 5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6 \
   --url mainnet-beta
@@ -215,6 +275,11 @@ pm2 logs pokeliquid-keeper
 cd app
 npm install
 npm run dev                 # http://localhost:3000
+```
+
+### Deploy Frontend
+```bash
+git push origin main        # auto-deploys to Vercel ("app" project → pokeliquid.xyz)
 ```
 
 ### Run Tests
@@ -270,11 +335,22 @@ Users authenticate with email + password. No external wallet extensions required
 - **Env var:** `ADMIN_KEYPAIR_PATH=/root/keeper/admin.json`
 - **Logs:** `pm2 logs pokeliquid-keeper`
 
+### Volume Farm
+- **Script:** `/root/volume-farm/volume-farm.js` (runs via pm2 as `volume-farm`)
+- **Wallets:** `/root/volume-farm/farm-wallets.json` (40 wallets)
+- Trades 6 markets with randomized intervals, direction, 10x leverage
+- Closes positions after $0.50 PnL move or 5min hold cap
+- CLI: `--setup`, `--drain`, `--status`, `--withdraw-fees <amt>`
+
 ### Vercel Frontend
 - **URL:** `https://pokeliquid.xyz`
 - **Deploy from:** `app/` subdirectory
 - **Rewrites:** `/api/keeper/*` → `http://157.180.67.25:3001/*` (via vercel.json)
-- **Deploy:** `cd app && npx vercel --prod`
+- **Auto-deploy:** Push to `origin/main` triggers deploy
+
+### GitHub Repos
+- **Private:** `onchainscammer-art/poke-liquid` (full codebase, auto-deploys frontend)
+- **Public:** `pokeliquid28-create/pokeliquid` (program source only, for on-chain verification)
 
 ### Env Vars (Vercel)
 ```
@@ -298,7 +374,7 @@ NEXT_PUBLIC_APP_URL=https://pokeliquid.xyz
 
 ## Keeper
 
-The keeper runs four loops and an HTTP API:
+The keeper runs five loops and an HTTP API:
 
 | Loop | Interval | Description |
 |------|----------|-------------|
@@ -306,9 +382,10 @@ The keeper runs four loops and an HTTP API:
 | Liquidation | 10 sec | Scan all margin accounts, liquidate underwater positions |
 | SL/TP execution | 10 sec | Execute stop-loss/take-profit when price crosses triggers |
 | Funding settlement | 1 hour | Call `settle_funding` for accounts with positions open 1+ hours |
+| Trade parsing | 30 sec | Parse on-chain events, store in SQLite for trade history API |
 
 ### Adaptive EWMA Oracle
-- Source: TCGPlayer market price (product 593355) via Playwright headless browser
+- Source: TCGPlayer market price via Playwright headless browser
 - Smoothing by deviation from current EWMA:
   - < 3%: direct pass-through (no smoothing)
   - 3-5%: alpha = 0.3 (moderate)
@@ -333,8 +410,6 @@ Alerts sent via `@pokeliquidbot` with level-based rate limiting:
 | WARN | Price deviation >10%, liquidation events, funding failures, scrape failures | 5 min |
 | INFO | Daily digest at midnight UTC (oracle updates, liquidations, volume, vault balance, errors) | none |
 
-Unhandled exceptions and promise rejections trigger CRITICAL alerts before exit. Keeper startup sends an INFO alert.
-
 ### API Endpoints (port 3001)
 
 ```
@@ -347,25 +422,6 @@ GET /stats                      # 24h/7d volume, trades, liquidations
 GET /trades?user=PUBKEY&limit=20 # Trade history for a user
 GET /trades/recent?limit=50     # Recent trades across all users
 GET /events/recent              # Recent decoded program events
-```
-
-Health status logic: `healthy` (all normal) → `degraded` (oracle >10min stale OR >5 RPC errors/hr) → `critical` (oracle >30min stale OR RPC down OR vault <$10)
-
-### GET /candles
-Returns OHLC candle data aggregated from raw 5-minute price records.
-
-| Param | Default | Description |
-|-------|---------|-------------|
-| `market` | ETB | Market ID (ETB, CHARIZARD-X, CHARMANDER, PIKACHU) |
-| `resolution` | 1h | Candle resolution: `1h` (hourly) or `1d` (daily) |
-| `limit` | 100 | Max candles returned |
-
-Response:
-```json
-[
-  { "time": 1717401600, "open": 161.5, "high": 162.0, "low": 160.8, "close": 161.9 },
-  ...
-]
 ```
 
 ---
@@ -421,17 +477,20 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 
 ## Current Strengths
 
-- **Unique market** — perpetual futures on physical TCG products (4 markets live)
+- **Unique market** — perpetual futures on physical TCG products (21 markets live)
 - **Full vertical stack** — on-chain program + keeper + scraper + frontend, all integrated
 - **No wallet extension required** — session wallet in localStorage, email+password auth for persistence
 - **Professional trading UX** — inline SL/TP, margin ratio bar, PnL flash, close confirmation
+- **PnL export cards** — shareable per-trade and overall PnL cards (save as PNG / copy to clipboard)
 - **Correct math** — PnL, liquidation, funding rates all verified (60 Rust tests including 38 fuzz tests)
+- **MasterChef LP fees** — fair fee distribution via accumulator pattern, auto-claim on withdraw
 - **Adaptive EWMA oracle** — 4-tier spike protection handles manipulation attempts
 - **Oracle resilience** — secondary authority fallback, auto-pause on stale, Telegram alerts
 - **Multi-position** — 5 simultaneous positions per account with add/remove margin
 - **On-chain funding settlement** — hourly settlement keeps liquidation checks accurate
 - **Insurance fund** — automatic 10% fee routing for protocol solvency
 - **LP pool** — users can provide liquidity and earn fees
+- **Admin via Squads multisig** — admin transferred to Squads v4 for secure multi-sig operations
 - **Persistent infrastructure** — Hetzner keeper (pm2 + systemd), Vercel frontend, Supabase Postgres
 - **Secure auth** — bcrypt password hashing, AES-256-GCM key encryption, JWT sessions (HttpOnly cookies)
 - **Password recovery** — email-based forgot password flow via Resend (token-based, 1hr expiry, single-use)
@@ -439,6 +498,9 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - **24h change tracking** — accurate 24-hour price change percentages per market
 - **Responsive mobile UI** — landing page, docs, and trading interface optimized for mobile
 - **Custom domain** — `pokeliquid.xyz` with verified email sending via Resend
+- **Leaderboard + prize pool** — competitive trading with prize distribution
+- **Security.txt** — on-chain security contact info via `solana-security-txt`
+- **Volume farm** — automated volume generation across 6 markets (40 wallets)
 
 ## Known Limitations & Roadmap
 
@@ -449,6 +511,10 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 
 ### Nice to have
 - [x] Mainnet deployment with real USDC
+- [x] MasterChef LP fee distribution
+- [x] Admin transfer to multisig
+- [x] 21 markets live
+- [x] PnL export cards
 - [ ] Referral / fee sharing system
 - [ ] $POKE governance token
 
@@ -470,7 +536,8 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - RELAYER_PRIVATE_KEY is base58 format (not JSON array)
 - Password hashing uses `bcryptjs` (pure JS, no native deps) — legacy PBKDF2 hashes auto-migrate on login
 - JWT sessions use `jose` package (HS256) — 30-day expiry, HttpOnly/Secure/SameSite=Lax cookies
-- Forgot-password emails sent via Resend API (verified domain: `pokeliquid.xyz`) — reset tokens stored in `password_reset_tokens` table
-- Logout clears localStorage wallet + `walletName` (wallet adapter key) + JWT session cookie — prevents auto-reconnect
+- Forgot-password emails sent via Resend API (verified domain: `pokeliquid.xyz`)
 - `SessionWalletAdapter.connect()` does NOT auto-generate keypairs — users must explicitly log in or choose guest mode
-- Guest wallets created via `createGuestWallet()` — generates keypair + requests funding from relayer
+- On-chain market IDs use full names (e.g. "PRISMATIC-ETB", not "ETB") — PDA seeds: `[b"oracle", market_id.as_bytes()]`
+- PositionClosed event does NOT emit notional/collateral — trade history shows "—" for size on closes
+- `html-to-image` (`toPng`) used for PnL card export with pixelRatio: 2
