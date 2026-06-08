@@ -414,7 +414,7 @@ export default function TradePage() {
 
           {/* Chart */}
           <div className="border-b border-border bg-panel">
-            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} />
+            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketImage={selectedMarket.image} />
           </div>
 
           {/* OI Bar */}
@@ -559,7 +559,29 @@ const TF_CONFIG: Record<Timeframe, { resolution: string }> = {
   "1d": { resolution: "1d" },  // 1-day candles, 30 days
 };
 
-function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string }) {
+type CardInfoData = {
+  productName: string | null;
+  cardNumber: string | null;
+  rarity: string | null;
+  type: string | null;
+  hp: string | null;
+  stage: string | null;
+  attacks: string[];
+  weakness: string | null;
+  resistance: string | null;
+  retreatCost: string | null;
+  artist: string | null;
+  marketPrice: string | null;
+  mostRecentSale: string | null;
+  volatility: string | null;
+  lowSalePrice: string | null;
+  highSalePrice: string | null;
+  totalSold: string | null;
+  avgDailySold: string | null;
+  isSealed: boolean;
+};
+
+function ChartSection({ oracle, priceApiMarket = "ETB", marketImage }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketImage?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
@@ -569,6 +591,16 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
   const [insufficient, setInsufficient] = useState(false);
   const [hoveredCandle, setHoveredCandle] = useState<ChartPoint | null>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
+  const [showCardInfo, setShowCardInfo] = useState(false);
+  const [cardInfo, setCardInfo] = useState<CardInfoData | null>(null);
+
+  // Fetch card info
+  useEffect(() => {
+    fetch(`${API_BASE}/card-info?market=${priceApiMarket}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setCardInfo(data); })
+      .catch(() => {});
+  }, [priceApiMarket]);
 
   // Fetch price data from keeper API
   useEffect(() => {
@@ -856,6 +888,17 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
           >
             ┃╋
           </button>
+          {cardInfo && !cardInfo.isSealed && (
+            <button
+              onClick={() => setShowCardInfo(!showCardInfo)}
+              className={`px-2 py-1 text-[10px] transition-colors ${
+                showCardInfo ? "text-long bg-long/10" : "text-secondary hover:text-primary"
+              }`}
+              title="Card info"
+            >
+              ℹ
+            </button>
+          )}
         </div>
       </div>
       <div ref={containerRef} className="h-[200px] md:h-[280px] relative">
@@ -893,6 +936,108 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
                 </div>
               );
             })()}
+            {showCardInfo && cardInfo && !cardInfo.isSealed && (
+              <div className="absolute inset-0 bg-bg/95 z-10 overflow-y-auto p-4">
+                <div className="flex gap-4 md:gap-6 max-w-3xl mx-auto">
+                  {/* Card image */}
+                  {marketImage && (
+                    <div className="shrink-0">
+                      <img
+                        src={marketImage}
+                        alt={cardInfo.productName || "Card"}
+                        className="w-[100px] md:w-[140px] border border-border"
+                      />
+                    </div>
+                  )}
+
+                  {/* Card details */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs md:text-sm font-bold text-primary mb-2 truncate">
+                      {cardInfo.productName}
+                    </h3>
+
+                    <div className="space-y-1 text-[10px] md:text-xs font-mono">
+                      {cardInfo.cardNumber && (
+                        <div className="flex gap-2">
+                          <span className="text-secondary w-20 shrink-0">Number</span>
+                          <span className="text-primary">{cardInfo.cardNumber} · {cardInfo.rarity}</span>
+                        </div>
+                      )}
+                      {cardInfo.type && (
+                        <div className="flex gap-2">
+                          <span className="text-secondary w-20 shrink-0">Type</span>
+                          <span className="text-primary">{cardInfo.type} / {cardInfo.hp} HP / {cardInfo.stage}</span>
+                        </div>
+                      )}
+                      {cardInfo.attacks.map((atk, i) => (
+                        <div key={i} className="flex gap-2">
+                          <span className="text-secondary w-20 shrink-0">Attack {i + 1}</span>
+                          <span className="text-primary">{atk}</span>
+                        </div>
+                      ))}
+                      {cardInfo.weakness && (
+                        <div className="flex gap-2">
+                          <span className="text-secondary w-20 shrink-0">Weakness</span>
+                          <span className="text-primary">{cardInfo.weakness}</span>
+                        </div>
+                      )}
+                      {cardInfo.artist && (
+                        <div className="flex gap-2">
+                          <span className="text-secondary w-20 shrink-0">Artist</span>
+                          <span className="text-primary">{cardInfo.artist}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Market stats */}
+                  <div className="shrink-0 hidden md:block">
+                    <div className="border border-border bg-panel p-3 space-y-2 text-[10px] md:text-xs font-mono min-w-[160px]">
+                      <div className="flex justify-between">
+                        <span className="text-secondary">Market Price</span>
+                        <span className="text-primary font-bold">{cardInfo.marketPrice}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary">Recent Sale</span>
+                        <span className="text-primary">{cardInfo.mostRecentSale}</span>
+                      </div>
+                      {cardInfo.volatility && cardInfo.volatility !== "-" && (
+                        <div className="flex justify-between">
+                          <span className="text-secondary">Volatility</span>
+                          <span className="text-accent">{cardInfo.volatility}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-border/50 pt-2 mt-2 space-y-1">
+                        {cardInfo.lowSalePrice && (
+                          <div className="flex justify-between">
+                            <span className="text-secondary">Low Sale</span>
+                            <span className="text-short">{cardInfo.lowSalePrice}</span>
+                          </div>
+                        )}
+                        {cardInfo.highSalePrice && (
+                          <div className="flex justify-between">
+                            <span className="text-secondary">High Sale</span>
+                            <span className="text-long">{cardInfo.highSalePrice}</span>
+                          </div>
+                        )}
+                        {cardInfo.totalSold && (
+                          <div className="flex justify-between">
+                            <span className="text-secondary">Total Sold</span>
+                            <span className="text-primary">{cardInfo.totalSold}</span>
+                          </div>
+                        )}
+                        {cardInfo.avgDailySold && (
+                          <div className="flex justify-between">
+                            <span className="text-secondary">Avg Daily</span>
+                            <span className="text-primary">{cardInfo.avgDailySold}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
