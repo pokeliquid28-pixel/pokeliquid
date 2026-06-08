@@ -698,9 +698,9 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
 
     if (chartMode === "candle") {
       // ── Candlestick rendering ──
-      // Fat candles that touch — like Axiom/Binance (24/7 market)
+      // Connected candles: each open = previous close (24/7 market, no gaps)
       const slotWidth = cw / n;
-      const bodyWidth = Math.max(3, slotWidth - 1); // 1px gap between candles
+      const bodyWidth = Math.max(3, slotWidth - 1);
       const wickWidth = Math.max(1, Math.min(2, slotWidth * 0.15));
 
       // Hover highlight bar (draw behind candles)
@@ -712,9 +712,12 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
 
       for (let i = 0; i < n; i++) {
         const c = chartData[i];
+        // Force open = previous close so candles connect
+        const candleOpen = i === 0 ? c.open : chartData[i - 1].close;
+        const candleClose = c.close;
         const slotX = pad.left + i * slotWidth;
         const centerX = slotX + slotWidth / 2;
-        const bullish = c.close >= c.open;
+        const bullish = candleClose >= candleOpen;
         const bodyColor = bullish ? "#00ff41" : "#ff3333";
 
         // Wick (thin line from high to low)
@@ -722,9 +725,9 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
         const wickX = centerX - wickWidth / 2;
         ctx.fillRect(wickX, toY(c.high), wickWidth, toY(c.low) - toY(c.high));
 
-        // Body (fat rectangle from open to close)
-        const bodyTop = toY(Math.max(c.open, c.close));
-        const bodyBot = toY(Math.min(c.open, c.close));
+        // Body (fat rectangle from open to close, connected)
+        const bodyTop = toY(Math.max(candleOpen, candleClose));
+        const bodyBot = toY(Math.min(candleOpen, candleClose));
         const bodyH = Math.max(2, bodyBot - bodyTop);
         const bodyX = centerX - bodyWidth / 2;
 
@@ -872,21 +875,24 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
                 Collecting price history...
               </div>
             )}
-            {hoveredCandle && chartMode === "candle" && (
-              <div className="absolute top-2 left-3 bg-panel/90 border border-border px-3 py-2 pointer-events-none">
-                <div className="text-[10px] text-secondary mb-1">
-                  {new Date(hoveredCandle.timestamp * 1000).toLocaleDateString("en-US", {
-                    month: "short", day: "numeric", ...(timeframe === "1h" ? { hour: "2-digit", minute: "2-digit" } : {}),
-                  })}
+            {hoveredCandle && chartMode === "candle" && hoveredIdx >= 0 && (() => {
+              const displayOpen = hoveredIdx === 0 ? hoveredCandle.open : chartData[hoveredIdx - 1].close;
+              return (
+                <div className="absolute top-2 left-3 bg-panel/90 border border-border px-3 py-2 pointer-events-none">
+                  <div className="text-[10px] text-secondary mb-1">
+                    {new Date(hoveredCandle.timestamp * 1000).toLocaleDateString("en-US", {
+                      month: "short", day: "numeric", ...(timeframe === "1h" ? { hour: "2-digit", minute: "2-digit" } : {}),
+                    })}
+                  </div>
+                  <div className="grid grid-cols-4 gap-x-3 text-[10px] font-mono">
+                    <div><span className="text-secondary">O </span><span className="text-primary">${displayOpen.toFixed(2)}</span></div>
+                    <div><span className="text-secondary">H </span><span className="text-long">${hoveredCandle.high.toFixed(2)}</span></div>
+                    <div><span className="text-secondary">L </span><span className="text-short">${hoveredCandle.low.toFixed(2)}</span></div>
+                    <div><span className="text-secondary">C </span><span className="text-primary">${hoveredCandle.close.toFixed(2)}</span></div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 gap-x-3 text-[10px] font-mono">
-                  <div><span className="text-secondary">O </span><span className="text-primary">${hoveredCandle.open.toFixed(2)}</span></div>
-                  <div><span className="text-secondary">H </span><span className="text-long">${hoveredCandle.high.toFixed(2)}</span></div>
-                  <div><span className="text-secondary">L </span><span className="text-short">${hoveredCandle.low.toFixed(2)}</span></div>
-                  <div><span className="text-secondary">C </span><span className="text-primary">${hoveredCandle.close.toFixed(2)}</span></div>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </>
         )}
       </div>
