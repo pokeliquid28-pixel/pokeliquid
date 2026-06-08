@@ -9,14 +9,6 @@ const CONTEST_END = new Date("2026-06-20T23:59:59Z");
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type Trade = {
-  user_pubkey: string;
-  action: string;
-  pnl: number | null;
-  notional: number;
-  direction: string;
-};
-
 type TraderRow = {
   pubkey: string;
   totalPnl: number;
@@ -42,24 +34,6 @@ function formatVolume(vol: number): string {
   if (vol >= 1_000_000) return `$${(vol / 1_000_000).toFixed(2)}M`;
   if (vol >= 1_000) return `$${(vol / 1_000).toFixed(1)}K`;
   return `$${vol.toFixed(2)}`;
-}
-
-function aggregateTrades(trades: Trade[]): TraderRow[] {
-  const map = new Map<string, TraderRow>();
-  for (const trade of trades) {
-    const existing = map.get(trade.user_pubkey);
-    const pnl = trade.pnl ?? 0;
-    const isWin = trade.pnl !== null && trade.pnl > 0;
-    if (existing) {
-      existing.totalPnl += pnl;
-      existing.wins += isWin ? 1 : 0;
-      existing.trades += 1;
-      existing.volume += trade.notional;
-    } else {
-      map.set(trade.user_pubkey, { pubkey: trade.user_pubkey, totalPnl: pnl, wins: isWin ? 1 : 0, trades: 1, volume: trade.notional });
-    }
-  }
-  return Array.from(map.values()).sort((a, b) => b.volume - a.volume);
 }
 
 function rankColor(rank: number): string {
@@ -90,40 +64,32 @@ function useCountdown() {
 
 // ── Leaderboard hook ─────────────────────────────────────────────────────────
 
-type BonusWinner = { pubkey: string; pnl: number; timestamp: number; paid?: boolean };
+type BonusWinner = { pubkey: string; pnl: number; timestamp: number; paid: boolean };
 
-// Wallets that have been paid out already
-const PAID_WALLETS = new Set([
-  "26FUVaUHbRmMvYM64UWG28HyxoYZoRW4uWbvB5yiPFaP",
-  "F1pVGJtAuXbKXVfCAsfbZ82ZZZbzndw98eznW6EcF9RE",
-]);
+// Hardcoded bonus winners (historical fact — first 4 unique wallets to close >$5 PnL)
+const KNOWN_BONUS_WINNERS: BonusWinner[] = [
+  { pubkey: "26FUVaUHbRmMvYM64UWG28HyxoYZoRW4uWbvB5yiPFaP", pnl: 6.58, timestamp: 1780810945, paid: true },
+  { pubkey: "F1pVGJtAuXbKXVfCAsfbZ82ZZZbzndw98eznW6EcF9RE", pnl: 7.35, timestamp: 1780815047, paid: true },
+];
 
 function useLeaderboard() {
   const [rows, setRows] = useState<TraderRow[]>([]);
-  const [bonusWinners, setBonusWinners] = useState<BonusWinner[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = () => {
-      fetch(`${API_BASE}/trades/recent?limit=200`)
+      fetch(`${API_BASE}/leaderboard`)
         .then((r) => r.json())
         .then((data) => {
-          const trades: Trade[] = data.trades ?? [];
-          setRows(aggregateTrades(trades));
-
-          // Find first 4 unique wallets to close a trade with PnL > $5
-          const winners: BonusWinner[] = [];
-          const seen = new Set<string>();
-          const closed = trades
-            .filter((t) => t.action === "close" && t.pnl !== null && t.pnl > 5)
-            .sort((a, b) => (a as any).timestamp - (b as any).timestamp);
-          for (const t of closed) {
-            if (!seen.has(t.user_pubkey) && winners.length < 4) {
-              seen.add(t.user_pubkey);
-              winners.push({ pubkey: t.user_pubkey, pnl: t.pnl!, timestamp: (t as any).timestamp ?? 0, paid: PAID_WALLETS.has(t.user_pubkey) });
-            }
-          }
-          setBonusWinners(winners);
+          const traders = (data.traders ?? []).map((t: { user_pubkey: string; total_pnl: number; wins: number; trades: number; volume: number }) => ({
+            pubkey: t.user_pubkey,
+            totalPnl: t.total_pnl,
+            wins: t.wins,
+            trades: t.trades,
+            volume: t.volume,
+          }));
+          traders.sort((a: TraderRow, b: TraderRow) => b.volume - a.volume);
+          setRows(traders);
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -133,7 +99,7 @@ function useLeaderboard() {
     return () => clearInterval(id);
   }, []);
 
-  return { rows, bonusWinners, loading };
+  return { rows, loading };
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -144,7 +110,8 @@ export default function PrizePoolPage() {
 
 function PrizePoolContent() {
   const { days, hours, minutes, seconds, ended } = useCountdown();
-  const { rows, bonusWinners, loading } = useLeaderboard();
+  const { rows, loading } = useLeaderboard();
+  const bonusWinners = KNOWN_BONUS_WINNERS;
 
   return (
     <div
