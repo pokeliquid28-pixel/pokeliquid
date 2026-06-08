@@ -698,19 +698,22 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
 
     if (chartMode === "candle") {
       // ── Candlestick rendering ──
-      const candleWidth = Math.max(3, Math.floor(cw / n) - 2);
-      const slotWidth = cw / (n - 1 || 1);
+      // Each candle fills its full slot width (no gaps — 24/7 market)
+      const slotWidth = cw / n;
+      const bodyWidth = Math.max(3, slotWidth * 0.8);
+      const gap = (slotWidth - bodyWidth) / 2;
 
       // Hover highlight bar (draw behind candles)
       if (hoveredIdx >= 0 && hoveredIdx < n) {
-        const hx = pad.left + (hoveredIdx / (n - 1)) * cw;
+        const hx = pad.left + hoveredIdx * slotWidth;
         ctx.fillStyle = "rgba(255,255,255,0.04)";
-        ctx.fillRect(hx - slotWidth / 2, pad.top, slotWidth, ch);
+        ctx.fillRect(hx, pad.top, slotWidth, ch);
       }
 
       for (let i = 0; i < n; i++) {
         const c = chartData[i];
-        const x = pad.left + (i / (n - 1)) * cw;
+        const slotX = pad.left + i * slotWidth;
+        const centerX = slotX + slotWidth / 2;
         const bullish = c.close >= c.open;
         const bodyColor = bullish ? "#00ff41" : "#ff3333";
         const wickColor = bullish ? "rgba(0,255,65,0.6)" : "rgba(255,51,51,0.6)";
@@ -719,8 +722,8 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
         ctx.strokeStyle = wickColor;
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(x, toY(c.high));
-        ctx.lineTo(x, toY(c.low));
+        ctx.moveTo(centerX, toY(c.high));
+        ctx.lineTo(centerX, toY(c.low));
         ctx.stroke();
 
         // Body (open to close)
@@ -729,7 +732,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
         const bodyH = Math.max(1, bodyBot - bodyTop);
 
         ctx.fillStyle = bodyColor;
-        ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyH);
+        ctx.fillRect(slotX + gap, bodyTop, bodyWidth, bodyH);
       }
     } else {
       // ── Line chart rendering ──
@@ -795,7 +798,8 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       const cw = rect.width - pad.left - pad.right;
       const mouseX = e.clientX - rect.left - pad.left;
       const n = chartData.length;
-      const idx = Math.round((mouseX / cw) * (n - 1));
+      const slotWidth = cw / n;
+      const idx = Math.floor(mouseX / slotWidth);
       if (idx >= 0 && idx < n) {
         setHoveredCandle(chartData[idx]);
         setHoveredIdx(idx);
