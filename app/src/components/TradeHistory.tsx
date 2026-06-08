@@ -198,7 +198,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
         <>
           {/* Desktop table */}
           <div className="hidden md:block">
-            <div className="grid grid-cols-9 gap-2 text-xs text-secondary uppercase tracking-wider font-semibold border-b border-border pb-2 mb-2">
+            <div className="grid grid-cols-10 gap-2 text-xs text-secondary uppercase tracking-wider font-semibold border-b border-border pb-2 mb-2">
               <div>Time</div>
               <div>Type</div>
               <div>Market</div>
@@ -208,6 +208,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
               <div>Exit</div>
               <div>PnL</div>
               <div>Fee</div>
+              <div></div>
             </div>
 
             {filtered.map((t) => {
@@ -215,8 +216,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
               return (
                 <div
                   key={t.id}
-                  onClick={() => setSelectedTrade(t)}
-                  className="grid grid-cols-9 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10 cursor-pointer"
+                  className="grid grid-cols-10 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10"
                 >
                   <div className="text-secondary truncate">{formatTime(t.timestamp)}</div>
                   <div>
@@ -235,6 +235,16 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
                     {t.pnl !== null ? `${t.pnl >= 0 ? "+" : ""}$${t.pnl.toFixed(2)}` : "—"}
                   </div>
                   <div className="text-secondary">${t.fee_paid.toFixed(4)}</div>
+                  <div>
+                    {isClose(t) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedTrade(t); }}
+                        className="px-2 py-0.5 text-[10px] font-bold border border-accent/40 text-accent hover:bg-accent/10 transition-colors"
+                      >
+                        PnL
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -245,7 +255,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
             {filtered.map((t) => {
               const badge = actionBadge(t.action, t.close_reason);
               return (
-                <div key={t.id} onClick={() => setSelectedTrade(t)} className="border border-border/50 bg-bg p-3 space-y-2 cursor-pointer">
+                <div key={t.id} className="border border-border/50 bg-bg p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className={`px-1.5 py-0.5 text-[10px] font-bold border ${badge.color}`}>
@@ -256,7 +266,17 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
                         {t.direction.toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-secondary">{formatTimeShort(t.timestamp)}</span>
+                    <div className="flex items-center gap-2">
+                      {isClose(t) && (
+                        <button
+                          onClick={() => setSelectedTrade(t)}
+                          className="px-2 py-0.5 text-[10px] font-bold border border-accent/40 text-accent hover:bg-accent/10 transition-colors"
+                        >
+                          PnL
+                        </button>
+                      )}
+                      <span className="text-[10px] font-mono text-secondary">{formatTimeShort(t.timestamp)}</span>
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
                     <div>
