@@ -4,6 +4,8 @@ import { AppProviders } from "@/providers/AppProviders";
 import { Header } from "@/components/Header";
 import { SaveWalletSheet } from "@/components/SaveWalletSheet";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { RiskDisclaimer } from "@/components/RiskDisclaimer";
+import { Footer } from "@/components/Footer";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -42,10 +44,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="overflow-x-hidden bg-bg">
         <AppProviders>
+          <RiskDisclaimer />
           <Header />
           <main className="pb-[60px] md:pb-0">
             <ErrorBoundary>{children}</ErrorBoundary>
           </main>
+          <Footer />
           <SaveWalletSheet />
         </AppProviders>
       </body>
