@@ -70,6 +70,7 @@ type BonusWinner = { pubkey: string; pnl: number; timestamp: number; paid: boole
 const KNOWN_BONUS_WINNERS: BonusWinner[] = [
   { pubkey: "26FUVaUHbRmMvYM64UWG28HyxoYZoRW4uWbvB5yiPFaP", pnl: 6.58, timestamp: 1780810945, paid: true },
   { pubkey: "F1pVGJtAuXbKXVfCAsfbZ82ZZZbzndw98eznW6EcF9RE", pnl: 7.35, timestamp: 1780815047, paid: true },
+  { pubkey: "3QFqERcroEvbDsMzFbg1T2KCahEPWeTMyqWdhb4nSp6G", pnl: 5.90, timestamp: 1749379200, paid: true },
 ];
 
 function useLeaderboard() {
