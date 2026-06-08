@@ -260,9 +260,8 @@ function PnlExportModal({ onClose }: { onClose: () => void }) {
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.06em" }}>TRADER</div>
-                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>
-                    {addr.slice(0, 4)}...{addr.slice(-4)}
+                  <div style={{ fontSize: 9, color: "#444", letterSpacing: "0.08em" }}>
+                    {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </div>
                 </div>
               </div>
@@ -350,17 +349,12 @@ function PnlExportModal({ onClose }: { onClose: () => void }) {
 
               {/* Footer */}
               <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
                 paddingTop: 12,
                 borderTop: "1px solid #1a1a1a",
+                textAlign: "center",
               }}>
                 <div style={{ fontSize: 9, color: "#333" }}>
                   pokeliquid.xyz
-                </div>
-                <div style={{ fontSize: 9, color: "#333" }}>
-                  {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </div>
               </div>
             </div>
