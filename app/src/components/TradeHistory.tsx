@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PnlExportButton } from "./PnlExport";
+import { PnlExportButton, TradeExportModal } from "./PnlExport";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
@@ -127,6 +127,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
   const { trades, total, loading, limit, setLimit } = useTradeHistory(expanded ? 50 : 20);
   const [filter, setFilter] = useState<Filter>("all");
   const [marketFilter, setMarketFilter] = useState<string>("all");
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
 
   if (!publicKey) return null;
 
@@ -214,7 +215,8 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-9 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10"
+                  onClick={() => setSelectedTrade(t)}
+                  className="grid grid-cols-9 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10 cursor-pointer"
                 >
                   <div className="text-secondary truncate">{formatTime(t.timestamp)}</div>
                   <div>
@@ -243,7 +245,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
             {filtered.map((t) => {
               const badge = actionBadge(t.action, t.close_reason);
               return (
-                <div key={t.id} className="border border-border/50 bg-bg p-3 space-y-2">
+                <div key={t.id} onClick={() => setSelectedTrade(t)} className="border border-border/50 bg-bg p-3 space-y-2 cursor-pointer">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className={`px-1.5 py-0.5 text-[10px] font-bold border ${badge.color}`}>
@@ -288,6 +290,9 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
             </button>
           )}
         </>
+      )}
+      {selectedTrade && (
+        <TradeExportModal trade={selectedTrade} onClose={() => setSelectedTrade(null)} />
       )}
     </div>
   );
