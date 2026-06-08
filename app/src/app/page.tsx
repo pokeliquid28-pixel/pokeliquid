@@ -246,6 +246,17 @@ export default function TradePage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [marketSearch, setMarketSearch] = useState("");
   const [mobileTab, setMobileTab] = useState<"trade" | "positions">("trade");
+  const [showCardInfo, setShowCardInfo] = useState(false);
+  const [cardInfo, setCardInfo] = useState<CardInfoData | null>(null);
+
+  // Fetch card info for selected market
+  useEffect(() => {
+    setShowCardInfo(false);
+    fetch(`${API_BASE}/card-info?market=${selectedMarket.priceApiMarket}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setCardInfo(data); else setCardInfo(null); })
+      .catch(() => setCardInfo(null));
+  }, [selectedMarket.priceApiMarket]);
 
   const handleRefresh = useCallback(() => { setRefreshKey((k) => k + 1); margin.refresh(); }, [margin]);
 
@@ -414,7 +425,7 @@ export default function TradePage() {
 
           {/* Chart */}
           <div className="border-b border-border bg-panel">
-            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketImage={selectedMarket.image} />
+            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketImage={selectedMarket.image} showCardInfo={showCardInfo} cardInfo={cardInfo} />
           </div>
 
           {/* OI Bar */}
@@ -433,6 +444,18 @@ export default function TradePage() {
             <span className="text-long">${rawToUsdc(marketState.longOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
             <span className="text-secondary">/</span>
             <span className="text-short">${rawToUsdc(marketState.shortOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            {cardInfo && (
+              <button
+                onClick={() => setShowCardInfo(!showCardInfo)}
+                className={`ml-1 px-2 py-0.5 uppercase tracking-wider border transition-colors ${
+                  showCardInfo
+                    ? "text-long border-long/40 bg-long/10"
+                    : "text-secondary border-border hover:text-primary hover:border-primary/30"
+                }`}
+              >
+                Market Data
+              </button>
+            )}
           </div>
 
           {/* Order Entry */}
@@ -581,7 +604,7 @@ type CardInfoData = {
   isSealed: boolean;
 };
 
-function ChartSection({ oracle, priceApiMarket = "ETB", marketImage }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketImage?: string }) {
+function ChartSection({ oracle, priceApiMarket = "ETB", marketImage, showCardInfo, cardInfo }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketImage?: string; showCardInfo: boolean; cardInfo: CardInfoData | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
@@ -591,16 +614,6 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketImage }: { oracle:
   const [insufficient, setInsufficient] = useState(false);
   const [hoveredCandle, setHoveredCandle] = useState<ChartPoint | null>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
-  const [showCardInfo, setShowCardInfo] = useState(false);
-  const [cardInfo, setCardInfo] = useState<CardInfoData | null>(null);
-
-  // Fetch card info
-  useEffect(() => {
-    fetch(`${API_BASE}/card-info?market=${priceApiMarket}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data) setCardInfo(data); })
-      .catch(() => {});
-  }, [priceApiMarket]);
 
   // Fetch price data from keeper API
   useEffect(() => {
@@ -888,17 +901,6 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketImage }: { oracle:
           >
             ┃╋
           </button>
-          {cardInfo && !cardInfo.isSealed && (
-            <button
-              onClick={() => setShowCardInfo(!showCardInfo)}
-              className={`px-2 py-1 text-[10px] transition-colors ${
-                showCardInfo ? "text-long bg-long/10" : "text-secondary hover:text-primary"
-              }`}
-              title="Card info"
-            >
-              ℹ
-            </button>
-          )}
         </div>
       </div>
       <div ref={containerRef} className="h-[200px] md:h-[280px] relative">
@@ -936,7 +938,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketImage }: { oracle:
                 </div>
               );
             })()}
-            {showCardInfo && cardInfo && !cardInfo.isSealed && (
+            {showCardInfo && cardInfo && (
               <div className="absolute inset-0 bg-bg/95 z-10 overflow-y-auto p-4">
                 <div className="flex gap-4 md:gap-6 max-w-3xl mx-auto">
                   {/* Card image */}
