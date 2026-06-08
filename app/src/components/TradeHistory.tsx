@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { PnlExportButton } from "./PnlExport";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
@@ -139,13 +140,16 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
     return true;
   });
 
+  const isClose = (t: Trade) => t.action !== "open";
+
   return (
     <div className="border border-border bg-panel p-3 md:p-5">
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <h2 className="text-[10px] md:text-xs font-semibold text-secondary uppercase tracking-wider">
           Trade History
         </h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
+          <PnlExportButton />
           <span className="text-[10px] md:text-xs text-secondary font-mono">{total} total</span>
           {!expanded && (
             <a href="/trades" className="text-[10px] text-long hover:underline">View all</a>
@@ -222,7 +226,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
                   <div className={t.direction === "long" ? "text-long" : "text-short"}>
                     {t.direction.toUpperCase()}
                   </div>
-                  <div className="text-primary">${t.notional.toFixed(2)}</div>
+                  <div className="text-primary">{t.notional > 0 ? `$${t.notional.toFixed(2)}` : "—"}</div>
                   <div className="text-primary">{t.entry_price ? `$${t.entry_price.toFixed(2)}` : "—"}</div>
                   <div className="text-primary">{t.exit_price ? `$${t.exit_price.toFixed(2)}` : "—"}</div>
                   <div className={t.pnl !== null ? (t.pnl >= 0 ? "text-long" : "text-short") : "text-secondary"}>
@@ -255,7 +259,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
                   <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
                     <div>
                       <div className="text-secondary text-[10px]">Size</div>
-                      <div className="text-primary">${t.notional.toFixed(0)}</div>
+                      <div className="text-primary">{t.notional > 0 ? `$${t.notional.toFixed(0)}` : "—"}</div>
                     </div>
                     <div>
                       <div className="text-secondary text-[10px]">Entry</div>

@@ -30,7 +30,6 @@ import {
 } from "@/lib/utils";
 import { MARKETS } from "@/lib/markets";
 import { TradeHistory } from "@/components/TradeHistory";
-import { PnlExportButton } from "@/components/PnlExport";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -652,12 +651,9 @@ function PositionsContent() {
           ))
         )}
 
-        {/* Trade History + PnL Export */}
+        {/* Trade History */}
         {connected && (
           <div style={{ marginTop: 24 }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-              <PnlExportButton />
-            </div>
             <TradeHistory />
           </div>
         )}
