@@ -698,15 +698,15 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
 
     if (chartMode === "candle") {
       // ── Candlestick rendering ──
-      // Each candle fills its full slot width (no gaps — 24/7 market)
+      // Fat candles that touch — like Axiom/Binance (24/7 market)
       const slotWidth = cw / n;
-      const bodyWidth = Math.max(3, slotWidth * 0.8);
-      const gap = (slotWidth - bodyWidth) / 2;
+      const bodyWidth = Math.max(3, slotWidth - 1); // 1px gap between candles
+      const wickWidth = Math.max(1, Math.min(2, slotWidth * 0.15));
 
       // Hover highlight bar (draw behind candles)
       if (hoveredIdx >= 0 && hoveredIdx < n) {
         const hx = pad.left + hoveredIdx * slotWidth;
-        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        ctx.fillStyle = "rgba(255,255,255,0.06)";
         ctx.fillRect(hx, pad.top, slotWidth, ch);
       }
 
@@ -716,23 +716,20 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
         const centerX = slotX + slotWidth / 2;
         const bullish = c.close >= c.open;
         const bodyColor = bullish ? "#00ff41" : "#ff3333";
-        const wickColor = bullish ? "rgba(0,255,65,0.6)" : "rgba(255,51,51,0.6)";
 
-        // Wick (high to low)
-        ctx.strokeStyle = wickColor;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(centerX, toY(c.high));
-        ctx.lineTo(centerX, toY(c.low));
-        ctx.stroke();
+        // Wick (thin line from high to low)
+        ctx.fillStyle = bodyColor;
+        const wickX = centerX - wickWidth / 2;
+        ctx.fillRect(wickX, toY(c.high), wickWidth, toY(c.low) - toY(c.high));
 
-        // Body (open to close)
+        // Body (fat rectangle from open to close)
         const bodyTop = toY(Math.max(c.open, c.close));
         const bodyBot = toY(Math.min(c.open, c.close));
-        const bodyH = Math.max(1, bodyBot - bodyTop);
+        const bodyH = Math.max(2, bodyBot - bodyTop);
+        const bodyX = centerX - bodyWidth / 2;
 
         ctx.fillStyle = bodyColor;
-        ctx.fillRect(slotX + gap, bodyTop, bodyWidth, bodyH);
+        ctx.fillRect(bodyX, bodyTop, bodyWidth, bodyH);
       }
     } else {
       // ── Line chart rendering ──
