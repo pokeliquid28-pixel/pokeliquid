@@ -8,7 +8,7 @@ import { SessionWalletProvider } from "@/providers/SessionWalletProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import { ToastContainer } from "@/components/ToastContainer";
 
-const RPC = process.env.NEXT_PUBLIC_RPC_ENDPOINT ?? "https://mainnet.helius-rpc.com/?api-key=ca9121cd-101b-49fb-b064-ef8c3e9cec89";
+const RPC = process.env.NEXT_PUBLIC_RPC_ENDPOINT!;
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const wallets = useMemo(
