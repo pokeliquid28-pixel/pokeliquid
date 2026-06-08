@@ -568,6 +568,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
   const [chartLoading, setChartLoading] = useState(true);
   const [insufficient, setInsufficient] = useState(false);
   const [hoveredCandle, setHoveredCandle] = useState<ChartPoint | null>(null);
+  const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
 
   // Fetch price data from keeper API
   useEffect(() => {
@@ -698,6 +699,15 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
     if (chartMode === "candle") {
       // ── Candlestick rendering ──
       const candleWidth = Math.max(3, Math.floor(cw / n) - 2);
+      const slotWidth = cw / (n - 1 || 1);
+
+      // Hover highlight bar (draw behind candles)
+      if (hoveredIdx >= 0 && hoveredIdx < n) {
+        const hx = pad.left + (hoveredIdx / (n - 1)) * cw;
+        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        ctx.fillRect(hx - slotWidth / 2, pad.top, slotWidth, ch);
+      }
+
       for (let i = 0; i < n; i++) {
         const c = chartData[i];
         const x = pad.left + (i / (n - 1)) * cw;
@@ -718,13 +728,8 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
         const bodyBot = toY(Math.min(c.open, c.close));
         const bodyH = Math.max(1, bodyBot - bodyTop);
 
-        if (bullish) {
-          ctx.fillStyle = bodyColor;
-          ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyH);
-        } else {
-          ctx.fillStyle = bodyColor;
-          ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyH);
-        }
+        ctx.fillStyle = bodyColor;
+        ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyH);
       }
     } else {
       // ── Line chart rendering ──
@@ -775,7 +780,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
     ctx.arc(pad.left + cw, curY, 3, 0, Math.PI * 2);
     ctx.fillStyle = "#00ff41";
     ctx.fill();
-  }, [chartData, timeframe, chartMode, oracle.price]);
+  }, [chartData, timeframe, chartMode, oracle.price, hoveredIdx]);
 
   // Hover handler for candlestick tooltip
   useEffect(() => {
@@ -784,7 +789,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
     if (!canvas || !container || chartData.length < 2) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (chartMode !== "candle") { setHoveredCandle(null); return; }
+      if (chartMode !== "candle") { setHoveredCandle(null); setHoveredIdx(-1); return; }
       const rect = container.getBoundingClientRect();
       const pad = { left: 8, right: 60 };
       const cw = rect.width - pad.left - pad.right;
@@ -793,12 +798,14 @@ function ChartSection({ oracle, priceApiMarket = "ETB" }: { oracle: ReturnType<t
       const idx = Math.round((mouseX / cw) * (n - 1));
       if (idx >= 0 && idx < n) {
         setHoveredCandle(chartData[idx]);
+        setHoveredIdx(idx);
       } else {
         setHoveredCandle(null);
+        setHoveredIdx(-1);
       }
     };
 
-    const handleMouseLeave = () => setHoveredCandle(null);
+    const handleMouseLeave = () => { setHoveredCandle(null); setHoveredIdx(-1); };
 
     canvas.addEventListener("mousemove", handleMouseMove);
     canvas.addEventListener("mouseleave", handleMouseLeave);
