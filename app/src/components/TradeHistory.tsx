@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
@@ -27,6 +27,31 @@ type Trade = {
 
 type Filter = "all" | "open" | "close" | "liquidation";
 
+const MARKET_LABELS: Record<string, string> = {
+  "PRISMATIC-ETB": "ETB",
+  "CHARIZARD-125/094-PFL": "CHARIZARD",
+  "CHARMANDER-038-MEP": "CHARMANDER",
+  "PIKACHU-276/217-AH": "PIKACHU",
+  "GRENINJA-116/086-CR": "GRENINJA",
+  "ASCENDED-HEROES-ETB": "AH-ETB",
+  "PSYDUCK-226/217-AH": "PSYDUCK",
+  "MEOWTH-106/094-PFL": "MEOWTH",
+  "BLACK-BOLT-ETB": "BB-ETB",
+  "MAGNETON-159-PROMO": "MAGNETON",
+  "CHARIZARD-199/165-151": "ZARD-151",
+  "MISTYS-PSYDUCK-193/182-DR": "M-PSYDUCK",
+  "UMBREON-161/131-PE": "UMBREON",
+  "MEW-232/091-PF": "MEW",
+  "PIKACHU-238/191-SS": "PIKA-SS",
+  "GIRATINA-GG69/GG70-CZ": "GIRATINA",
+  "CHAOS-RISING-BB": "CR-BB",
+  "KABUTO-FOSSIL-1E": "KABUTO",
+  "GENGAR-284/217-AH": "GENGAR",
+  "DRAGONITE-290/217-AH": "DRAGONITE",
+  "CLEFAIRY-094/088-PO": "CLEFAIRY",
+  "MEGA-GRENINJA-117/086-CR": "MEGA-GREN",
+};
+
 function formatTime(ts: number) {
   const d = new Date(ts * 1000);
   return d.toLocaleString("en-US", {
@@ -47,30 +72,7 @@ function formatTimeShort(ts: number) {
 
 function marketLabel(t: Trade): string {
   if (!t.market) return "—";
-  const map: Record<string, string> = {
-    "PRISMATIC-ETB": "ETB",
-    "CHARIZARD-125/094-PFL": "CHARIZARD",
-    "CHARMANDER-038-MEP": "CHARMANDER",
-    "PIKACHU-276/217-AH": "PIKACHU",
-    "GRENINJA-116/086-CR": "GRENINJA",
-    "ASCENDED-HEROES-ETB": "AH-ETB",
-    "PSYDUCK-226/217-AH": "PSYDUCK",
-    "MEOWTH-106/094-PFL": "MEOWTH",
-    "BLACK-BOLT-ETB": "BB-ETB",
-    "MAGNETON-159-PROMO": "MAGNETON",
-    "CHARIZARD-199/165-151": "ZARD-151",
-    "MISTYS-PSYDUCK-193/182-DR": "M-PSYDUCK",
-    "UMBREON-161/131-PE": "UMBREON",
-    "MEW-232/091-PF": "MEW",
-    "PIKACHU-238/191-SS": "PIKA-SS",
-    "GIRATINA-GG69/GG70-CZ": "GIRATINA",
-    "CHAOS-RISING-BB": "CR-BB",
-    "KABUTO-FOSSIL-1E": "KABUTO",
-    "GENGAR-284/217-AH": "GENGAR",
-    "DRAGONITE-290/217-AH": "DRAGONITE",
-    "CLEFAIRY-094/088-PO": "CLEFAIRY",
-  };
-  return map[t.market] || t.market;
+  return MARKET_LABELS[t.market] || t.market;
 }
 
 function actionBadge(action: string, reason: string | null) {
@@ -81,45 +83,59 @@ function actionBadge(action: string, reason: string | null) {
   return { label: "MANUAL", color: "bg-border text-secondary border-border" };
 }
 
-export function TradeHistory() {
+function useTradeHistory(limitOverride?: number) {
   const { publicKey } = useWallet();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<Filter>("all");
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(limitOverride ?? 20);
 
-  useEffect(() => {
-    if (!publicKey) {
-      setTrades([]);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-
-    fetch(`${API_BASE}/trades?user=${publicKey.toBase58()}&limit=${limit}`)
+  const fetchTrades = useCallback(() => {
+    if (!publicKey) return;
+    const url = `${API_BASE}/trades?user=${publicKey.toBase58()}&limit=${limit}`;
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
-        if (cancelled) return;
         setTrades(data.trades || []);
         setTotal(data.total || 0);
       })
       .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => { cancelled = true; };
+      .finally(() => setLoading(false));
   }, [publicKey, limit]);
+
+  useEffect(() => {
+    if (!publicKey) { setTrades([]); return; }
+    setLoading(true);
+    fetchTrades();
+    const id = setInterval(fetchTrades, 15_000);
+    return () => clearInterval(id);
+  }, [publicKey, limit, fetchTrades]);
+
+  return { trades, total, loading, limit, setLimit };
+}
+
+// Get unique markets from trades for filter dropdown
+function getUniqueMarkets(trades: Trade[]): string[] {
+  const markets = new Set<string>();
+  trades.forEach((t) => { if (t.market) markets.add(t.market); });
+  return Array.from(markets).sort();
+}
+
+export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
+  const { publicKey } = useWallet();
+  const { trades, total, loading, limit, setLimit } = useTradeHistory(expanded ? 50 : 20);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [marketFilter, setMarketFilter] = useState<string>("all");
 
   if (!publicKey) return null;
 
+  const uniqueMarkets = getUniqueMarkets(trades);
+
   const filtered = trades.filter((t) => {
-    if (filter === "all") return true;
-    if (filter === "open") return t.action === "open";
-    if (filter === "close") return t.action === "close" || t.action === "sl" || t.action === "tp";
-    if (filter === "liquidation") return t.action === "liquidate";
+    if (filter === "open" && t.action !== "open") return false;
+    if (filter === "close" && t.action !== "close" && t.action !== "sl" && t.action !== "tp") return false;
+    if (filter === "liquidation" && t.action !== "liquidate") return false;
+    if (marketFilter !== "all" && t.market !== marketFilter) return false;
     return true;
   });
 
@@ -129,24 +145,44 @@ export function TradeHistory() {
         <h2 className="text-[10px] md:text-xs font-semibold text-secondary uppercase tracking-wider">
           Trade History
         </h2>
-        <span className="text-[10px] md:text-xs text-secondary font-mono">{total} total</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] md:text-xs text-secondary font-mono">{total} total</span>
+          {!expanded && (
+            <a href="/trades" className="text-[10px] text-long hover:underline">View all</a>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-1.5 md:gap-2 mb-3 md:mb-4 overflow-x-auto">
-        {(["all", "open", "close", "liquidation"] as Filter[]).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-2.5 md:px-3 py-1.5 text-[10px] md:text-xs font-mono transition-colors whitespace-nowrap ${
-              filter === f
-                ? "bg-border text-primary"
-                : "text-secondary hover:text-primary"
-            }`}
+      <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
+        <div className="flex gap-1.5 overflow-x-auto">
+          {(["all", "open", "close", "liquidation"] as Filter[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-2.5 md:px-3 py-1.5 text-[10px] md:text-xs font-mono transition-colors whitespace-nowrap ${
+                filter === f
+                  ? "bg-border text-primary"
+                  : "text-secondary hover:text-primary"
+              }`}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {uniqueMarkets.length > 1 && (
+          <select
+            value={marketFilter}
+            onChange={(e) => setMarketFilter(e.target.value)}
+            className="bg-bg border border-border text-[10px] md:text-xs font-mono text-primary px-2 py-1.5 outline-none cursor-pointer"
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
+            <option value="all">All Markets</option>
+            {uniqueMarkets.map((m) => (
+              <option key={m} value={m}>{MARKET_LABELS[m] || m}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {loading && trades.length === 0 ? (

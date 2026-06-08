@@ -28,6 +28,7 @@ const NAV = [
   { href: "/prize-pool", label: "PRIZE POOL" },
   { href: "/leaderboard", label: "LEADERBOARD" },
   { href: "/positions", label: "POSITIONS" },
+  { href: "/trades", label: "TRADES" },
   { href: "/docs", label: "DOCS" },
   { href: "/api-docs", label: "API" },
 ];
