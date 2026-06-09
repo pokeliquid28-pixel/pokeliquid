@@ -478,7 +478,7 @@ export default function TradePage() {
 
           {/* Chart */}
           <div className="border-b border-border bg-panel">
-            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketImage={selectedMarket.image} showCardInfo={showCardInfo} cardInfo={cardInfo} />
+            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketId={selectedMarket.id} marketImage={selectedMarket.image} showCardInfo={showCardInfo} cardInfo={cardInfo} />
           </div>
 
           {/* OI Bar */}
@@ -683,7 +683,7 @@ type CardInfoData = {
   isSealed: boolean;
 };
 
-function ChartSection({ oracle, priceApiMarket = "ETB", marketImage, showCardInfo, cardInfo }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketImage?: string; showCardInfo: boolean; cardInfo: CardInfoData | null }) {
+function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, showCardInfo, cardInfo }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketId?: string; marketImage?: string; showCardInfo: boolean; cardInfo: CardInfoData | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1h");
@@ -988,9 +988,20 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketImage, showCardInf
             Loading chart...
           </div>
         ) : chartData.length < 2 ? (
-          <div className="flex items-center justify-center h-full text-[11px] text-secondary">
-            Collecting price history...
-          </div>
+          marketId === "PL500" ? (
+            <div className="flex flex-col items-center justify-center h-full px-6 text-center gap-2">
+              <div className="text-[13px] font-bold text-primary tracking-wide">The S&P 500 of Pokemon Cards</div>
+              <div className="text-[11px] text-secondary leading-relaxed max-w-[360px]">
+                Tracks the combined market value of the top 500 best-selling Pokemon cards on TCGPlayer. Updated every 60s.
+              </div>
+              <a href="/pl500" className="text-[10px] text-long hover:underline mt-1">View methodology & all 500 cards &rarr;</a>
+              <div className="text-[9px] text-secondary/50 mt-1">Chart will appear as price history builds</div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-[11px] text-secondary">
+              Collecting price history...
+            </div>
+          )
         ) : (
           <>
             <canvas ref={canvasRef} className="w-full h-full" />
