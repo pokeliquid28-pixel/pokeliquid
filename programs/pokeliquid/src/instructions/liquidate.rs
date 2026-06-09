@@ -106,8 +106,8 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
 
     let equity = position.collateral as i128 + unrealized_pnl;
 
-    // margin_ratio < 5% => equity * 20 < notional
-    let is_liquidatable = equity <= 0 || (equity * 20 < position.notional as i128);
+    // margin_ratio < 2% => equity * 50 < notional
+    let is_liquidatable = equity <= 0 || (equity * 50 < position.notional as i128);
     require!(is_liquidatable, ErrorCode::NotLiquidatable);
 
     // ── Distribute collateral: 2% liquidator, 44% LP, 44% insurance, 10% platform
@@ -157,6 +157,20 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
             .accumulated_fees
             .checked_add(lp_portion)
             .ok_or(ErrorCode::MathOverflow)?;
+        if ctx.accounts.liquidity_pool.total_shares > 0 {
+            ctx.accounts.liquidity_pool.acc_fee_per_share = ctx
+                .accounts
+                .liquidity_pool
+                .acc_fee_per_share
+                .checked_add(
+                    (lp_portion as u128)
+                        .checked_mul(crate::state::FEE_PER_SHARE_PRECISION)
+                        .ok_or(ErrorCode::MathOverflow)?
+                        .checked_div(ctx.accounts.liquidity_pool.total_shares as u128)
+                        .ok_or(ErrorCode::MathOverflow)?,
+                )
+                .ok_or(ErrorCode::MathOverflow)?;
+        }
     }
 
     // Transfer insurance portion

@@ -71,12 +71,12 @@ export function timeOpen(openTs: number): string {
 // Liquidation price formulas (from spec)
 export function calcLiqPriceLong(entryPriceRaw: number, leverage: number): number {
   const entry = rawToPrice(entryPriceRaw);
-  return entry * (1 - 1 / leverage + 0.05);
+  return entry * (1 - 1 / leverage + 0.02);
 }
 
 export function calcLiqPriceShort(entryPriceRaw: number, leverage: number): number {
   const entry = rawToPrice(entryPriceRaw);
-  return entry * (1 + 1 / leverage - 0.05);
+  return entry * (1 + 1 / leverage - 0.02);
 }
 
 // PnL in raw USDC units (mirrors close_position.rs)
