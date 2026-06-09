@@ -1264,7 +1264,8 @@ function OrderEntry({
 
   // ── Render ──────────────────────────────────────────────────────────────
 
-  const leveragePresets = [1, 2, 5, 10];
+  // leverage slider ticks
+  const leverageTicks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   return (
     <div className="space-y-3">
@@ -1422,31 +1423,32 @@ function OrderEntry({
 
       {/* Leverage */}
       <div className="space-y-1.5">
-        <div className="text-[10px] text-secondary uppercase">Leverage</div>
-        <div className="flex gap-1">
-          {leveragePresets.map((lv) => (
-            <button
-              key={lv}
-              onClick={() => setLeverage(lv)}
-              className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${
-                leverage === lv
-                  ? "bg-long/15 text-long border border-long/40"
-                  : "border border-border text-secondary hover:text-primary"
-              }`}
-            >
-              {lv}x
-            </button>
-          ))}
-          <button
-            onClick={() => setLeverage(10)}
-            className={`flex-1 py-1.5 text-[10px] font-bold transition-colors ${
-              leverage === 10
-                ? "bg-short/20 text-short border border-short/40"
-                : "border border-border text-short/60 hover:text-short"
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] text-secondary uppercase">Leverage</div>
+          <div className={`text-[11px] font-bold ${leverage >= 10 ? "text-short" : "text-long"}`}>
+            {leverage}x{leverage >= 10 ? " DEGEN" : ""}
+          </div>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={10}
+          step={1}
+          value={leverage}
+          onChange={(e) => setLeverage(Number(e.target.value))}
+          className={`w-full h-1.5 appearance-none bg-border rounded-sm cursor-pointer
+            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0
+            [&::-webkit-slider-thumb]:cursor-pointer ${
+              leverage >= 10
+                ? "[&::-webkit-slider-thumb]:bg-short [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(239,68,68,0.4)]"
+                : "[&::-webkit-slider-thumb]:bg-long [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(0,255,0,0.3)]"
             }`}
-          >
-            DEGEN
-          </button>
+        />
+        <div className="flex justify-between text-[8px] text-secondary/50 px-0.5">
+          {leverageTicks.map((t) => (
+            <span key={t} className={leverage === t ? (t >= 10 ? "text-short" : "text-long font-bold") : ""}>{t}x</span>
+          ))}
         </div>
       </div>
 
