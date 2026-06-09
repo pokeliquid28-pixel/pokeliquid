@@ -14,6 +14,17 @@ export type Market = {
 
 export const MARKETS: Market[] = [
   {
+    id: "PL500",
+    name: "PL500-PERP",
+    subtitle: "PL500 Index \u00B7 Top 500 Pokemon Cards",
+    badge: "INDEX",
+    live: true,
+    oracleAddress: "DtvddgrZ8h44AcJangbBbc3F8ByuYzWMnvKHG11U5WqP",
+    programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
+    image: "/pl500.svg",
+    priceApiMarket: "PL500",
+  },
+  {
     id: "PRISMATIC-ETB",
     name: "PRISMATIC-ETB-PERP",
     subtitle: "Prismatic Evolutions \u00B7 Sealed Product",
