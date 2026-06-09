@@ -225,6 +225,63 @@ function MarketListItem({
   );
 }
 
+// ── Mobile market sheet item ──────────────────────────────────────────────
+
+function MobileMarketItem({
+  m,
+  selected,
+  onSelect,
+}: {
+  m: Market;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { price, readings, isLoading } = useOracle(m.oracleAddress, m.priceApiMarket);
+  const priceUsd = price / 1_000_000;
+
+  let pctChange = 0;
+  if (readings.length >= 2) {
+    const oldest = readings[0].price / 1_000_000;
+    if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
+  }
+
+  const shortName = m.name.replace("-PERP", "");
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`w-full flex items-center gap-3 px-4 py-3 border-b border-border/30 transition-colors ${
+        selected ? "bg-long/10 border-l-2 border-l-long" : "border-l-2 border-l-transparent active:bg-white/5"
+      }`}
+    >
+      {m.image && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={m.image} alt="" width={36} height={36} className="object-contain flex-shrink-0 rounded" />
+      )}
+      <div className="flex-1 min-w-0 text-left">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-primary truncate">{shortName}</span>
+          {m.badge && (
+            <span className="text-[8px] px-1 py-0.5 border border-long/40 text-long uppercase flex-shrink-0">{m.badge}</span>
+          )}
+        </div>
+        <div className="text-[10px] text-secondary truncate">{m.subtitle}</div>
+      </div>
+      <div className="text-right flex-shrink-0">
+        <div className="text-xs font-bold text-primary">
+          {isLoading ? "-.--" : `$${priceUsd.toFixed(2)}`}
+        </div>
+        {!isLoading && priceUsd > 0 && (
+          <div className={`text-[10px] font-bold ${pctChange >= 0 ? "text-long" : "text-short"}`}>
+            {pctChange >= 0 ? "+" : ""}{pctChange.toFixed(2)}%
+          </div>
+        )}
+      </div>
+      {selected && <span className="text-long text-sm flex-shrink-0">✓</span>}
+    </button>
+  );
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ═════════════════════════════════════════════════════════════════════════════
@@ -246,6 +303,7 @@ export default function TradePage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [marketSearch, setMarketSearch] = useState("");
   const [mobileTab, setMobileTab] = useState<"trade" | "positions">("trade");
+  const [mobileMarketOpen, setMobileMarketOpen] = useState(false);
   const [showCardInfo, setShowCardInfo] = useState(false);
   const [cardInfo, setCardInfo] = useState<CardInfoData | null>(null);
 
@@ -376,26 +434,21 @@ export default function TradePage() {
           <div className={mobileTab === "positions" ? "hidden md:contents" : "contents"}>
           {/* Market header bar */}
           <div className="flex items-center gap-4 md:gap-6 px-4 py-3 border-b border-border bg-panel flex-wrap">
-            {/* Mobile: market selector dropdown */}
+            {/* Mobile: market selector button */}
             <div className="flex items-center gap-2">
-              <div className="relative flex items-center">
-                <select
-                  value={selectedMarket.id}
-                  onChange={(e) => {
-                    const m = markets.find((mk) => mk.id === e.target.value);
-                    if (m && m.live) setSelectedMarket(m);
-                  }}
-                  className="lg:hidden appearance-none bg-transparent text-sm font-bold text-primary pr-4 cursor-pointer outline-none"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
-                  {markets.filter((m) => m.live).map((m) => (
-                    <option key={m.id} value={m.id} style={{ background: "#111", color: "#fff" }}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="lg:hidden text-secondary text-[10px] pointer-events-none absolute right-0">&#9662;</span>
-              </div>
+              <button
+                onClick={() => setMobileMarketOpen(true)}
+                className="lg:hidden flex items-center gap-2"
+              >
+                {selectedMarket.image && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={selectedMarket.image} alt="" width={24} height={24} className="object-contain flex-shrink-0" />
+                )}
+                <span className="text-sm font-bold text-primary" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  {selectedMarket.name.replace("-PERP", "").split("-").slice(0, 1)[0]}
+                </span>
+                <span className="text-secondary text-[10px]">&#9662;</span>
+              </button>
               <span className="hidden lg:inline text-sm font-bold text-primary">{selectedMarket.name}</span>
               <span className="hidden lg:inline text-secondary text-xs cursor-pointer">&#9662;</span>
               {selectedMarket.badge && <span className="text-[9px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{selectedMarket.badge}</span>}
@@ -564,6 +617,32 @@ export default function TradePage() {
         <div className="hidden md:block">
           <TradeHistory />
         </div>
+      )}
+
+      {/* ── MOBILE MARKET SELECTOR SHEET ──────────────────────────────── */}
+      {mobileMarketOpen && (
+        <>
+          <div
+            onClick={() => setMobileMarketOpen(false)}
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm lg:hidden"
+          />
+          <div className="fixed inset-x-0 bottom-0 z-[101] lg:hidden max-h-[75dvh] flex flex-col bg-panel border-t border-border rounded-t-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <span className="text-xs font-bold text-secondary uppercase tracking-wider">Select Market</span>
+              <button onClick={() => setMobileMarketOpen(false)} className="text-secondary text-lg px-2">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {markets.filter((m) => m.live).map((m) => (
+                <MobileMarketItem
+                  key={m.id}
+                  m={m}
+                  selected={selectedMarket.id === m.id}
+                  onSelect={() => { setSelectedMarket(m); setMobileMarketOpen(false); }}
+                />
+              ))}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
