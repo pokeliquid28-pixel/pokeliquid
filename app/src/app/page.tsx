@@ -1265,7 +1265,7 @@ function OrderEntry({
   // ── Render ──────────────────────────────────────────────────────────────
 
   // leverage slider ticks
-  const leverageTicks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const leverageTicks = [1, 5, 10, 15, 20, 25];
 
   return (
     <div className="space-y-3">
@@ -1425,14 +1425,14 @@ function OrderEntry({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <div className="text-[10px] text-secondary uppercase">Leverage</div>
-          <div className={`text-[11px] font-bold ${leverage >= 10 ? "text-short" : "text-long"}`}>
-            {leverage}x{leverage >= 10 ? " DEGEN" : ""}
+          <div className={`text-[11px] font-bold ${leverage >= 20 ? "text-short" : "text-long"}`}>
+            {leverage}x{leverage >= 20 ? " DEGEN" : ""}
           </div>
         </div>
         <input
           type="range"
           min={1}
-          max={10}
+          max={25}
           step={1}
           value={leverage}
           onChange={(e) => setLeverage(Number(e.target.value))}
@@ -1440,14 +1440,14 @@ function OrderEntry({
             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0
             [&::-webkit-slider-thumb]:cursor-pointer ${
-              leverage >= 10
+              leverage >= 20
                 ? "[&::-webkit-slider-thumb]:bg-short [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(239,68,68,0.4)]"
                 : "[&::-webkit-slider-thumb]:bg-long [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(0,255,0,0.3)]"
             }`}
         />
         <div className="flex justify-between text-[8px] text-secondary/50 px-0.5">
           {leverageTicks.map((t) => (
-            <span key={t} className={leverage === t ? (t >= 10 ? "text-short" : "text-long font-bold") : ""}>{t}x</span>
+            <span key={t} className={leverage === t ? (t >= 20 ? "text-short" : "text-long font-bold") : ""}>{t}x</span>
           ))}
         </div>
       </div>

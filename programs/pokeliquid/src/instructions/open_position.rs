@@ -74,7 +74,7 @@ pub fn handler(
 
     require!(!protocol.is_paused, ErrorCode::ProtocolPaused);
     require!(leverage >= 1, ErrorCode::BelowMinLeverage);
-    require!(leverage <= 10, ErrorCode::AboveMaxLeverage);
+    require!(leverage <= 25, ErrorCode::AboveMaxLeverage);
     require!(collateral >= protocol.min_position_size, ErrorCode::BelowMinPositionSize);
     require!(
         ctx.accounts.margin_account.collateral >= collateral,
@@ -111,12 +111,12 @@ pub fn handler(
         }
     }
 
-    // Per-account per-market collateral cap ($100 USDC = 100_000_000)
+    // Per-account per-market per-direction collateral cap ($100 USDC = 100_000_000)
     let market_collateral_cap: u64 = 100_000_000;
     let oracle_key = oracle.key();
     let existing_market_collateral: u64 = ctx.accounts.margin_account.positions.iter()
         .filter_map(|p| p.as_ref())
-        .filter(|p| p.oracle == oracle_key)
+        .filter(|p| p.oracle == oracle_key && p.direction == direction)
         .map(|p| p.collateral)
         .sum();
     let post_fee_collateral = collateral
@@ -216,6 +216,20 @@ pub fn handler(
             .accumulated_fees
             .checked_add(lp_portion)
             .ok_or(ErrorCode::MathOverflow)?;
+        if ctx.accounts.liquidity_pool.total_shares > 0 {
+            ctx.accounts.liquidity_pool.acc_fee_per_share = ctx
+                .accounts
+                .liquidity_pool
+                .acc_fee_per_share
+                .checked_add(
+                    (lp_portion as u128)
+                        .checked_mul(crate::state::FEE_PER_SHARE_PRECISION)
+                        .ok_or(ErrorCode::MathOverflow)?
+                        .checked_div(ctx.accounts.liquidity_pool.total_shares as u128)
+                        .ok_or(ErrorCode::MathOverflow)?,
+                )
+                .ok_or(ErrorCode::MathOverflow)?;
+        }
     }
 
     // Deduct fee + record position collateral (net of fee) in margin account
