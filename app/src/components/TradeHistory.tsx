@@ -76,6 +76,15 @@ function marketLabel(t: Trade): string {
   return MARKET_LABELS[t.market] || t.market;
 }
 
+function positionValue(t: Trade): number | null {
+  if (t.notional <= 0) return null;
+  if (t.action === "open") return t.notional;
+  if (t.entry_price && t.exit_price && t.entry_price > 0) {
+    return t.notional * t.exit_price / t.entry_price;
+  }
+  return t.notional;
+}
+
 function actionBadge(action: string, reason: string | null) {
   if (action === "open") return { label: "OPEN", color: "bg-long/20 text-long border-long/30" };
   if (action === "liquidate") return { label: "LIQUIDATED", color: "bg-short/20 text-short border-short/30" };
@@ -228,7 +237,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
                   <div className={t.direction === "long" ? "text-long" : "text-short"}>
                     {t.direction.toUpperCase()}
                   </div>
-                  <div className="text-primary">{t.notional > 0 ? `$${t.notional.toFixed(2)}` : "—"}</div>
+                  <div className="text-primary">{(() => { const v = positionValue(t); return v !== null ? `$${v.toFixed(2)}` : "—"; })()}</div>
                   <div className="text-primary">{t.entry_price ? `$${t.entry_price.toFixed(2)}` : "—"}</div>
                   <div className="text-primary">{t.exit_price ? `$${t.exit_price.toFixed(2)}` : "—"}</div>
                   <div className={t.pnl !== null ? (t.pnl >= 0 ? "text-long" : "text-short") : "text-secondary"}>
@@ -281,7 +290,7 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
                   <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
                     <div>
                       <div className="text-secondary text-[10px]">Size</div>
-                      <div className="text-primary">{t.notional > 0 ? `$${t.notional.toFixed(0)}` : "—"}</div>
+                      <div className="text-primary">{(() => { const v = positionValue(t); return v !== null ? `$${v.toFixed(0)}` : "—"; })()}</div>
                     </div>
                     <div>
                       <div className="text-secondary text-[10px]">Entry</div>

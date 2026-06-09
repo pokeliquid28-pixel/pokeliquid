@@ -270,9 +270,12 @@ export function TradeExportModal({ trade, onClose }: { trade: TradeDetail; onClo
             {trade.exit_price !== null && (
               <StatBlock label="Exit" value={`$${trade.exit_price.toFixed(2)}`} />
             )}
-            {trade.notional > 0 && (
-              <StatBlock label="Size" value={`$${trade.notional.toFixed(2)}`} />
-            )}
+            {trade.notional > 0 && (() => {
+              const val = isClose && trade.entry_price && trade.exit_price && trade.entry_price > 0
+                ? trade.notional * trade.exit_price / trade.entry_price
+                : trade.notional;
+              return <StatBlock label="Size" value={`$${val.toFixed(2)}`} />;
+            })()}
             <StatBlock label="Fee" value={`$${trade.fee_paid.toFixed(4)}`} color="#666" />
           </div>
 
