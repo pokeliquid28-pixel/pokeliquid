@@ -78,15 +78,16 @@ async function ensureAta(
 
 // ── Stats Hook ──────────────────────────────────────────────────────────────
 
-function useStats() {
+function useStats(marketId?: string) {
   const [stats, setStats] = useState<{ total_volume_24h: number } | null>(null);
   useEffect(() => {
+    const q = marketId ? `?market=${marketId}` : "";
     const load = () =>
-      fetch(`${API_BASE}/stats`).then((r) => r.json()).then(setStats).catch(() => {});
+      fetch(`${API_BASE}/stats${q}`).then((r) => r.json()).then(setStats).catch(() => {});
     load();
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
-  }, []);
+  }, [marketId]);
   return stats;
 }
 
@@ -296,7 +297,7 @@ export default function TradePage() {
   const marketState = useMarketState(selectedMarket.id);
   const margin = useMarginAccount();
   const { asks, bids } = useOrderBook(selectedMarket.id);
-  const stats = useStats();
+  const stats = useStats(selectedMarket.id);
   const { trades: recentTrades, loading: tradesLoading } = useRecentTrades(selectedMarket.id);
   const walletUsdc = useWalletUsdc();
   const { addNotification } = useNotifications();
