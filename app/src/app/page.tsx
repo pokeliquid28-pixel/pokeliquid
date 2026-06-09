@@ -685,15 +685,13 @@ type CardInfoData = {
 };
 
 function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, showCardInfo, cardInfo }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketId?: string; marketImage?: string; showCardInfo: boolean; cardInfo: CardInfoData | null }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<ReturnType<typeof import("lightweight-charts").createChart> | null>(null);
+  const seriesRef = useRef<any>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1h");
   const [chartMode, setChartMode] = useState<ChartMode>("candle");
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
-  const [insufficient, setInsufficient] = useState(false);
-  const [hoveredCandle, setHoveredCandle] = useState<ChartPoint | null>(null);
-  const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
 
   // Fetch price data from keeper API
   useEffect(() => {
@@ -706,7 +704,6 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
         .then((data: { timestamp: number; open: number; high: number; low: number; close: number }[]) => {
           if (cancelled) return;
           if (!Array.isArray(data) || data.length === 0) {
-            console.warn("[Chart] No data from API");
             setChartData([]);
             setChartLoading(false);
             return;
@@ -720,13 +717,10 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
             close: d.close,
           }));
           points.sort((a, b) => a.timestamp - b.timestamp);
-          console.log(`[Chart ${timeframe}] ${points.length} candles, first:`, points[0], "last:", points[points.length - 1]);
           setChartData(points);
-          setInsufficient(points.length < 3);
           setChartLoading(false);
         })
-        .catch((err) => {
-          console.error("[Chart] Fetch error:", err);
+        .catch(() => {
           if (!cancelled) {
             setChartData([]);
             setChartLoading(false);
@@ -734,215 +728,123 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
         });
     };
     load();
-    const id = setInterval(load, 5 * 60 * 1000); // refresh every 5 min
+    const id = setInterval(load, 5 * 60 * 1000);
     return () => { cancelled = true; clearInterval(id); };
   }, [timeframe, priceApiMarket]);
 
-  // Draw chart
+  // Create/update lightweight-charts
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container || chartData.length < 2) return;
+    if (!containerRef.current || chartData.length < 2) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    let lc: typeof import("lightweight-charts");
+    let mounted = true;
 
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+    import("lightweight-charts").then((mod) => {
+      if (!mounted || !containerRef.current) return;
+      lc = mod;
 
-    const w = rect.width;
-    const h = rect.height;
-    const pad = { top: 16, right: 60, bottom: 28, left: 8 };
-    const cw = w - pad.left - pad.right;
-    const ch = h - pad.top - pad.bottom;
+      // Remove old chart
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+        seriesRef.current = null;
+      }
 
-    const livePrice = oracle.price / 1_000_000;
+      const chart = lc.createChart(containerRef.current!, {
+        layout: {
+          background: { color: "transparent" },
+          textColor: "rgba(255,255,255,0.4)",
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 10,
+        },
+        grid: {
+          vertLines: { color: "rgba(255,255,255,0.03)" },
+          horzLines: { color: "rgba(255,255,255,0.03)" },
+        },
+        crosshair: {
+          mode: lc.CrosshairMode.Normal,
+          vertLine: { color: "rgba(255,255,255,0.15)", width: 1, style: lc.LineStyle.Dashed, labelBackgroundColor: "#1a1a1a" },
+          horzLine: { color: "rgba(255,255,255,0.15)", width: 1, style: lc.LineStyle.Dashed, labelBackgroundColor: "#1a1a1a" },
+        },
+        rightPriceScale: {
+          borderColor: "rgba(255,255,255,0.06)",
+        },
+        timeScale: {
+          borderColor: "rgba(255,255,255,0.06)",
+          timeVisible: timeframe === "1h",
+          secondsVisible: false,
+        },
+        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+        handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+      });
 
-    // For candlestick mode, use high/low for range; for line, use close
-    const allHighs = chartData.map((p) => chartMode === "candle" ? p.high : p.price);
-    const allLows = chartData.map((p) => chartMode === "candle" ? p.low : p.price);
-    const minP = Math.min(...allLows, livePrice) * 0.98;
-    const maxP = Math.max(...allHighs, livePrice) * 1.02;
-    const range = maxP - minP || 1;
+      chartRef.current = chart;
 
-    const toY = (price: number) => pad.top + ch - ((price - minP) / range) * ch;
-
-    ctx.clearRect(0, 0, w, h);
-
-    // Grid lines + price axis
-    ctx.strokeStyle = "rgba(255,255,255,0.04)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 4; i++) {
-      const y = pad.top + (ch / 4) * i;
-      ctx.beginPath();
-      ctx.moveTo(pad.left, y);
-      ctx.lineTo(w - pad.right, y);
-      ctx.stroke();
-
-      const priceVal = maxP - (range / 4) * i;
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.font = "10px 'JetBrains Mono', monospace";
-      ctx.textAlign = "left";
-      ctx.fillText(`$${priceVal.toFixed(2)}`, w - pad.right + 6, y + 3);
-    }
-
-    // X-axis time labels
-    ctx.fillStyle = "rgba(255,255,255,0.2)";
-    ctx.font = "9px 'JetBrains Mono', monospace";
-    ctx.textAlign = "center";
-    const n = chartData.length;
-    const labelSkip = Math.max(1, Math.floor(n / 7));
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    for (let i = 0; i < n; i += labelSkip) {
-      const x = pad.left + (i / (n - 1)) * cw;
-      const d = new Date(chartData[i].timestamp * 1000);
-      let label: string;
-      if (timeframe === "1d") {
-        label = `${months[d.getMonth()]} ${d.getDate()}`;
+      if (chartMode === "candle") {
+        const series = chart.addSeries(lc.CandlestickSeries, {
+          upColor: "#00ff41",
+          downColor: "#ff3333",
+          borderUpColor: "#00ff41",
+          borderDownColor: "#ff3333",
+          wickUpColor: "#00ff41",
+          wickDownColor: "#ff3333",
+        });
+        const candleData = chartData.map((d, i) => ({
+          time: d.timestamp as any,
+          open: i === 0 ? d.open : chartData[i - 1].close,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+        }));
+        series.setData(candleData);
+        seriesRef.current = series;
       } else {
-        const hr = d.getHours();
-        label = hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`;
-      }
-      ctx.fillText(label, x, h - 4);
-    }
-    if ((n - 1) % labelSkip !== 0) {
-      const lastX = pad.left + cw;
-      const lastD = new Date(chartData[n - 1].timestamp * 1000);
-      let label: string;
-      if (timeframe === "1d") {
-        label = `${months[lastD.getMonth()]} ${lastD.getDate()}`;
-      } else {
-        const hr = lastD.getHours();
-        label = hr === 0 ? "12 AM" : hr < 12 ? `${hr} AM` : hr === 12 ? "12 PM" : `${hr - 12} PM`;
-      }
-      ctx.fillText(label, lastX, h - 4);
-    }
-
-    if (chartMode === "candle") {
-      // ── Candlestick rendering ──
-      // Connected candles: each open = previous close (24/7 market, no gaps)
-      const slotWidth = cw / n;
-      const bodyWidth = Math.max(3, slotWidth - 1);
-      const wickWidth = Math.max(1, Math.min(2, slotWidth * 0.15));
-
-      // Hover highlight bar (draw behind candles)
-      if (hoveredIdx >= 0 && hoveredIdx < n) {
-        const hx = pad.left + hoveredIdx * slotWidth;
-        ctx.fillStyle = "rgba(255,255,255,0.06)";
-        ctx.fillRect(hx, pad.top, slotWidth, ch);
+        const series = chart.addSeries(lc.AreaSeries, {
+          lineColor: "#00ff41",
+          lineWidth: 2,
+          topColor: "rgba(0,255,65,0.15)",
+          bottomColor: "rgba(0,255,65,0)",
+          crosshairMarkerBackgroundColor: "#00ff41",
+        });
+        series.setData(chartData.map((d) => ({ time: d.timestamp as any, value: d.close })));
+        seriesRef.current = series;
       }
 
-      for (let i = 0; i < n; i++) {
-        const c = chartData[i];
-        // Force open = previous close so candles connect
-        const candleOpen = i === 0 ? c.open : chartData[i - 1].close;
-        const candleClose = c.close;
-        const slotX = pad.left + i * slotWidth;
-        const centerX = slotX + slotWidth / 2;
-        const bullish = candleClose >= candleOpen;
-        const bodyColor = bullish ? "#00ff41" : "#ff3333";
-
-        // Wick (thin line from high to low)
-        ctx.fillStyle = bodyColor;
-        const wickX = centerX - wickWidth / 2;
-        ctx.fillRect(wickX, toY(c.high), wickWidth, toY(c.low) - toY(c.high));
-
-        // Body (fat rectangle from open to close, connected)
-        const bodyTop = toY(Math.max(candleOpen, candleClose));
-        const bodyBot = toY(Math.min(candleOpen, candleClose));
-        const bodyH = Math.max(2, bodyBot - bodyTop);
-        const bodyX = centerX - bodyWidth / 2;
-
-        ctx.fillStyle = bodyColor;
-        ctx.fillRect(bodyX, bodyTop, bodyWidth, bodyH);
+      // Live price line
+      const livePrice = oracle.price / 1_000_000;
+      if (livePrice > 0 && seriesRef.current) {
+        seriesRef.current.createPriceLine({
+          price: livePrice,
+          color: "rgba(0,255,65,0.5)",
+          lineWidth: 1,
+          lineStyle: lc.LineStyle.Dashed,
+          axisLabelVisible: true,
+          title: "",
+        });
       }
-    } else {
-      // ── Line chart rendering ──
-      const prices = chartData.map((p) => p.price);
 
-      const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
-      gradient.addColorStop(0, "rgba(0,255,65,0.12)");
-      gradient.addColorStop(1, "rgba(0,255,65,0)");
+      chart.timeScale().fitContent();
 
-      ctx.beginPath();
-      for (let i = 0; i < prices.length; i++) {
-        const x = pad.left + (i / (prices.length - 1)) * cw;
-        const y = toY(prices[i]);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.lineTo(pad.left + cw, pad.top + ch);
-      ctx.lineTo(pad.left, pad.top + ch);
-      ctx.closePath();
-      ctx.fillStyle = gradient;
-      ctx.fill();
+      // Resize observer
+      const ro = new ResizeObserver(() => {
+        if (containerRef.current && chartRef.current) {
+          chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
+        }
+      });
+      ro.observe(containerRef.current!);
 
-      ctx.beginPath();
-      for (let i = 0; i < prices.length; i++) {
-        const x = pad.left + (i / (prices.length - 1)) * cw;
-        const y = toY(prices[i]);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.strokeStyle = "#00ff41";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
+      return () => ro.disconnect();
+    });
 
-    // Live oracle price dashed line
-    const curY = toY(livePrice);
-    ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = "rgba(0,255,65,0.4)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, curY);
-    ctx.lineTo(w - pad.right, curY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Current price dot
-    ctx.beginPath();
-    ctx.arc(pad.left + cw, curY, 3, 0, Math.PI * 2);
-    ctx.fillStyle = "#00ff41";
-    ctx.fill();
-  }, [chartData, timeframe, chartMode, oracle.price, hoveredIdx]);
-
-  // Hover handler for candlestick tooltip
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container || chartData.length < 2) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (chartMode !== "candle") { setHoveredCandle(null); setHoveredIdx(-1); return; }
-      const rect = container.getBoundingClientRect();
-      const pad = { left: 8, right: 60 };
-      const cw = rect.width - pad.left - pad.right;
-      const mouseX = e.clientX - rect.left - pad.left;
-      const n = chartData.length;
-      const slotWidth = cw / n;
-      const idx = Math.floor(mouseX / slotWidth);
-      if (idx >= 0 && idx < n) {
-        setHoveredCandle(chartData[idx]);
-        setHoveredIdx(idx);
-      } else {
-        setHoveredCandle(null);
-        setHoveredIdx(-1);
-      }
-    };
-
-    const handleMouseLeave = () => { setHoveredCandle(null); setHoveredIdx(-1); };
-
-    canvas.addEventListener("mousemove", handleMouseMove);
-    canvas.addEventListener("mouseleave", handleMouseLeave);
     return () => {
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("mouseleave", handleMouseLeave);
+      mounted = false;
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+        seriesRef.current = null;
+      }
     };
-  }, [chartData, chartMode]);
+  }, [chartData, chartMode, timeframe, oracle.price]);
 
   const timeframes: Timeframe[] = ["1h", "1d"];
 
@@ -983,7 +885,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
           </button>
         </div>
       </div>
-      <div ref={containerRef} className="h-[200px] md:h-[280px] relative">
+      <div className="h-[200px] md:h-[280px] relative">
         {chartLoading ? (
           <div className="flex items-center justify-center h-full text-[11px] text-secondary">
             Loading chart...
@@ -1005,34 +907,10 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
           )
         ) : (
           <>
-            <canvas ref={canvasRef} className="w-full h-full" />
-            {insufficient && (
-              <div className="absolute bottom-2 left-4 text-[9px] text-secondary/60">
-                Collecting price history...
-              </div>
-            )}
-            {hoveredCandle && chartMode === "candle" && hoveredIdx >= 0 && (() => {
-              const displayOpen = hoveredIdx === 0 ? hoveredCandle.open : chartData[hoveredIdx - 1].close;
-              return (
-                <div className="absolute top-2 left-3 bg-panel/90 border border-border px-3 py-2 pointer-events-none">
-                  <div className="text-[10px] text-secondary mb-1">
-                    {new Date(hoveredCandle.timestamp * 1000).toLocaleDateString("en-US", {
-                      month: "short", day: "numeric", ...(timeframe === "1h" ? { hour: "2-digit", minute: "2-digit" } : {}),
-                    })}
-                  </div>
-                  <div className="grid grid-cols-4 gap-x-3 text-[10px] font-mono">
-                    <div><span className="text-secondary">O </span><span className="text-primary">${displayOpen.toFixed(2)}</span></div>
-                    <div><span className="text-secondary">H </span><span className="text-long">${hoveredCandle.high.toFixed(2)}</span></div>
-                    <div><span className="text-secondary">L </span><span className="text-short">${hoveredCandle.low.toFixed(2)}</span></div>
-                    <div><span className="text-secondary">C </span><span className="text-primary">${hoveredCandle.close.toFixed(2)}</span></div>
-                  </div>
-                </div>
-              );
-            })()}
+            <div ref={containerRef} className="w-full h-full" />
             {showCardInfo && cardInfo && (
               <div className="absolute inset-0 bg-bg/95 z-10 overflow-hidden p-3 md:p-4">
                 <div className="flex gap-3 md:gap-4 h-full">
-                  {/* Card image */}
                   {marketImage && (
                     <div className="shrink-0">
                       <img
@@ -1042,8 +920,6 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
                       />
                     </div>
                   )}
-
-                  {/* Card details — middle column */}
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <h3 className="text-[10px] md:text-xs font-bold text-primary mb-1 truncate">
                       {cardInfo.productName}
@@ -1081,8 +957,6 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
                       )}
                     </div>
                   </div>
-
-                  {/* Market stats — right column */}
                   <div className="shrink-0 text-[9px] md:text-[10px] font-mono space-y-1 min-w-[100px] md:min-w-[130px]">
                     <div className="flex justify-between gap-2">
                       <span className="text-secondary">Mkt Price</span>
@@ -1678,6 +1552,8 @@ function PositionRow({
   const pnlRaw = markPriceRaw > 0 ? calcPnl(pos.direction, markPriceRaw, pos.entryPrice, pos.notional) : 0;
   const pnl = rawToUsdc(pnlRaw);
   const isProfit = pnl >= 0;
+  const collateralUsdc = rawToUsdc(pos.collateral);
+  const pnlPct = collateralUsdc > 0 ? (pnl / collateralUsdc) * 100 : 0;
   const entryUsd = rawToPrice(pos.entryPrice);
   const liq = pos.direction === "Long"
     ? calcLiqPriceLong(pos.entryPrice, pos.leverage)
@@ -1820,7 +1696,7 @@ function PositionRow({
         <span className="text-primary">{markPriceRaw > 0 ? `$${markPriceUsd.toFixed(2)}` : "..."}</span>
         <span className="text-short">${liq.toFixed(2)}</span>
         <span className={isProfit ? "text-long" : "text-short"}>
-          {isProfit ? "+" : ""}${pnl.toFixed(2)}
+          {isProfit ? "+" : ""}${pnl.toFixed(2)} <span className="text-[9px] opacity-70">({isProfit ? "+" : ""}{pnlPct.toFixed(1)}%)</span>
         </span>
         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
           {confirmClose ? (
@@ -1946,7 +1822,7 @@ function PositionRow({
           </div>
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <span className={`text-[12px] font-bold ${isProfit ? "text-long" : "text-short"}`}>
-              {isProfit ? "+" : ""}${pnl.toFixed(2)}
+              {isProfit ? "+" : ""}${pnl.toFixed(2)} <span className="text-[9px] opacity-70">({isProfit ? "+" : ""}{pnlPct.toFixed(1)}%)</span>
             </span>
             {confirmClose ? (
               <div className="flex gap-1 items-center">

@@ -21,6 +21,7 @@
     "bn.js": "^5.2.1",
     "html-to-image": "^1.11.13",
     "jose": "^6.2.3",
+    "lightweight-charts": "^5.2.0",
     "lucide-react": "^1.17.0",
     "next": "14.2.29",
     "pg": "^8.21.0",
