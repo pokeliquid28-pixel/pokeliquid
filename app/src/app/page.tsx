@@ -479,7 +479,7 @@ export default function TradePage() {
 
           {/* Chart */}
           <div className="border-b border-border bg-panel">
-            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketId={selectedMarket.id} marketImage={selectedMarket.image} showCardInfo={showCardInfo} cardInfo={cardInfo} />
+            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketId={selectedMarket.id} marketImage={selectedMarket.image} showCardInfo={showCardInfo} cardInfo={cardInfo} positions={margin.positions} selectedOracleAddress={selectedMarket.oracleAddress} />
           </div>
 
           {/* OI Bar */}
@@ -684,7 +684,7 @@ type CardInfoData = {
   isSealed: boolean;
 };
 
-function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, showCardInfo, cardInfo }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketId?: string; marketImage?: string; showCardInfo: boolean; cardInfo: CardInfoData | null }) {
+function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, showCardInfo, cardInfo, positions = [], selectedOracleAddress }: { oracle: ReturnType<typeof useOracle>; priceApiMarket?: string; marketId?: string; marketImage?: string; showCardInfo: boolean; cardInfo: CardInfoData | null; positions?: Position[]; selectedOracleAddress?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof import("lightweight-charts").createChart> | null>(null);
   const seriesRef = useRef<any>(null);
@@ -821,6 +821,28 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
           axisLabelVisible: true,
           title: "",
         });
+
+        // Position entry lines with PnL
+        const marketPositions = positions.filter((p) => p.oracle === selectedOracleAddress);
+        for (const pos of marketPositions) {
+          const entry = pos.entryPrice / 1_000_000;
+          const collateral = pos.collateral / 1_000_000;
+          const notional = pos.notional / 1_000_000;
+          const priceDelta = pos.direction === "Long" ? livePrice - entry : entry - livePrice;
+          const pnl = (priceDelta / entry) * notional;
+          const pnlPct = collateral > 0 ? (pnl / collateral) * 100 : 0;
+          const isProfit = pnl >= 0;
+          const color = pos.direction === "Long" ? "#00ff41" : "#ff3333";
+          const pnlStr = `${isProfit ? "+" : ""}$${pnl.toFixed(2)} (${isProfit ? "+" : ""}${pnlPct.toFixed(1)}%)`;
+          seriesRef.current.createPriceLine({
+            price: entry,
+            color,
+            lineWidth: 1,
+            lineStyle: lc.LineStyle.Dotted,
+            axisLabelVisible: true,
+            title: `${pos.direction[0]}${pos.leverage}x ${pnlStr}`,
+          });
+        }
       }
 
       chart.timeScale().fitContent();
@@ -844,7 +866,7 @@ function ChartSection({ oracle, priceApiMarket = "ETB", marketId, marketImage, s
         seriesRef.current = null;
       }
     };
-  }, [chartData, chartMode, timeframe, oracle.price]);
+  }, [chartData, chartMode, timeframe, oracle.price, positions, selectedOracleAddress]);
 
   const timeframes: Timeframe[] = ["1h", "1d"];
 
