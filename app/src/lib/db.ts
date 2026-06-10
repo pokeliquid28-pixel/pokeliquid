@@ -54,6 +54,10 @@ async function ensureTables() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  // Add referrer column if it doesn't exist
+  await query(`
+    ALTER TABLE wallets ADD COLUMN IF NOT EXISTS referrer TEXT
+  `);
   initialized = true;
 }
 
@@ -89,15 +93,25 @@ export async function createAccount(
   email: string,
   passwordHash: string,
   encryptedKey: string,
-  publicKey: string
+  publicKey: string,
+  referrer?: string
 ): Promise<number> {
   await ensureTables();
   const result = await query(
-    `INSERT INTO wallets (email, password_hash, encrypted_key, public_key)
-     VALUES ($1, $2, $3, $4) RETURNING id`,
-    [email, passwordHash, encryptedKey, publicKey]
+    `INSERT INTO wallets (email, password_hash, encrypted_key, public_key, referrer)
+     VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    [email, passwordHash, encryptedKey, publicKey, referrer || null]
   );
   return result.rows[0].id;
+}
+
+export async function getReferrerByPublicKey(publicKey: string): Promise<string | null> {
+  await ensureTables();
+  const result = await query(
+    `SELECT referrer FROM wallets WHERE public_key = $1 LIMIT 1`,
+    [publicKey]
+  );
+  return result.rows[0]?.referrer || null;
 }
 
 export async function getAccountByEmail(

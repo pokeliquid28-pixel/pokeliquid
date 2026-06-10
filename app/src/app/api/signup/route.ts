@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Server not configured" }, { status: 503 });
     }
 
-    const { email, password, privateKey, publicKey } = await req.json();
+    const { email, password, privateKey, publicKey, referrer } = await req.json();
 
     if (!email || !password || !privateKey || !publicKey) {
       return NextResponse.json({ error: "All fields required" }, { status: 400 });
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hashPassword(password);
     const encryptedKey = encrypt(privateKey, encryptionSecret);
-    const userId = await createAccount(email, passwordHash, encryptedKey, publicKey);
+    const userId = await createAccount(email, passwordHash, encryptedKey, publicKey, referrer);
 
     const jwt = await createSessionToken({ userId, email, walletPubkey: publicKey });
 

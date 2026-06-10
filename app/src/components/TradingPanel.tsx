@@ -164,12 +164,19 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh, oracleAddres
       const slVal = slInput ? new BN(Math.round(parseFloat(slInput) * 1_000_000)) : null;
       const tpVal = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
 
-      // Check for referral
+      // Check for referral — first try DB (permanent), fallback to localStorage
       let remainingAccounts: { pubkey: PublicKey; isSigner: boolean; isWritable: boolean }[] = [];
       try {
-        const referrerUsername = localStorage.getItem("pokeliquid_referrer");
+        let referrerUsername: string | null = null;
+        try {
+          const res = await fetch(`/api/referrer?publicKey=${publicKey.toBase58()}`);
+          const data = await res.json();
+          referrerUsername = data.referrer;
+        } catch {}
+        if (!referrerUsername) {
+          referrerUsername = localStorage.getItem("pokeliquid_referrer");
+        }
         if (referrerUsername) {
-          // Look up all referral accounts to find the one with this username
           const allReferrals = await (program.account as any).referralAccount.all();
           const match = allReferrals.find((a: any) => {
             const bytes = a.account.username.slice(0, a.account.usernameLen);

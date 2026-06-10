@@ -70,7 +70,7 @@ export default function RefPage() {
       const res = await fetch("/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, privateKey, publicKey: kp.publicKey.toBase58() }),
+        body: JSON.stringify({ email, password, privateKey, publicKey: kp.publicKey.toBase58(), referrer: username }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");

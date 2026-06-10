@@ -113,7 +113,8 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
     try {
       const kp = Keypair.generate();
       const privateKey = JSON.stringify(Array.from(kp.secretKey));
-      const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, privateKey, publicKey: kp.publicKey.toBase58() }) });
+      const referrer = typeof window !== "undefined" ? localStorage.getItem("pokeliquid_referrer") : null;
+      const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, privateKey, publicKey: kp.publicKey.toBase58(), referrer }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");
       saveSessionKeypair(kp); setSavedEmail(email);
