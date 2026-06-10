@@ -36,7 +36,7 @@ export const MARKETS: Market[] = [
     live: true,
     oracleAddress: "7oMqfryXRbhDDhhmwoPHJybLaB8dVmS74C2ZALUtdQDB",
     programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
-    image: "/sv151.svg",
+    image: "https://product-images.tcgplayer.com/fit-in/400x400/517045.jpg",
     priceApiMarket: "SV151",
     type: "INDEX",
   },
