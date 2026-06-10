@@ -232,49 +232,45 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* ── HERO ── */}
-      <div className="flex flex-col items-center flex-shrink-0 pt-2 md:pt-4">
+      <div className="flex flex-col items-center flex-shrink-0">
         {/* Logo */}
         <div
-          className="transition-all duration-700 mb-0"
+          className="transition-all duration-700"
           style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)" }}
         >
           <div className="block md:hidden"><Logo size={100} /></div>
           <div className="hidden md:block"><Logo width={320} /></div>
         </div>
 
-        {/* Card fan — directly under logo, contained */}
+        {/* Card fan — simple inline images, no absolute nonsense */}
         <div
-          className="relative flex items-center justify-center"
-          style={{ height: 110, width: "100%", maxWidth: 400 }}
+          className="flex items-end justify-center transition-all duration-700"
+          style={{ opacity: cardsVisible ? 1 : 0, marginBottom: 8 }}
         >
           {LANDING_CARDS.map((card, i) => (
-            <div
+            <img
               key={card.id}
-              className="absolute transition-all duration-700 ease-out"
+              src={card.image}
+              alt={card.name}
+              draggable={false}
+              className="transition-all duration-700 ease-out"
               style={{
-                opacity: cardsVisible ? 1 : 0,
-                transform: cardsVisible
-                  ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i] * 0.5}px) scale(${CARD_SCALES[i]})`
-                  : `rotate(0deg) translateY(40px) scale(1)`,
-                transitionDelay: `${i * 100}ms`,
-                left: `${12 + i * 15}%`,
-                top: "50%",
-                marginTop: -45,
                 width: 68,
+                transform: `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i] * 0.5}px) scale(${CARD_SCALES[i]})`,
+                marginLeft: i === 0 ? 0 : -12,
+                filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))",
                 zIndex: i === 2 ? 10 : 5 - Math.abs(i - 2),
-                transformOrigin: "center center",
+                position: "relative",
               }}
-            >
-              <img src={card.image} alt={card.name} className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))" }} draggable={false} />
-            </div>
+            />
           ))}
         </div>
 
-        <p className="text-center font-mono transition-all duration-700 mt-1 mb-1" style={{ color: "#666", fontSize: 11, opacity: cardsVisible ? 1 : 0 }}>
+        <p className="text-center font-mono mb-1" style={{ color: "#666", fontSize: 11 }}>
           Pok&eacute;mon card perpetual futures on Solana
         </p>
 
-        <p className="text-center font-mono transition-all duration-700 mb-4 md:mb-5 px-2" style={{ color: "#777", fontSize: 12, lineHeight: 1.6, maxWidth: 520, opacity: logoVisible ? 1 : 0 }}>
+        <p className="text-center font-mono mb-4 px-2" style={{ color: "#777", fontSize: 12, lineHeight: 1.6, maxWidth: 520 }}>
           Bet on Pok&eacute;mon card prices without owning the card. Go long if you think Charizard goes up. Go short if you think it drops. Set your USDC collateral, choose leverage, and manage risk with stop loss / take profit.
         </p>
       </div>
