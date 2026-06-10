@@ -68,5 +68,15 @@ export function getLpPositionPDA(userPubkey: PublicKey): PublicKey {
   return pda;
 }
 
+export const REFERRAL_SEED = Buffer.from("referral");
+
+export function getReferralAccountPDA(userPubkey: PublicKey): PublicKey {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [REFERRAL_SEED, userPubkey.toBuffer()],
+    PROGRAM_ID
+  );
+  return pda;
+}
+
 export const LIQUIDITY_POOL = getLiquidityPoolPDA();
 export const LP_VAULT = getLpVaultPDA();

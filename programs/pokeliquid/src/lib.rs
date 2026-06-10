@@ -5,11 +5,23 @@ pub mod instructions;
 pub mod state;
 
 use anchor_lang::prelude::*;
+#[cfg(not(feature = "no-entrypoint"))]
+use solana_security_txt::security_txt;
 
 pub use constants::*;
 pub use events::*;
 pub use instructions::*;
 pub use state::*;
+
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "Pokeliquid",
+    project_url: "https://pokeliquid.xyz",
+    contacts: "email:pokeliquid28@gmail.com",
+    policy: "https://pokeliquid.xyz/terms",
+    preferred_languages: "en",
+    source_code: "https://github.com/pokeliquid28-create/pokeliquid"
+}
 
 // Mainnet program ID
 declare_id!("5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6");
@@ -153,6 +165,16 @@ pub mod pokeliquid {
     /// Admin: withdraw USDC from the insurance fund.
     pub fn withdraw_insurance(ctx: Context<WithdrawInsurance>, amount: u64) -> Result<()> {
         withdraw_insurance::handler(ctx, amount)
+    }
+
+    /// Register a referral account with a username.
+    pub fn register_referral(ctx: Context<RegisterReferral>, username: String) -> Result<()> {
+        register_referral::handler(ctx, username)
+    }
+
+    /// Claim accumulated referral fees.
+    pub fn claim_referral(ctx: Context<ClaimReferral>) -> Result<()> {
+        claim_referral::handler(ctx)
     }
 
     /// Devnet helper: mint 1000 USDC to the caller (no auth required).

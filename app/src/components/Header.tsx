@@ -31,6 +31,7 @@ const NAV = [
   { href: "/trades", label: "TRADES" },
   { href: "/pl500", label: "PL500" },
   { href: "/docs", label: "DOCS" },
+  { href: "/referral", label: "REFERRAL" },
   { href: "/api-docs", label: "API" },
 ];
 

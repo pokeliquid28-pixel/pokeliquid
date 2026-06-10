@@ -257,6 +257,111 @@
       "args": []
     },
     {
+      "name": "claim_referral",
+      "docs": [
+        "Claim accumulated referral fees."
+      ],
+      "discriminator": [
+        219,
+        247,
+        18,
+        148,
+        63,
+        247,
+        112,
+        198
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  116,
+                  111,
+                  99,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "referral_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  102,
+                  101,
+                  114,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_token_account",
+          "docs": [
+            "User's USDC token account to receive fees"
+          ],
+          "writable": true
+        },
+        {
+          "name": "fee_vault",
+          "docs": [
+            "Fee vault holds the USDC (referral fees stay in fee_vault until claimed)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  101,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "close_margin_account",
       "docs": [
         "Close (delete) a margin account and return rent to the user."
@@ -1042,25 +1147,10 @@
         },
         {
           "name": "usdc_mint",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  100,
-                  99,
-                  95,
-                  109,
-                  105,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
+          "docs": [
+            "On mainnet: pass the real USDC mint (e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v).",
+            "On devnet: creates a program-controlled mint via PDA."
+          ]
         },
         {
           "name": "fee_vault",
@@ -1934,6 +2024,64 @@
           "type": {
             "option": "u64"
           }
+        }
+      ]
+    },
+    {
+      "name": "register_referral",
+      "docs": [
+        "Register a referral account with a username."
+      ],
+      "discriminator": [
+        158,
+        196,
+        134,
+        102,
+        193,
+        102,
+        184,
+        86
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "referral_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  102,
+                  101,
+                  114,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "username",
+          "type": "string"
         }
       ]
     },
@@ -2864,6 +3012,19 @@
         195,
         248
       ]
+    },
+    {
+      "name": "ReferralAccount",
+      "discriminator": [
+        237,
+        162,
+        80,
+        78,
+        196,
+        233,
+        91,
+        2
+      ]
     }
   ],
   "events": [
@@ -2982,6 +3143,45 @@
         117,
         101,
         121
+      ]
+    },
+    {
+      "name": "ReferralClaimed",
+      "discriminator": [
+        195,
+        109,
+        77,
+        196,
+        134,
+        226,
+        78,
+        108
+      ]
+    },
+    {
+      "name": "ReferralFeeCredited",
+      "discriminator": [
+        227,
+        216,
+        102,
+        218,
+        121,
+        64,
+        69,
+        241
+      ]
+    },
+    {
+      "name": "ReferralRegistered",
+      "discriminator": [
+        210,
+        150,
+        27,
+        227,
+        209,
+        161,
+        7,
+        232
       ]
     },
     {
@@ -3123,6 +3323,21 @@
       "code": 6024,
       "name": "OraclePriceDeviation",
       "msg": "Oracle price change exceeds maximum deviation"
+    },
+    {
+      "code": 6025,
+      "name": "UsernameTooLong",
+      "msg": "Username too long (max 32 bytes)"
+    },
+    {
+      "code": 6026,
+      "name": "UsernameEmpty",
+      "msg": "Username cannot be empty"
+    },
+    {
+      "code": 6027,
+      "name": "NoReferralFees",
+      "msg": "No referral fees to claim"
     }
   ],
   "types": [
@@ -3753,6 +3968,12 @@
             "type": {
               "option": "u64"
             }
+          },
+          {
+            "name": "admin",
+            "type": {
+              "option": "pubkey"
+            }
           }
         ]
       }
@@ -3857,6 +4078,99 @@
           {
             "name": "manual_pause",
             "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReferralAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "username",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "username_len",
+            "type": "u8"
+          },
+          {
+            "name": "pending_fees",
+            "type": "u64"
+          },
+          {
+            "name": "total_earned",
+            "type": "u64"
+          },
+          {
+            "name": "total_referrals",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReferralClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReferralFeeCredited",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "referrer",
+            "type": "pubkey"
+          },
+          {
+            "name": "trader",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReferralRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "username",
+            "type": "string"
           }
         ]
       }

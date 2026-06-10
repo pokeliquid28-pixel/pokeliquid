@@ -4,8 +4,8 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::{
     constants::*,
     error::ErrorCode,
-    events::PositionOpened,
-    state::{Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, Position, ProtocolState},
+    events::{PositionOpened, ReferralFeeCredited},
+    state::{Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, Position, ProtocolState, ReferralAccount},
 };
 
 #[derive(Accounts)]
@@ -60,6 +60,9 @@ pub struct OpenPosition<'info> {
     pub liquidity_pool: Account<'info, LiquidityPool>,
 
     pub token_program: Program<'info, Token>,
+
+    // Optional: referrer's referral account via remaining_accounts.
+    // If provided, 10% of the fee goes to referrer.
 }
 
 pub fn handler(
@@ -185,11 +188,69 @@ pub fn handler(
         .checked_div(10_000)
         .ok_or(ErrorCode::MathOverflow)?;
 
-    let insurance_portion = fee_amount
+    let mut insurance_portion = fee_amount
         .checked_mul(protocol.insurance_fund_bps)
         .ok_or(ErrorCode::MathOverflow)?
         .checked_div(10_000)
         .ok_or(ErrorCode::MathOverflow)?;
+
+    // ── Referral fee ──────────────────────────────────────────────────────
+    // If a valid ReferralAccount is passed in remaining_accounts, credit
+    // 10% of fee_amount to the referrer (5% from platform + 5% from insurance).
+    // The USDC stays in fee_vault — referrer claims later via claim_referral.
+    let mut referral_portion: u64 = 0;
+    if let Some(referral_info) = ctx.remaining_accounts.first() {
+        if referral_info.is_writable && referral_info.owner == ctx.program_id {
+            let mut data = &referral_info.try_borrow_data()?[..];
+            if let Ok(mut referral) = ReferralAccount::try_deserialize(&mut data) {
+                // Verify PDA and that referrer is not the trader
+                let (expected_pda, _) = Pubkey::find_program_address(
+                    &[REFERRAL_SEED, referral.owner.as_ref()],
+                    ctx.program_id,
+                );
+                if referral_info.key() == expected_pda && referral.owner != ctx.accounts.user.key() {
+                    referral_portion = fee_amount
+                        .checked_mul(REFERRAL_FEE_BPS)
+                        .ok_or(ErrorCode::MathOverflow)?
+                        .checked_div(10_000)
+                        .ok_or(ErrorCode::MathOverflow)?;
+
+                    if referral_portion > 0 {
+                        referral.pending_fees = referral
+                            .pending_fees
+                            .checked_add(referral_portion)
+                            .ok_or(ErrorCode::MathOverflow)?;
+                        referral.total_earned = referral
+                            .total_earned
+                            .checked_add(referral_portion)
+                            .ok_or(ErrorCode::MathOverflow)?;
+                        referral.total_referrals = referral
+                            .total_referrals
+                            .checked_add(1)
+                            .ok_or(ErrorCode::MathOverflow)?;
+
+                        // Write back to account
+                        let mut ref_data = referral_info.try_borrow_mut_data()?;
+                        let mut writer = &mut ref_data[..];
+                        referral.try_serialize(&mut writer)?;
+
+                        emit!(ReferralFeeCredited {
+                            referrer: referral.owner,
+                            trader: ctx.accounts.user.key(),
+                            amount: referral_portion,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    // Deduct referral portion: half from insurance, half from platform
+    if referral_portion > 0 {
+        let from_insurance = referral_portion / 2;
+        insurance_portion = insurance_portion.saturating_sub(from_insurance);
+        // The other half reduces platform's implicit share (stays in fee_vault anyway)
+    }
 
     let seeds = &[PROTOCOL_SEED, &[protocol.bump]];
     let signer = &[&seeds[..]];

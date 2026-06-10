@@ -93,3 +93,22 @@ pub struct OracleStale {
     pub last_updated: i64,
     pub seconds_stale: i64,
 }
+
+#[event]
+pub struct ReferralRegistered {
+    pub user: Pubkey,
+    pub username: String,
+}
+
+#[event]
+pub struct ReferralFeeCredited {
+    pub referrer: Pubkey,
+    pub trader: Pubkey,
+    pub amount: u64,
+}
+
+#[event]
+pub struct ReferralClaimed {
+    pub user: Pubkey,
+    pub amount: u64,
+}

@@ -133,6 +133,9 @@ pub enum Direction {
 
 // ─── Liquidity Pool ──────────────────────────────────────────────────────
 
+/// Precision multiplier for acc_fee_per_share (1e12).
+pub const FEE_PER_SHARE_PRECISION: u128 = 1_000_000_000_000;
+
 #[account]
 pub struct LiquidityPool {
     pub total_usdc: u64,
@@ -142,11 +145,14 @@ pub struct LiquidityPool {
     pub bump: u8,
     pub vault_bump: u8,
     pub total_fees_claimed: u64,
+    /// MasterChef-style accumulator: total fees per share (scaled by 1e12).
+    /// Monotonically increasing. Used for fair fee distribution across LPs.
+    pub acc_fee_per_share: u128,
 }
 
 impl LiquidityPool {
-    // 8 disc + 5*8 u64 + 2*1 bumps + 24 padding
-    pub const SPACE: usize = 8 + 40 + 2 + 24;
+    // 8 disc + 5*8 u64 + 2*1 bumps + 1*16 u128 + 8 padding
+    pub const SPACE: usize = 8 + 40 + 2 + 16 + 8;
 }
 
 // ─── LP Position ─────────────────────────────────────────────────────────
@@ -158,11 +164,33 @@ pub struct LpPosition {
     pub usdc_deposited: u64,
     pub fees_claimed: u64,
     pub bump: u8,
+    /// MasterChef reward_debt = shares * acc_fee_per_share at last deposit/withdraw.
+    pub reward_debt: u128,
 }
 
 impl LpPosition {
-    // 8 disc + 32 owner + 3*8 u64 + 1 bump + 32 padding
-    pub const SPACE: usize = 8 + 32 + 24 + 1 + 32;
+    // 8 disc + 32 owner + 3*8 u64 + 1 bump + 1*16 u128 + 16 padding
+    pub const SPACE: usize = 8 + 32 + 24 + 1 + 16 + 16;
+}
+
+// ─── Referral Account ────────────────────────────────────────────────────────
+
+pub const MAX_USERNAME_LEN: usize = 32;
+
+#[account]
+pub struct ReferralAccount {
+    pub owner: Pubkey,
+    pub username: [u8; MAX_USERNAME_LEN],
+    pub username_len: u8,
+    pub pending_fees: u64,
+    pub total_earned: u64,
+    pub total_referrals: u64,
+    pub bump: u8,
+}
+
+impl ReferralAccount {
+    // 8 disc + 32 owner + 32 username + 1 username_len + 3*8 u64 + 1 bump + 16 padding
+    pub const SPACE: usize = 8 + 32 + MAX_USERNAME_LEN + 1 + 24 + 1 + 16;
 }
 
 // ─── Update Params ────────────────────────────────────────────────────────────
@@ -182,4 +210,5 @@ pub struct ProtocolParams {
     pub auto_pause_threshold: Option<i64>,
     pub insurance_fund_bps: Option<u64>,
     pub lp_fee_bps: Option<u64>,
+    pub admin: Option<Pubkey>,
 }

@@ -22,6 +22,8 @@ pub mod update_oracle;
 pub mod update_params;
 pub mod withdraw_collateral;
 pub mod withdraw_fees;
+pub mod register_referral;
+pub mod claim_referral;
 pub mod withdraw_insurance;
 
 pub use add_margin::*;
@@ -47,5 +49,7 @@ pub use update_market_oracle::*;
 pub use update_oracle::*;
 pub use update_params::*;
 pub use withdraw_collateral::*;
+pub use register_referral::*;
+pub use claim_referral::*;
 pub use withdraw_fees::*;
 pub use withdraw_insurance::*;

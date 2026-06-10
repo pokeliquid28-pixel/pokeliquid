@@ -15,7 +15,10 @@ import {
   FEE_VAULT,
   INSURANCE_FUND,
   USDC_MINT,
+  PROGRAM_ID,
+  REFERRAL_SEED,
   getMarginAccountPDA,
+  getReferralAccountPDA,
 } from "@/lib/addresses";
 import {
   rawToPrice,
@@ -161,6 +164,28 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh, oracleAddres
       const slVal = slInput ? new BN(Math.round(parseFloat(slInput) * 1_000_000)) : null;
       const tpVal = tpInput ? new BN(Math.round(parseFloat(tpInput) * 1_000_000)) : null;
 
+      // Check for referral
+      let remainingAccounts: { pubkey: PublicKey; isSigner: boolean; isWritable: boolean }[] = [];
+      try {
+        const referrerUsername = localStorage.getItem("pokeliquid_referrer");
+        if (referrerUsername) {
+          // Look up all referral accounts to find the one with this username
+          const allReferrals = await (program.account as any).referralAccount.all();
+          const match = allReferrals.find((a: any) => {
+            const bytes = a.account.username.slice(0, a.account.usernameLen);
+            const name = Buffer.from(bytes).toString("utf-8");
+            return name === referrerUsername;
+          });
+          if (match && match.account.owner.toBase58() !== publicKey.toBase58()) {
+            remainingAccounts = [
+              { pubkey: match.publicKey, isSigner: false, isWritable: true },
+            ];
+          }
+        }
+      } catch {
+        // Referral lookup failed — proceed without it
+      }
+
       const txBuilder = (program.methods as any)
         .openPosition(direction, new BN(collateralRaw), leverage, slVal, tpVal)
         .accounts({
@@ -171,7 +196,8 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh, oracleAddres
           feeVault: FEE_VAULT,
           insuranceFund: INSURANCE_FUND,
           tokenProgram: TOKEN_PROGRAM_ID,
-        });
+        })
+        .remainingAccounts(remainingAccounts);
 
       await txBuilder.rpc();
       setTxStatus({

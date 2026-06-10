@@ -52,4 +52,10 @@ pub enum ErrorCode {
     InvalidOraclePrice,
     #[msg("Oracle price change exceeds maximum deviation")]
     OraclePriceDeviation,
+    #[msg("Username too long (max 32 bytes)")]
+    UsernameTooLong,
+    #[msg("Username cannot be empty")]
+    UsernameEmpty,
+    #[msg("No referral fees to claim")]
+    NoReferralFees,
 }

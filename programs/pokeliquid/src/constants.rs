@@ -27,6 +27,10 @@ pub const USDC_DECIMALS: u8 = 6;
 pub const DEVNET_MINT_AMOUNT: u64 = 1_000_000_000; // 1000 USDC (6 decimals)
 
 pub const MARKET_SEED: &[u8] = b"market";
+pub const REFERRAL_SEED: &[u8] = b"referral";
+
+/// Referral fee: 5% of platform portion + 5% of insurance portion = 10% of total fee
+pub const REFERRAL_FEE_BPS: u64 = 1_000; // 10% of the fee amount (= 1000 bps of fee)
 
 pub const DEFAULT_MAX_MARKET_OI: u64 = 100_000_000_000; // 100k USDC (6 decimals)
 
