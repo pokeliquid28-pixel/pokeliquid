@@ -1,0 +1,4642 @@
+[
+  {
+    "rank": 1,
+    "productId": 676096,
+    "cardName": "Mega Gengar Ex   284 217",
+    "number": null,
+    "snapshotPrice": 1384.78,
+    "livePrice": 1384.78
+  },
+  {
+    "rank": 2,
+    "productId": 676088,
+    "cardName": "Pikachu Ex   276 217",
+    "number": null,
+    "snapshotPrice": 1276.19,
+    "livePrice": 1276.19
+  },
+  {
+    "rank": 3,
+    "productId": 676102,
+    "cardName": "Mega Dragonite Ex   290 217",
+    "number": null,
+    "snapshotPrice": 876.23,
+    "livePrice": 876.23
+  },
+  {
+    "rank": 4,
+    "productId": 676106,
+    "cardName": "Mega Charizard Y Ex   294 217",
+    "number": null,
+    "snapshotPrice": 648.04,
+    "livePrice": 648.04
+  },
+  {
+    "rank": 5,
+    "productId": 676089,
+    "cardName": "Pikachu Ex   277 217",
+    "number": null,
+    "snapshotPrice": 463.42,
+    "livePrice": 463.42
+  },
+  {
+    "rank": 6,
+    "productId": 676093,
+    "cardName": "Team Rocket S Mewtwo Ex   281 217",
+    "number": null,
+    "snapshotPrice": 454.39,
+    "livePrice": 454.39
+  },
+  {
+    "rank": 7,
+    "productId": 676107,
+    "cardName": "Mega Dragonite Ex   295 217",
+    "number": null,
+    "snapshotPrice": 331.59,
+    "livePrice": 331.59
+  },
+  {
+    "rank": 8,
+    "productId": 676092,
+    "cardName": "Lillie S Clefairy Ex   280 217",
+    "number": null,
+    "snapshotPrice": 206.87,
+    "livePrice": 206.87
+  },
+  {
+    "rank": 9,
+    "productId": 676098,
+    "cardName": "N S Zoroark Ex   286 217",
+    "number": null,
+    "snapshotPrice": 193.15,
+    "livePrice": 193.15
+  },
+  {
+    "rank": 10,
+    "productId": 676086,
+    "cardName": "Mega Feraligatr Ex   274 217",
+    "number": null,
+    "snapshotPrice": 187.18,
+    "livePrice": 187.18
+  },
+  {
+    "rank": 11,
+    "productId": 676038,
+    "cardName": "Psyduck   226 217",
+    "number": null,
+    "snapshotPrice": 110.87,
+    "livePrice": 110.87
+  },
+  {
+    "rank": 12,
+    "productId": 676101,
+    "cardName": "Steven S Metagross Ex",
+    "number": null,
+    "snapshotPrice": 105.44,
+    "livePrice": 105.44
+  },
+  {
+    "rank": 13,
+    "productId": 676084,
+    "cardName": "Mega Meganium Ex   272 217",
+    "number": null,
+    "snapshotPrice": 101.96,
+    "livePrice": 101.96
+  },
+  {
+    "rank": 14,
+    "productId": 676087,
+    "cardName": "Mega Froslass Ex   275 217",
+    "number": null,
+    "snapshotPrice": 90.46,
+    "livePrice": 90.46
+  },
+  {
+    "rank": 15,
+    "productId": 676099,
+    "cardName": "Marnie S Grimmsnarl Ex",
+    "number": null,
+    "snapshotPrice": 85.33,
+    "livePrice": 85.33
+  },
+  {
+    "rank": 16,
+    "productId": 676081,
+    "cardName": "Mega Gengar Ex   269 217",
+    "number": null,
+    "snapshotPrice": 82.84,
+    "livePrice": 82.84
+  },
+  {
+    "rank": 17,
+    "productId": 676097,
+    "cardName": "Mega Scrafty Ex   285 217",
+    "number": null,
+    "snapshotPrice": 76.08,
+    "livePrice": 76.08
+  },
+  {
+    "rank": 18,
+    "productId": 676095,
+    "cardName": "Mega Hawlucha Ex   283 217",
+    "number": null,
+    "snapshotPrice": 75.53,
+    "livePrice": 75.53
+  },
+  {
+    "rank": 19,
+    "productId": 676085,
+    "cardName": "Mega Emboar Ex   273 217",
+    "number": null,
+    "snapshotPrice": 74.89,
+    "livePrice": 74.89
+  },
+  {
+    "rank": 20,
+    "productId": 676100,
+    "cardName": "Fezandipiti Ex   288 217",
+    "number": null,
+    "snapshotPrice": 74.72,
+    "livePrice": 74.72
+  },
+  {
+    "rank": 21,
+    "productId": 676091,
+    "cardName": "Iono S Bellibolt Ex   279 217",
+    "number": null,
+    "snapshotPrice": 74.54,
+    "livePrice": 74.54
+  },
+  {
+    "rank": 22,
+    "productId": 676094,
+    "cardName": "Mega Diancie Ex   282 217",
+    "number": null,
+    "snapshotPrice": 72.49,
+    "livePrice": 72.49
+  },
+  {
+    "rank": 23,
+    "productId": 676083,
+    "cardName": "Mega Dragonite Ex   271 217",
+    "number": null,
+    "snapshotPrice": 58.04,
+    "livePrice": 58.04
+  },
+  {
+    "rank": 24,
+    "productId": 676103,
+    "cardName": "Canari   291 217",
+    "number": null,
+    "snapshotPrice": 47.75,
+    "livePrice": 47.75
+  },
+  {
+    "rank": 25,
+    "productId": 676090,
+    "cardName": "Mega Eelektross Ex   278 217",
+    "number": null,
+    "snapshotPrice": 44.7,
+    "livePrice": 44.7
+  },
+  {
+    "rank": 26,
+    "productId": 676104,
+    "cardName": "Iris S Fighting Spirit   292 217",
+    "number": null,
+    "snapshotPrice": 39.29,
+    "livePrice": 39.29
+  },
+  {
+    "rank": 27,
+    "productId": 676105,
+    "cardName": "Surfer   293 217",
+    "number": null,
+    "snapshotPrice": 30.35,
+    "livePrice": 30.35
+  },
+  {
+    "rank": 28,
+    "productId": 676050,
+    "cardName": "Team Rocket S Mimikyu   238 217",
+    "number": null,
+    "snapshotPrice": 29.69,
+    "livePrice": 29.69
+  },
+  {
+    "rank": 29,
+    "productId": 676030,
+    "cardName": "Erika S Tangela   218 217",
+    "number": null,
+    "snapshotPrice": 27.34,
+    "livePrice": 27.34
+  },
+  {
+    "rank": 30,
+    "productId": 676044,
+    "cardName": "Marill   232 217",
+    "number": null,
+    "snapshotPrice": 16.79,
+    "livePrice": 16.79
+  },
+  {
+    "rank": 31,
+    "productId": 676051,
+    "cardName": "Team Rocket S Dugtrio   239 217",
+    "number": null,
+    "snapshotPrice": 14.88,
+    "livePrice": 14.88
+  },
+  {
+    "rank": 32,
+    "productId": 676056,
+    "cardName": "Cynthia S Spiritomb   244 217",
+    "number": null,
+    "snapshotPrice": 14.69,
+    "livePrice": 14.69
+  },
+  {
+    "rank": 33,
+    "productId": 676077,
+    "cardName": "Mega Froslass Ex   265 217",
+    "number": null,
+    "snapshotPrice": 14.41,
+    "livePrice": 14.41
+  },
+  {
+    "rank": 34,
+    "productId": 676046,
+    "cardName": "Banette   234 217",
+    "number": null,
+    "snapshotPrice": 12.91,
+    "livePrice": 12.91
+  },
+  {
+    "rank": 35,
+    "productId": 676037,
+    "cardName": "Scorbunny   225 217",
+    "number": null,
+    "snapshotPrice": 12.1,
+    "livePrice": 12.1
+  },
+  {
+    "rank": 36,
+    "productId": 676059,
+    "cardName": "Dreepy   247 217",
+    "number": null,
+    "snapshotPrice": 11.4,
+    "livePrice": 11.4
+  },
+  {
+    "rank": 37,
+    "productId": 676043,
+    "cardName": "Iono S Wattrel   231 217",
+    "number": null,
+    "snapshotPrice": 11.39,
+    "livePrice": 11.39
+  },
+  {
+    "rank": 38,
+    "productId": 676033,
+    "cardName": "Budew   221 217",
+    "number": null,
+    "snapshotPrice": 11.29,
+    "livePrice": 11.29
+  },
+  {
+    "rank": 39,
+    "productId": 676079,
+    "cardName": "Mega Diancie Ex   267 217",
+    "number": null,
+    "snapshotPrice": 10.21,
+    "livePrice": 10.21
+  },
+  {
+    "rank": 40,
+    "productId": 675834,
+    "cardName": "Mega Charizard Y Ex   022 217",
+    "number": null,
+    "snapshotPrice": 9.51,
+    "livePrice": 9.51
+  },
+  {
+    "rank": 41,
+    "productId": 676048,
+    "cardName": "Slurpuff   236 217",
+    "number": null,
+    "snapshotPrice": 9.22,
+    "livePrice": 9.22
+  },
+  {
+    "rank": 42,
+    "productId": 676055,
+    "cardName": "Mightyena   243 217",
+    "number": null,
+    "snapshotPrice": 9.09,
+    "livePrice": 9.09
+  },
+  {
+    "rank": 43,
+    "productId": 676068,
+    "cardName": "Boss S Orders Corbeau   256 217",
+    "number": null,
+    "snapshotPrice": 8.92,
+    "livePrice": 8.92
+  },
+  {
+    "rank": 44,
+    "productId": 676060,
+    "cardName": "Drakloak   248 217",
+    "number": null,
+    "snapshotPrice": 8.74,
+    "livePrice": 8.74
+  },
+  {
+    "rank": 45,
+    "productId": 676052,
+    "cardName": "Hitmontop   240 217",
+    "number": null,
+    "snapshotPrice": 8.45,
+    "livePrice": 8.45
+  },
+  {
+    "rank": 46,
+    "productId": 676031,
+    "cardName": "Beautifly   219 217",
+    "number": null,
+    "snapshotPrice": 8.25,
+    "livePrice": 8.25
+  },
+  {
+    "rank": 47,
+    "productId": 676080,
+    "cardName": "Mega Hawlucha Ex   268 217",
+    "number": null,
+    "snapshotPrice": 8.2,
+    "livePrice": 8.2
+  },
+  {
+    "rank": 48,
+    "productId": 676076,
+    "cardName": "Ultra Ball   264 217",
+    "number": null,
+    "snapshotPrice": 7.85,
+    "livePrice": 7.85
+  },
+  {
+    "rank": 49,
+    "productId": 676040,
+    "cardName": "Weavile   228 217",
+    "number": null,
+    "snapshotPrice": 7.85,
+    "livePrice": 7.85
+  },
+  {
+    "rank": 50,
+    "productId": 676034,
+    "cardName": "Ethan S Magcargo   222 217",
+    "number": null,
+    "snapshotPrice": 7.83,
+    "livePrice": 7.83
+  },
+  {
+    "rank": 51,
+    "productId": 676039,
+    "cardName": "Snorunt   227 217",
+    "number": null,
+    "snapshotPrice": 7.28,
+    "livePrice": 7.28
+  },
+  {
+    "rank": 52,
+    "productId": 676058,
+    "cardName": "Mawile   246 217",
+    "number": null,
+    "snapshotPrice": 7.12,
+    "livePrice": 7.12
+  },
+  {
+    "rank": 53,
+    "productId": 676047,
+    "cardName": "Togekiss   235 217",
+    "number": null,
+    "snapshotPrice": 6.88,
+    "livePrice": 6.88
+  },
+  {
+    "rank": 54,
+    "productId": 676045,
+    "cardName": "Misdreavus   233 217",
+    "number": null,
+    "snapshotPrice": 6.57,
+    "livePrice": 6.57
+  },
+  {
+    "rank": 55,
+    "productId": 676053,
+    "cardName": "Medicham   241 217",
+    "number": null,
+    "snapshotPrice": 6.43,
+    "livePrice": 6.43
+  },
+  {
+    "rank": 56,
+    "productId": 676035,
+    "cardName": "Numel   223 217",
+    "number": null,
+    "snapshotPrice": 6.32,
+    "livePrice": 6.32
+  },
+  {
+    "rank": 57,
+    "productId": 676054,
+    "cardName": "Carbink   242 217",
+    "number": null,
+    "snapshotPrice": 5.94,
+    "livePrice": 5.94
+  },
+  {
+    "rank": 58,
+    "productId": 676082,
+    "cardName": "Mega Scrafty Ex   270 217",
+    "number": null,
+    "snapshotPrice": 5.67,
+    "livePrice": 5.67
+  },
+  {
+    "rank": 59,
+    "productId": 676049,
+    "cardName": "Hop S Trevenant   237 217",
+    "number": null,
+    "snapshotPrice": 5.66,
+    "livePrice": 5.66
+  },
+  {
+    "rank": 60,
+    "productId": 675859,
+    "cardName": "Mega Froslass Ex   047 217",
+    "number": null,
+    "snapshotPrice": 5.58,
+    "livePrice": 5.58
+  },
+  {
+    "rank": 61,
+    "productId": 675964,
+    "cardName": "Mega Dragonite Ex   152 217",
+    "number": null,
+    "snapshotPrice": 5.04,
+    "livePrice": 5.04
+  },
+  {
+    "rank": 62,
+    "productId": 676061,
+    "cardName": "Larry S Staraptor   249 217",
+    "number": null,
+    "snapshotPrice": 4.93,
+    "livePrice": 4.93
+  },
+  {
+    "rank": 63,
+    "productId": 676078,
+    "cardName": "Mega Eelektross Ex   266 217",
+    "number": null,
+    "snapshotPrice": 4.51,
+    "livePrice": 4.51
+  },
+  {
+    "rank": 64,
+    "productId": 676057,
+    "cardName": "Galarian Obstagoon   245 217",
+    "number": null,
+    "snapshotPrice": 4.32,
+    "livePrice": 4.32
+  },
+  {
+    "rank": 65,
+    "productId": 675954,
+    "cardName": "Fezandipiti Ex   142 217",
+    "number": null,
+    "snapshotPrice": 4.3,
+    "livePrice": 4.3
+  },
+  {
+    "rank": 66,
+    "productId": 676032,
+    "cardName": "Dustox   220 217",
+    "number": null,
+    "snapshotPrice": 4.25,
+    "livePrice": 4.25
+  },
+  {
+    "rank": 67,
+    "productId": 676062,
+    "cardName": "Fan Rotom   250 217",
+    "number": null,
+    "snapshotPrice": 4.12,
+    "livePrice": 4.12
+  },
+  {
+    "rank": 68,
+    "productId": 675937,
+    "cardName": "Mega Gengar Ex   125 217",
+    "number": null,
+    "snapshotPrice": 3.88,
+    "livePrice": 3.88
+  },
+  {
+    "rank": 69,
+    "productId": 676069,
+    "cardName": "Canari   257 217",
+    "number": null,
+    "snapshotPrice": 3.77,
+    "livePrice": 3.77
+  },
+  {
+    "rank": 70,
+    "productId": 675869,
+    "cardName": "Pikachu Ex   057 217",
+    "number": null,
+    "snapshotPrice": 3.48,
+    "livePrice": 3.48
+  },
+  {
+    "rank": 71,
+    "productId": 676036,
+    "cardName": "Salazzle   224 217",
+    "number": null,
+    "snapshotPrice": 3.46,
+    "livePrice": 3.46
+  },
+  {
+    "rank": 72,
+    "productId": 676074,
+    "cardName": "N S Pp Up   262 217",
+    "number": null,
+    "snapshotPrice": 3.22,
+    "livePrice": 3.22
+  },
+  {
+    "rank": 73,
+    "productId": 675851,
+    "cardName": "Psyduck   039 217",
+    "number": null,
+    "snapshotPrice": 2.91,
+    "livePrice": 2.91
+  },
+  {
+    "rank": 74,
+    "productId": 676042,
+    "cardName": "Vikavolt   230 217",
+    "number": null,
+    "snapshotPrice": 2.75,
+    "livePrice": 2.75
+  },
+  {
+    "rank": 75,
+    "productId": 676063,
+    "cardName": "Sprigatito Ex",
+    "number": null,
+    "snapshotPrice": 2.68,
+    "livePrice": 2.68
+  },
+  {
+    "rank": 76,
+    "productId": 676041,
+    "cardName": "Heliolisk   229 217",
+    "number": null,
+    "snapshotPrice": 2.64,
+    "livePrice": 2.64
+  },
+  {
+    "rank": 77,
+    "productId": 681583,
+    "cardName": "Code Card   Ascended Heroes Pokemon Center Elite Trainer Box Digital Bundle",
+    "number": null,
+    "snapshotPrice": 2.29,
+    "livePrice": 2.29
+  },
+  {
+    "rank": 78,
+    "productId": 676952,
+    "cardName": "Team Rocket S Honchkrow Team Rocket",
+    "number": null,
+    "snapshotPrice": 2.18,
+    "livePrice": 2.18
+  },
+  {
+    "rank": 79,
+    "productId": 676065,
+    "cardName": "Mega Audino Ex   253 217",
+    "number": null,
+    "snapshotPrice": 1.85,
+    "livePrice": 1.85
+  },
+  {
+    "rank": 80,
+    "productId": 677111,
+    "cardName": "Rayquaza Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 1.83,
+    "livePrice": 1.83
+  },
+  {
+    "rank": 81,
+    "productId": 676929,
+    "cardName": "Team Rocket S Mimikyu   097 217 Team Rocket",
+    "number": null,
+    "snapshotPrice": 1.65,
+    "livePrice": 1.65
+  },
+  {
+    "rank": 82,
+    "productId": 675891,
+    "cardName": "Team Rocket S Mewtwo Ex   079 217",
+    "number": null,
+    "snapshotPrice": 1.64,
+    "livePrice": 1.64
+  },
+  {
+    "rank": 83,
+    "productId": 675972,
+    "cardName": "Dragapult Ex",
+    "number": null,
+    "snapshotPrice": 1.51,
+    "livePrice": 1.51
+  },
+  {
+    "rank": 84,
+    "productId": 675888,
+    "cardName": "Lillie S Clefairy Ex   076 217",
+    "number": null,
+    "snapshotPrice": 1.44,
+    "livePrice": 1.44
+  },
+  {
+    "rank": 85,
+    "productId": 675822,
+    "cardName": "Mega Meganium Ex   010 217",
+    "number": null,
+    "snapshotPrice": 1.3,
+    "livePrice": 1.3
+  },
+  {
+    "rank": 86,
+    "productId": 675855,
+    "cardName": "Mega Feraligatr Ex   043 217",
+    "number": null,
+    "snapshotPrice": 1.26,
+    "livePrice": 1.26
+  },
+  {
+    "rank": 87,
+    "productId": 676075,
+    "cardName": "Team Rocket S Transceiver   263 217",
+    "number": null,
+    "snapshotPrice": 1.25,
+    "livePrice": 1.25
+  },
+  {
+    "rank": 88,
+    "productId": 676897,
+    "cardName": "Pikachu Friend Ball",
+    "number": null,
+    "snapshotPrice": 1.23,
+    "livePrice": 1.23
+  },
+  {
+    "rank": 89,
+    "productId": 676066,
+    "cardName": "Anthea And Concordia   254 217",
+    "number": null,
+    "snapshotPrice": 1.17,
+    "livePrice": 1.17
+  },
+  {
+    "rank": 90,
+    "productId": 675925,
+    "cardName": "Mega Lucario Ex",
+    "number": null,
+    "snapshotPrice": 1.04,
+    "livePrice": 1.04
+  },
+  {
+    "rank": 91,
+    "productId": 675974,
+    "cardName": "Team Rocket S Kangaskhan Ex",
+    "number": null,
+    "snapshotPrice": 1.04,
+    "livePrice": 1.04
+  },
+  {
+    "rank": 92,
+    "productId": 676073,
+    "cardName": "Jamming Tower",
+    "number": null,
+    "snapshotPrice": 0.96,
+    "livePrice": 0.96
+  },
+  {
+    "rank": 93,
+    "productId": 675984,
+    "cardName": "Mega Audino Ex   172 217",
+    "number": null,
+    "snapshotPrice": 0.96,
+    "livePrice": 0.96
+  },
+  {
+    "rank": 94,
+    "productId": 676010,
+    "cardName": "Poke Pad",
+    "number": null,
+    "snapshotPrice": 0.96,
+    "livePrice": 0.96
+  },
+  {
+    "rank": 95,
+    "productId": 676067,
+    "cardName": "Black Belt S Training",
+    "number": null,
+    "snapshotPrice": 0.95,
+    "livePrice": 0.95
+  },
+  {
+    "rank": 96,
+    "productId": 675828,
+    "cardName": "Budew   016 217",
+    "number": null,
+    "snapshotPrice": 0.92,
+    "livePrice": 0.92
+  },
+  {
+    "rank": 97,
+    "productId": 675923,
+    "cardName": "Cynthia S Garchomp Ex",
+    "number": null,
+    "snapshotPrice": 0.92,
+    "livePrice": 0.92
+  },
+  {
+    "rank": 98,
+    "productId": 675896,
+    "cardName": "Azumarill Ex",
+    "number": null,
+    "snapshotPrice": 0.88,
+    "livePrice": 0.88
+  },
+  {
+    "rank": 99,
+    "productId": 675928,
+    "cardName": "Mega Hawlucha Ex   116 217",
+    "number": null,
+    "snapshotPrice": 0.88,
+    "livePrice": 0.88
+  },
+  {
+    "rank": 100,
+    "productId": 675815,
+    "cardName": "Erika S Vileplume Ex",
+    "number": null,
+    "snapshotPrice": 0.87,
+    "livePrice": 0.87
+  },
+  {
+    "rank": 101,
+    "productId": 675873,
+    "cardName": "Mega Eelektross Ex   061 217",
+    "number": null,
+    "snapshotPrice": 0.87,
+    "livePrice": 0.87
+  },
+  {
+    "rank": 102,
+    "productId": 675901,
+    "cardName": "Mega Gardevoir Ex",
+    "number": null,
+    "snapshotPrice": 0.86,
+    "livePrice": 0.86
+  },
+  {
+    "rank": 103,
+    "productId": 675947,
+    "cardName": "Mega Scrafty Ex   135 217",
+    "number": null,
+    "snapshotPrice": 0.86,
+    "livePrice": 0.86
+  },
+  {
+    "rank": 104,
+    "productId": 675949,
+    "cardName": "N S Zoroark Ex   137 217",
+    "number": null,
+    "snapshotPrice": 0.86,
+    "livePrice": 0.86
+  },
+  {
+    "rank": 105,
+    "productId": 676070,
+    "cardName": "Cheren",
+    "number": null,
+    "snapshotPrice": 0.82,
+    "livePrice": 0.82
+  },
+  {
+    "rank": 106,
+    "productId": 675910,
+    "cardName": "Spectrier",
+    "number": null,
+    "snapshotPrice": 0.82,
+    "livePrice": 0.82
+  },
+  {
+    "rank": 107,
+    "productId": 675843,
+    "cardName": "Mega Emboar Ex   031 217",
+    "number": null,
+    "snapshotPrice": 0.79,
+    "livePrice": 0.79
+  },
+  {
+    "rank": 108,
+    "productId": 675995,
+    "cardName": "Boss S Orders Corbeau   183 217",
+    "number": null,
+    "snapshotPrice": 0.76,
+    "livePrice": 0.76
+  },
+  {
+    "rank": 109,
+    "productId": 675884,
+    "cardName": "Iono S Kilowattrel",
+    "number": null,
+    "snapshotPrice": 0.75,
+    "livePrice": 0.75
+  },
+  {
+    "rank": 110,
+    "productId": 675957,
+    "cardName": "Registeel Ex",
+    "number": null,
+    "snapshotPrice": 0.73,
+    "livePrice": 0.73
+  },
+  {
+    "rank": 111,
+    "productId": 675933,
+    "cardName": "Koraidon Ex",
+    "number": null,
+    "snapshotPrice": 0.72,
+    "livePrice": 0.72
+  },
+  {
+    "rank": 112,
+    "productId": 676064,
+    "cardName": "Stunfisk Ex   252 217",
+    "number": null,
+    "snapshotPrice": 0.72,
+    "livePrice": 0.72
+  },
+  {
+    "rank": 113,
+    "productId": 675850,
+    "cardName": "Cinderace Ex",
+    "number": null,
+    "snapshotPrice": 0.71,
+    "livePrice": 0.71
+  },
+  {
+    "rank": 114,
+    "productId": 675991,
+    "cardName": "Terapagos Ex",
+    "number": null,
+    "snapshotPrice": 0.71,
+    "livePrice": 0.71
+  },
+  {
+    "rank": 115,
+    "productId": 677037,
+    "cardName": "Pikachu Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.7,
+    "livePrice": 0.7
+  },
+  {
+    "rank": 116,
+    "productId": 676951,
+    "cardName": "Team Rocket S Murkrow Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.7,
+    "livePrice": 0.7
+  },
+  {
+    "rank": 117,
+    "productId": 676004,
+    "cardName": "Lillie S Determination",
+    "number": null,
+    "snapshotPrice": 0.69,
+    "livePrice": 0.69
+  },
+  {
+    "rank": 118,
+    "productId": 676884,
+    "cardName": "Psyduck   039 217 Love Ball",
+    "number": null,
+    "snapshotPrice": 0.68,
+    "livePrice": 0.68
+  },
+  {
+    "rank": 119,
+    "productId": 676019,
+    "cardName": "Team Rocket S Petrel",
+    "number": null,
+    "snapshotPrice": 0.68,
+    "livePrice": 0.68
+  },
+  {
+    "rank": 120,
+    "productId": 675870,
+    "cardName": "Voltorb Ex",
+    "number": null,
+    "snapshotPrice": 0.68,
+    "livePrice": 0.68
+  },
+  {
+    "rank": 121,
+    "productId": 675882,
+    "cardName": "Iono S Bellibolt Ex   070 217",
+    "number": null,
+    "snapshotPrice": 0.67,
+    "livePrice": 0.67
+  },
+  {
+    "rank": 122,
+    "productId": 677025,
+    "cardName": "Golduck Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.64,
+    "livePrice": 0.64
+  },
+  {
+    "rank": 123,
+    "productId": 677038,
+    "cardName": "Raichu Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.64,
+    "livePrice": 0.64
+  },
+  {
+    "rank": 124,
+    "productId": 675979,
+    "cardName": "Zangoose Ex",
+    "number": null,
+    "snapshotPrice": 0.63,
+    "livePrice": 0.63
+  },
+  {
+    "rank": 125,
+    "productId": 675880,
+    "cardName": "Hop S Pincurchin Ex",
+    "number": null,
+    "snapshotPrice": 0.62,
+    "livePrice": 0.62
+  },
+  {
+    "rank": 126,
+    "productId": 675885,
+    "cardName": "Miraidon Ex",
+    "number": null,
+    "snapshotPrice": 0.62,
+    "livePrice": 0.62
+  },
+  {
+    "rank": 127,
+    "productId": 675838,
+    "cardName": "Ethan S Ho Oh Ex",
+    "number": null,
+    "snapshotPrice": 0.61,
+    "livePrice": 0.61
+  },
+  {
+    "rank": 128,
+    "productId": 675976,
+    "cardName": "Larry S Dudunsparce Ex",
+    "number": null,
+    "snapshotPrice": 0.61,
+    "livePrice": 0.61
+  },
+  {
+    "rank": 129,
+    "productId": 675863,
+    "cardName": "N S Vanilluxe",
+    "number": null,
+    "snapshotPrice": 0.61,
+    "livePrice": 0.61
+  },
+  {
+    "rank": 130,
+    "productId": 675860,
+    "cardName": "Regice Ex",
+    "number": null,
+    "snapshotPrice": 0.61,
+    "livePrice": 0.61
+  },
+  {
+    "rank": 131,
+    "productId": 675961,
+    "cardName": "Togedemaru Ex",
+    "number": null,
+    "snapshotPrice": 0.6,
+    "livePrice": 0.6
+  },
+  {
+    "rank": 132,
+    "productId": 676071,
+    "cardName": "Counter Gain   259 217",
+    "number": null,
+    "snapshotPrice": 0.58,
+    "livePrice": 0.58
+  },
+  {
+    "rank": 133,
+    "productId": 676072,
+    "cardName": "Glass Trumpet   260 217",
+    "number": null,
+    "snapshotPrice": 0.58,
+    "livePrice": 0.58
+  },
+  {
+    "rank": 134,
+    "productId": 675951,
+    "cardName": "Mandibuzz Ex",
+    "number": null,
+    "snapshotPrice": 0.58,
+    "livePrice": 0.58
+  },
+  {
+    "rank": 135,
+    "productId": 676914,
+    "cardName": "Togepi Love Ball",
+    "number": null,
+    "snapshotPrice": 0.58,
+    "livePrice": 0.58
+  },
+  {
+    "rank": 136,
+    "productId": 676973,
+    "cardName": "N S Zekrom Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.57,
+    "livePrice": 0.57
+  },
+  {
+    "rank": 137,
+    "productId": 675926,
+    "cardName": "Stunfisk Ex   114 217",
+    "number": null,
+    "snapshotPrice": 0.55,
+    "livePrice": 0.55
+  },
+  {
+    "rank": 138,
+    "productId": 677069,
+    "cardName": "Team Rocket S Mimikyu   097 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.54,
+    "livePrice": 0.54
+  },
+  {
+    "rank": 139,
+    "productId": 676921,
+    "cardName": "Kirlia Love Ball",
+    "number": null,
+    "snapshotPrice": 0.53,
+    "livePrice": 0.53
+  },
+  {
+    "rank": 140,
+    "productId": 677029,
+    "cardName": "Weavile   045 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.53,
+    "livePrice": 0.53
+  },
+  {
+    "rank": 141,
+    "productId": 677010,
+    "cardName": "Charmeleon Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.51,
+    "livePrice": 0.51
+  },
+  {
+    "rank": 142,
+    "productId": 677050,
+    "cardName": "Clefairy Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.51,
+    "livePrice": 0.51
+  },
+  {
+    "rank": 143,
+    "productId": 676910,
+    "cardName": "Clefairy Love Ball",
+    "number": null,
+    "snapshotPrice": 0.51,
+    "livePrice": 0.51
+  },
+  {
+    "rank": 144,
+    "productId": 675919,
+    "cardName": "Regirock Ex",
+    "number": null,
+    "snapshotPrice": 0.49,
+    "livePrice": 0.49
+  },
+  {
+    "rank": 145,
+    "productId": 675816,
+    "cardName": "Erika S Bellsprout",
+    "number": null,
+    "snapshotPrice": 0.48,
+    "livePrice": 0.48
+  },
+  {
+    "rank": 146,
+    "productId": 676960,
+    "cardName": "N S Zorua Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.48,
+    "livePrice": 0.48
+  },
+  {
+    "rank": 147,
+    "productId": 677092,
+    "cardName": "Team Rocket S Honchkrow Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.48,
+    "livePrice": 0.48
+  },
+  {
+    "rank": 148,
+    "productId": 676941,
+    "cardName": "Cynthia S Gabite Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.47,
+    "livePrice": 0.47
+  },
+  {
+    "rank": 149,
+    "productId": 676016,
+    "cardName": "Team Rocket S Giovanni",
+    "number": null,
+    "snapshotPrice": 0.47,
+    "livePrice": 0.47
+  },
+  {
+    "rank": 150,
+    "productId": 677091,
+    "cardName": "Team Rocket S Murkrow Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.47,
+    "livePrice": 0.47
+  },
+  {
+    "rank": 151,
+    "productId": 676924,
+    "cardName": "Rotom Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.46,
+    "livePrice": 0.46
+  },
+  {
+    "rank": 152,
+    "productId": 677024,
+    "cardName": "Psyduck   039 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.45,
+    "livePrice": 0.45
+  },
+  {
+    "rank": 153,
+    "productId": 675997,
+    "cardName": "Canari   185 217",
+    "number": null,
+    "snapshotPrice": 0.44,
+    "livePrice": 0.44
+  },
+  {
+    "rank": 154,
+    "productId": 677113,
+    "cardName": "N S Zekrom Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.44,
+    "livePrice": 0.44
+  },
+  {
+    "rank": 155,
+    "productId": 676015,
+    "cardName": "Team Rocket S Factory",
+    "number": null,
+    "snapshotPrice": 0.44,
+    "livePrice": 0.44
+  },
+  {
+    "rank": 156,
+    "productId": 676927,
+    "cardName": "Hop S Phantump Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.43,
+    "livePrice": 0.43
+  },
+  {
+    "rank": 157,
+    "productId": 676931,
+    "cardName": "Munkidori Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.43,
+    "livePrice": 0.43
+  },
+  {
+    "rank": 158,
+    "productId": 677068,
+    "cardName": "Hop S Trevenant   096 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.42,
+    "livePrice": 0.42
+  },
+  {
+    "rank": 159,
+    "productId": 677097,
+    "cardName": "Galarian Obstagoon   132 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.41,
+    "livePrice": 0.41
+  },
+  {
+    "rank": 160,
+    "productId": 676003,
+    "cardName": "Light Ball",
+    "number": null,
+    "snapshotPrice": 0.41,
+    "livePrice": 0.41
+  },
+  {
+    "rank": 161,
+    "productId": 676029,
+    "cardName": "Team Rocket S Energy",
+    "number": null,
+    "snapshotPrice": 0.41,
+    "livePrice": 0.41
+  },
+  {
+    "rank": 162,
+    "productId": 676008,
+    "cardName": "Night Stretcher",
+    "number": null,
+    "snapshotPrice": 0.4,
+    "livePrice": 0.4
+  },
+  {
+    "rank": 163,
+    "productId": 676911,
+    "cardName": "Clefable Love Ball",
+    "number": null,
+    "snapshotPrice": 0.39,
+    "livePrice": 0.39
+  },
+  {
+    "rank": 164,
+    "productId": 677087,
+    "cardName": "Coalossal Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.39,
+    "livePrice": 0.39
+  },
+  {
+    "rank": 165,
+    "productId": 677080,
+    "cardName": "Cynthia S Gible Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.39,
+    "livePrice": 0.39
+  },
+  {
+    "rank": 166,
+    "productId": 676920,
+    "cardName": "Ralts Love Ball",
+    "number": null,
+    "snapshotPrice": 0.39,
+    "livePrice": 0.39
+  },
+  {
+    "rank": 167,
+    "productId": 677098,
+    "cardName": "Cynthia S Spiritomb   133 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.38,
+    "livePrice": 0.38
+  },
+  {
+    "rank": 168,
+    "productId": 676908,
+    "cardName": "Iono S Wattrel   071 217 Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.38,
+    "livePrice": 0.38
+  },
+  {
+    "rank": 169,
+    "productId": 677071,
+    "cardName": "Munkidori Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.38,
+    "livePrice": 0.38
+  },
+  {
+    "rank": 170,
+    "productId": 676940,
+    "cardName": "Cynthia S Gible Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.37,
+    "livePrice": 0.37
+  },
+  {
+    "rank": 171,
+    "productId": 676009,
+    "cardName": "Nighttime Mine",
+    "number": null,
+    "snapshotPrice": 0.37,
+    "livePrice": 0.37
+  },
+  {
+    "rank": 172,
+    "productId": 676028,
+    "cardName": "Prism Energy",
+    "number": null,
+    "snapshotPrice": 0.37,
+    "livePrice": 0.37
+  },
+  {
+    "rank": 173,
+    "productId": 675993,
+    "cardName": "Air Balloon",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 174,
+    "productId": 677110,
+    "cardName": "Dragonair Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 175,
+    "productId": 676950,
+    "cardName": "Haunter Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 176,
+    "productId": 676919,
+    "cardName": "Mismagius Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 177,
+    "productId": 677018,
+    "cardName": "N S Darumaka Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 178,
+    "productId": 677112,
+    "cardName": "N S Reshiram Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 179,
+    "productId": 677100,
+    "cardName": "N S Zorua Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 180,
+    "productId": 677008,
+    "cardName": "Team Rocket S Spidops Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 181,
+    "productId": 676996,
+    "cardName": "Erika S Victreebel Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 182,
+    "productId": 677090,
+    "cardName": "Haunter Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 183,
+    "productId": 677019,
+    "cardName": "N S Darmanitan Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 184,
+    "productId": 677073,
+    "cardName": "Team Rocket S Dugtrio   101 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 185,
+    "productId": 676912,
+    "cardName": "Team Rocket S Exeggcute Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 186,
+    "productId": 676867,
+    "cardName": "Team Rocket S Tarountula Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 187,
+    "productId": 676916,
+    "cardName": "Togekiss   082 217 Love Ball",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 188,
+    "productId": 677012,
+    "cardName": "Ethan S Magcargo   024 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 189,
+    "productId": 677067,
+    "cardName": "Hop S Phantump Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 190,
+    "productId": 677061,
+    "cardName": "Kirlia Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 191,
+    "productId": 676005,
+    "cardName": "Mega Signal",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 192,
+    "productId": 676023,
+    "cardName": "Thick Scale",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 193,
+    "productId": 676915,
+    "cardName": "Togetic Love Ball",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 194,
+    "productId": 675999,
+    "cardName": "Fighting Gong",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 195,
+    "productId": 677035,
+    "cardName": "Frosmoth Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 196,
+    "productId": 677043,
+    "cardName": "Heliolisk   064 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 197,
+    "productId": 676928,
+    "cardName": "Hop S Trevenant   096 217 Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 198,
+    "productId": 677094,
+    "cardName": "Mightyena   129 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 199,
+    "productId": 676964,
+    "cardName": "Pecharunt Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 200,
+    "productId": 676953,
+    "cardName": "Poochyena Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 201,
+    "productId": 676925,
+    "cardName": "Swirlix Love Ball",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 202,
+    "productId": 676022,
+    "cardName": "Team Rocket S Watchtower",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 203,
+    "productId": 676027,
+    "cardName": "Waitress",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 204,
+    "productId": 676923,
+    "cardName": "Banette   091 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 205,
+    "productId": 676958,
+    "cardName": "Cynthia S Spiritomb   133 217 Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 206,
+    "productId": 676995,
+    "cardName": "Erika S Weepinbell Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 207,
+    "productId": 677103,
+    "cardName": "Hoopa Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 208,
+    "productId": 677115,
+    "cardName": "Noivern Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 209,
+    "productId": 676926,
+    "cardName": "Slurpuff   094 217 Love Ball",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 210,
+    "productId": 677078,
+    "cardName": "Solrock Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 211,
+    "productId": 676014,
+    "cardName": "Team Rocket S Ariana",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 212,
+    "productId": 677063,
+    "cardName": "Banette   091 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 213,
+    "productId": 676999,
+    "cardName": "Bayleef Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 214,
+    "productId": 677081,
+    "cardName": "Cynthia S Gabite Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 215,
+    "productId": 675945,
+    "cardName": "Cynthia S Spiritomb   133 217",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 216,
+    "productId": 677036,
+    "cardName": "Glastrier Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 217,
+    "productId": 676885,
+    "cardName": "Golduck Love Ball",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 218,
+    "productId": 677108,
+    "cardName": "Kingambit Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 219,
+    "productId": 677077,
+    "cardName": "Lunatone Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 220,
+    "productId": 677105,
+    "cardName": "Mawile   144 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 221,
+    "productId": 676918,
+    "cardName": "Misdreavus   085 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 222,
+    "productId": 677070,
+    "cardName": "Spectrier Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 223,
+    "productId": 676913,
+    "cardName": "Team Rocket S Exeggutor Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 224,
+    "productId": 677131,
+    "cardName": "Terapagos Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 225,
+    "productId": 677009,
+    "cardName": "Charmander Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 226,
+    "productId": 677051,
+    "cardName": "Clefable Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 227,
+    "productId": 677040,
+    "cardName": "Eelektrik Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 228,
+    "productId": 676956,
+    "cardName": "Galarian Linoone Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 229,
+    "productId": 677048,
+    "cardName": "Iono S Wattrel   071 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 230,
+    "productId": 677128,
+    "cardName": "Larry S Komala Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 231,
+    "productId": 677124,
+    "cardName": "Larry S Staraptor   170 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 232,
+    "productId": 677122,
+    "cardName": "Larry S Starly Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 233,
+    "productId": 677088,
+    "cardName": "Okidogi Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 234,
+    "productId": 676959,
+    "cardName": "Scraggy Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 235,
+    "productId": 677066,
+    "cardName": "Slurpuff   094 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 236,
+    "productId": 677046,
+    "cardName": "Tapu Koko Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 237,
+    "productId": 677118,
+    "cardName": "Team Rocket S Meowth Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 238,
+    "productId": 677055,
+    "cardName": "Togetic Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 239,
+    "productId": 677002,
+    "cardName": "Beautifly   013 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 240,
+    "productId": 677027,
+    "cardName": "Croconaw Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 241,
+    "productId": 677129,
+    "cardName": "Drampa Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 242,
+    "productId": 676955,
+    "cardName": "Galarian Zigzagoon Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 243,
+    "productId": 676963,
+    "cardName": "Hoopa Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 244,
+    "productId": 676909,
+    "cardName": "Iono S Kilowattrel Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 245,
+    "productId": 677047,
+    "cardName": "Iono S Tadbulb Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 246,
+    "productId": 676007,
+    "cardName": "N S Pp Up   195 217",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 247,
+    "productId": 677032,
+    "cardName": "N S Vanillish Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 248,
+    "productId": 677031,
+    "cardName": "N S Vanillite Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 249,
+    "productId": 676011,
+    "cardName": "Premium Power Pro",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 250,
+    "productId": 676930,
+    "cardName": "Spectrier Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 251,
+    "productId": 676024,
+    "cardName": "Tool Scrapper",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 252,
+    "productId": 676961,
+    "cardName": "Vullaby Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 253,
+    "productId": 677084,
+    "cardName": "Carbink   117 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 254,
+    "productId": 677004,
+    "cardName": "Dustox   015 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 255,
+    "productId": 676957,
+    "cardName": "Galarian Obstagoon   132 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 256,
+    "productId": 676949,
+    "cardName": "Gastly Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 257,
+    "productId": 676001,
+    "cardName": "Glass Trumpet   189 217",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 258,
+    "productId": 677079,
+    "cardName": "Groudon Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 259,
+    "productId": 676954,
+    "cardName": "Mightyena   129 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 260,
+    "productId": 675967,
+    "cardName": "N S Zekrom",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 261,
+    "productId": 677104,
+    "cardName": "Pecharunt Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 262,
+    "productId": 677017,
+    "cardName": "Pignite Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 263,
+    "productId": 676971,
+    "cardName": "Rayquaza Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 264,
+    "productId": 677020,
+    "cardName": "Salandit Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 265,
+    "productId": 676922,
+    "cardName": "Shuppet Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 266,
+    "productId": 675858,
+    "cardName": "Snorunt   046 217",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 267,
+    "productId": 676012,
+    "cardName": "Surfer   200 217",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 268,
+    "productId": 677053,
+    "cardName": "Team Rocket S Exeggutor Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 269,
+    "productId": 676869,
+    "cardName": "Charmander Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 270,
+    "productId": 676969,
+    "cardName": "Dratini Love Ball",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 271,
+    "productId": 677013,
+    "cardName": "Entei Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 272,
+    "productId": 676852,
+    "cardName": "Erika S Oddish Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 273,
+    "productId": 676000,
+    "cardName": "Forest Of Vitality",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 274,
+    "productId": 677096,
+    "cardName": "Galarian Linoone Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 275,
+    "productId": 677006,
+    "cardName": "Grubbin Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 276,
+    "productId": 677049,
+    "cardName": "Iono S Kilowattrel Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 277,
+    "productId": 676006,
+    "cardName": "Mystery Garden",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 278,
+    "productId": 677033,
+    "cardName": "N S Vanilluxe Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 279,
+    "productId": 676962,
+    "cardName": "Pangoro Love Ball",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 280,
+    "productId": 676890,
+    "cardName": "Snorunt   046 217 Love Ball",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 281,
+    "productId": 676017,
+    "cardName": "Team Rocket S Great Ball",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 282,
+    "productId": 675939,
+    "cardName": "Team Rocket S Honchkrow",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 283,
+    "productId": 676020,
+    "cardName": "Team Rocket S Proton",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 284,
+    "productId": 675994,
+    "cardName": "Anthea And Concordia   182 217",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 285,
+    "productId": 675998,
+    "cardName": "Counter Gain   186 217",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 286,
+    "productId": 677125,
+    "cardName": "Fan Rotom   171 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 287,
+    "productId": 676939,
+    "cardName": "Groudon Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 288,
+    "productId": 677074,
+    "cardName": "Hitmontop   102 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 289,
+    "productId": 676917,
+    "cardName": "Marill   083 217 Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 290,
+    "productId": 677059,
+    "cardName": "Mismagius Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 291,
+    "productId": 676878,
+    "cardName": "N S Darumaka Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 292,
+    "productId": 677102,
+    "cardName": "Pangoro Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 293,
+    "productId": 675965,
+    "cardName": "Rayquaza",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 294,
+    "productId": 676882,
+    "cardName": "Scorbunny   036 217 Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 295,
+    "productId": 677062,
+    "cardName": "Shuppet Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 296,
+    "productId": 677120,
+    "cardName": "Skitty Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 297,
+    "productId": 677065,
+    "cardName": "Swirlix Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 298,
+    "productId": 676978,
+    "cardName": "Team Rocket S Meowth Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 299,
+    "productId": 677007,
+    "cardName": "Team Rocket S Tarountula Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 300,
+    "productId": 676026,
+    "cardName": "Urbain",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 301,
+    "productId": 677000,
+    "cardName": "Wurmple Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 302,
+    "productId": 675821,
+    "cardName": "Bayleef",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 303,
+    "productId": 676865,
+    "cardName": "Budew   016 217 Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 304,
+    "productId": 677015,
+    "cardName": "Camerupt Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 305,
+    "productId": 676944,
+    "cardName": "Carbink   117 217 Love Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 306,
+    "productId": 677003,
+    "cardName": "Cascoon Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 307,
+    "productId": 676998,
+    "cardName": "Chikorita Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 308,
+    "productId": 676981,
+    "cardName": "Delcatty Love Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 309,
+    "productId": 676970,
+    "cardName": "Dragonair Love Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 310,
+    "productId": 676994,
+    "cardName": "Erika S Bellsprout Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 311,
+    "productId": 676990,
+    "cardName": "Hop S Cramorant Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 312,
+    "productId": 677127,
+    "cardName": "Larry S Braviary Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 313,
+    "productId": 676891,
+    "cardName": "N S Vanillite Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 314,
+    "productId": 676974,
+    "cardName": "Noibat Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 315,
+    "productId": 676980,
+    "cardName": "Skitty Love Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 316,
+    "productId": 677034,
+    "cardName": "Snom Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 317,
+    "productId": 676894,
+    "cardName": "Snom Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 318,
+    "productId": 677030,
+    "cardName": "Snorunt   046 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 319,
+    "productId": 677052,
+    "cardName": "Team Rocket S Exeggcute Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 320,
+    "productId": 676868,
+    "cardName": "Team Rocket S Spidops Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 321,
+    "productId": 677054,
+    "cardName": "Togepi Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 322,
+    "productId": 677045,
+    "cardName": "Vikavolt   066 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 323,
+    "productId": 676967,
+    "cardName": "Bisharp Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 324,
+    "productId": 675820,
+    "cardName": "Chikorita",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 325,
+    "productId": 676947,
+    "cardName": "Coalossal Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 326,
+    "productId": 677117,
+    "cardName": "Drakloak   159 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 327,
+    "productId": 676873,
+    "cardName": "Entei Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 328,
+    "productId": 676853,
+    "cardName": "Erika S Gloom Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 329,
+    "productId": 676856,
+    "cardName": "Erika S Victreebel Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 330,
+    "productId": 676872,
+    "cardName": "Ethan S Magcargo   024 217 Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 331,
+    "productId": 676895,
+    "cardName": "Frosmoth Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 332,
+    "productId": 676896,
+    "cardName": "Glastrier Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 333,
+    "productId": 677130,
+    "cardName": "Hop S Cramorant Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 334,
+    "productId": 676907,
+    "cardName": "Iono S Tadbulb Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 335,
+    "productId": 677119,
+    "cardName": "Larry S Dunsparce Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 336,
+    "productId": 676983,
+    "cardName": "Larry S Staravia Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 337,
+    "productId": 677083,
+    "cardName": "Pancham Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 338,
+    "productId": 677093,
+    "cardName": "Poochyena Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 339,
+    "productId": 677064,
+    "cardName": "Rotom Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 340,
+    "productId": 677021,
+    "cardName": "Salazzle   035 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 341,
+    "productId": 676861,
+    "cardName": "Silcoon Love Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 342,
+    "productId": 676018,
+    "cardName": "Team Rocket S Hypnotizer",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 343,
+    "productId": 676991,
+    "cardName": "Terapagos Love Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 344,
+    "productId": 677056,
+    "cardName": "Togekiss   082 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 345,
+    "productId": 676889,
+    "cardName": "Weavile   045 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 346,
+    "productId": 677005,
+    "cardName": "Budew   016 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 347,
+    "productId": 676977,
+    "cardName": "Drakloak   159 217 Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 348,
+    "productId": 676976,
+    "cardName": "Dreepy   158 217 Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 349,
+    "productId": 676864,
+    "cardName": "Dustox   015 217 Love Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 350,
+    "productId": 676854,
+    "cardName": "Erika S Bellsprout Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 351,
+    "productId": 676993,
+    "cardName": "Erika S Gloom Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 352,
+    "productId": 676992,
+    "cardName": "Erika S Oddish Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 353,
+    "productId": 676987,
+    "cardName": "Larry S Braviary Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 354,
+    "productId": 676988,
+    "cardName": "Larry S Komala Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 355,
+    "productId": 677057,
+    "cardName": "Marill   083 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 356,
+    "productId": 676879,
+    "cardName": "N S Darmanitan Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 357,
+    "productId": 676874,
+    "cardName": "Numel   027 217 Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 358,
+    "productId": 677023,
+    "cardName": "Raboot Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 359,
+    "productId": 676898,
+    "cardName": "Raichu Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 360,
+    "productId": 677060,
+    "cardName": "Ralts Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 361,
+    "productId": 677022,
+    "cardName": "Scorbunny   036 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 362,
+    "productId": 676906,
+    "cardName": "Tapu Koko Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 363,
+    "productId": 676025,
+    "cardName": "Ultra Ball   213 217",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 364,
+    "productId": 677044,
+    "cardName": "Charjabug Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 365,
+    "productId": 676857,
+    "cardName": "Erika S Tangela   007 217 Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 366,
+    "productId": 676855,
+    "cardName": "Erika S Weepinbell Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 367,
+    "productId": 676871,
+    "cardName": "Ethan S Slugma Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 368,
+    "productId": 677089,
+    "cardName": "Gastly Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 369,
+    "productId": 676866,
+    "cardName": "Grubbin Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 370,
+    "productId": 677123,
+    "cardName": "Larry S Staravia Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 371,
+    "productId": 677075,
+    "cardName": "Meditite Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 372,
+    "productId": 676893,
+    "cardName": "N S Vanilluxe Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 373,
+    "productId": 676943,
+    "cardName": "Pancham Love Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 374,
+    "productId": 677082,
+    "cardName": "Riolu Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 375,
+    "productId": 675902,
+    "cardName": "Shuppet",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 376,
+    "productId": 676888,
+    "cardName": "Sneasel Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 377,
+    "productId": 676013,
+    "cardName": "Team Rocket S Archer",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 378,
+    "productId": 676886,
+    "cardName": "Totodile Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 379,
+    "productId": 676860,
+    "cardName": "Wurmple Love Ball",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 380,
+    "productId": 675992,
+    "cardName": "Acerola S Mischief",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 381,
+    "productId": 677107,
+    "cardName": "Bisharp Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 382,
+    "productId": 677086,
+    "cardName": "Carkol Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 383,
+    "productId": 675833,
+    "cardName": "Charmeleon",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 384,
+    "productId": 675886,
+    "cardName": "Clefairy",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 385,
+    "productId": 675854,
+    "cardName": "Croconaw",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 386,
+    "productId": 677121,
+    "cardName": "Delcatty Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 387,
+    "productId": 676002,
+    "cardName": "Iris S Fighting Spirit   190 217",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 388,
+    "productId": 676965,
+    "cardName": "Mawile   144 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 389,
+    "productId": 676935,
+    "cardName": "Meditite Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 390,
+    "productId": 676972,
+    "cardName": "N S Reshiram Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 391,
+    "productId": 676892,
+    "cardName": "N S Vanillish Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 392,
+    "productId": 676975,
+    "cardName": "Noivern Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 393,
+    "productId": 675867,
+    "cardName": "Pikachu",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 394,
+    "productId": 676942,
+    "cardName": "Riolu Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 395,
+    "productId": 675946,
+    "cardName": "Scraggy",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 396,
+    "productId": 677001,
+    "cardName": "Silcoon Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 397,
+    "productId": 677072,
+    "cardName": "Team Rocket S Diglett Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 398,
+    "productId": 676021,
+    "cardName": "Team Rocket S Transceiver   209 217",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 399,
+    "productId": 676876,
+    "cardName": "Tepig Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 400,
+    "productId": 677026,
+    "cardName": "Totodile Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 401,
+    "productId": 676905,
+    "cardName": "Vikavolt   066 217 Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 402,
+    "productId": 675996,
+    "cardName": "Buddy Buddy Poffin",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 403,
+    "productId": 676887,
+    "cardName": "Croconaw Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 404,
+    "productId": 675962,
+    "cardName": "Dratini",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 405,
+    "productId": 677109,
+    "cardName": "Dratini Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 406,
+    "productId": 676997,
+    "cardName": "Erika S Tangela   007 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 407,
+    "productId": 677011,
+    "cardName": "Ethan S Slugma Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 408,
+    "productId": 676985,
+    "cardName": "Fan Rotom   171 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 409,
+    "productId": 677042,
+    "cardName": "Helioptile Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 410,
+    "productId": 676934,
+    "cardName": "Hitmontop   102 217 Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 411,
+    "productId": 676986,
+    "cardName": "Larry S Rufflet Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 412,
+    "productId": 676937,
+    "cardName": "Lunatone Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 413,
+    "productId": 676948,
+    "cardName": "Okidogi Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 414,
+    "productId": 676881,
+    "cardName": "Salazzle   035 217 Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 415,
+    "productId": 675824,
+    "cardName": "Silcoon",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 416,
+    "productId": 676933,
+    "cardName": "Team Rocket S Dugtrio   101 217 Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 417,
+    "productId": 677101,
+    "cardName": "Vullaby Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 418,
+    "productId": 675832,
+    "cardName": "Charmander",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 419,
+    "productId": 676870,
+    "cardName": "Charmeleon Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 420,
+    "productId": 676858,
+    "cardName": "Chikorita Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 421,
+    "productId": 677116,
+    "cardName": "Dreepy   158 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 422,
+    "productId": 676903,
+    "cardName": "Heliolisk   064 217 Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 423,
+    "productId": 676902,
+    "cardName": "Helioptile Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 424,
+    "productId": 676979,
+    "cardName": "Larry S Dunsparce Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 425,
+    "productId": 677126,
+    "cardName": "Larry S Rufflet Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 426,
+    "productId": 676982,
+    "cardName": "Larry S Starly Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 427,
+    "productId": 676883,
+    "cardName": "Raboot Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 428,
+    "productId": 677085,
+    "cardName": "Rolycoly Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 429,
+    "productId": 677099,
+    "cardName": "Scraggy Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 430,
+    "productId": 677028,
+    "cardName": "Sneasel Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 431,
+    "productId": 676932,
+    "cardName": "Team Rocket S Diglett Team Rocket",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 432,
+    "productId": 675909,
+    "cardName": "Team Rocket S Mimikyu   097 217",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 433,
+    "productId": 675831,
+    "cardName": "Team Rocket S Spidops",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 434,
+    "productId": 676862,
+    "cardName": "Beautifly   013 217 Love Ball",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 435,
+    "productId": 687679,
+    "cardName": "Code Card   Premium Poster Collection Mega Lucario",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 436,
+    "productId": 676989,
+    "cardName": "Drampa Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 437,
+    "productId": 675872,
+    "cardName": "Eelektrik",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 438,
+    "productId": 676900,
+    "cardName": "Eelektrik Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 439,
+    "productId": 677095,
+    "cardName": "Galarian Zigzagoon Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 440,
+    "productId": 675908,
+    "cardName": "Hop S Trevenant   096 217",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 441,
+    "productId": 675862,
+    "cardName": "N S Vanillish",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 442,
+    "productId": 675948,
+    "cardName": "N S Zorua",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 443,
+    "productId": 676877,
+    "cardName": "Pignite Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 444,
+    "productId": 675874,
+    "cardName": "Stunfisk",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 445,
+    "productId": 677041,
+    "cardName": "Stunfisk Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 446,
+    "productId": 675830,
+    "cardName": "Team Rocket S Tarountula",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 447,
+    "productId": 677016,
+    "cardName": "Tepig Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 448,
+    "productId": 676875,
+    "cardName": "Camerupt Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 449,
+    "productId": 676863,
+    "cardName": "Cascoon Love Ball",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 450,
+    "productId": 675922,
+    "cardName": "Cynthia S Gabite",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 451,
+    "productId": 676968,
+    "cardName": "Kingambit Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 452,
+    "productId": 675917,
+    "cardName": "Lunatone",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 453,
+    "productId": 677058,
+    "cardName": "Misdreavus   085 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 454,
+    "productId": 675911,
+    "cardName": "Munkidori",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 455,
+    "productId": 677114,
+    "cardName": "Noibat Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 456,
+    "productId": 677106,
+    "cardName": "Pawniard Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 457,
+    "productId": 676945,
+    "cardName": "Rolycoly Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 458,
+    "productId": 676880,
+    "cardName": "Salandit Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 459,
+    "productId": 675977,
+    "cardName": "Skitty",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 460,
+    "productId": 675893,
+    "cardName": "Togetic",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 461,
+    "productId": 677039,
+    "cardName": "Tynamo Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 462,
+    "productId": 675907,
+    "cardName": "Hop S Phantump",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 463,
+    "productId": 676936,
+    "cardName": "Medicham   104 217 Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 464,
+    "productId": 677014,
+    "cardName": "Numel   027 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 465,
+    "productId": 676966,
+    "cardName": "Pawniard Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 466,
+    "productId": 676938,
+    "cardName": "Solrock Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 467,
+    "productId": 676899,
+    "cardName": "Tynamo Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 468,
+    "productId": 676859,
+    "cardName": "Bayleef Friend Ball",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 469,
+    "productId": 675819,
+    "cardName": "Erika S Tangela   007 217",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 470,
+    "productId": 677076,
+    "cardName": "Medicham   104 217 Energy Symbol Pattern",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 471,
+    "productId": 675864,
+    "cardName": "Snom",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 472,
+    "productId": 676901,
+    "cardName": "Stunfisk Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 473,
+    "productId": 675938,
+    "cardName": "Team Rocket S Murkrow",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 474,
+    "productId": 675814,
+    "cardName": "Erika S Gloom",
+    "number": null,
+    "snapshotPrice": 0.14,
+    "livePrice": 0.14
+  },
+  {
+    "rank": 475,
+    "productId": 675966,
+    "cardName": "N S Reshiram",
+    "number": null,
+    "snapshotPrice": 0.14,
+    "livePrice": 0.14
+  },
+  {
+    "rank": 476,
+    "productId": 675918,
+    "cardName": "Solrock",
+    "number": null,
+    "snapshotPrice": 0.14,
+    "livePrice": 0.14
+  },
+  {
+    "rank": 477,
+    "productId": 675963,
+    "cardName": "Dragonair",
+    "number": null,
+    "snapshotPrice": 0.13,
+    "livePrice": 0.13
+  },
+  {
+    "rank": 478,
+    "productId": 675852,
+    "cardName": "Golduck",
+    "number": null,
+    "snapshotPrice": 0.13,
+    "livePrice": 0.13
+  },
+  {
+    "rank": 479,
+    "productId": 675842,
+    "cardName": "Pignite",
+    "number": null,
+    "snapshotPrice": 0.13,
+    "livePrice": 0.13
+  },
+  {
+    "rank": 480,
+    "productId": 675841,
+    "cardName": "Tepig",
+    "number": null,
+    "snapshotPrice": 0.13,
+    "livePrice": 0.13
+  },
+  {
+    "rank": 481,
+    "productId": 675892,
+    "cardName": "Togepi",
+    "number": null,
+    "snapshotPrice": 0.13,
+    "livePrice": 0.13
+  },
+  {
+    "rank": 482,
+    "productId": 676946,
+    "cardName": "Carkol Dusk Ball",
+    "number": null,
+    "snapshotPrice": 0.12,
+    "livePrice": 0.12
+  },
+  {
+    "rank": 483,
+    "productId": 676904,
+    "cardName": "Charjabug Quick Ball",
+    "number": null,
+    "snapshotPrice": 0.12,
+    "livePrice": 0.12
+  },
+  {
+    "rank": 484,
+    "productId": 675978,
+    "cardName": "Delcatty",
+    "number": null,
+    "snapshotPrice": 0.12,
+    "livePrice": 0.12
+  },
+  {
+    "rank": 485,
+    "productId": 675875,
+    "cardName": "Helioptile",
+    "number": null,
+    "snapshotPrice": 0.12,
+    "livePrice": 0.12
+  },
+  {
+    "rank": 486,
+    "productId": 676984,
+    "cardName": "Larry S Staraptor   170 217 Poke Ball",
+    "number": null,
+    "snapshotPrice": 0.12,
+    "livePrice": 0.12
+  },
+  {
+    "rank": 487,
+    "productId": 675940,
+    "cardName": "Poochyena",
+    "number": null,
+    "snapshotPrice": 0.12,
+    "livePrice": 0.12
+  },
+  {
+    "rank": 488,
+    "productId": 675899,
+    "cardName": "Ralts",
+    "number": null,
+    "snapshotPrice": 0.12,
+    "livePrice": 0.12
+  },
+  {
+    "rank": 489,
+    "productId": 675887,
+    "cardName": "Clefable",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 490,
+    "productId": 687678,
+    "cardName": "Code Card   Premium Poster Collection Mega Gardevoir",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 491,
+    "productId": 675921,
+    "cardName": "Cynthia S Gible",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 492,
+    "productId": 675970,
+    "cardName": "Dreepy   158 217",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 493,
+    "productId": 675827,
+    "cardName": "Dustox   015 217",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 494,
+    "productId": 675817,
+    "cardName": "Erika S Weepinbell",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 495,
+    "productId": 675866,
+    "cardName": "Glastrier",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 496,
+    "productId": 675960,
+    "cardName": "Kingambit",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 497,
+    "productId": 675981,
+    "cardName": "Larry S Staravia",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 498,
+    "productId": 675956,
+    "cardName": "Mawile   144 217",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 499,
+    "productId": 675839,
+    "cardName": "Numel   027 217",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 500,
+    "productId": 675927,
+    "cardName": "Pancham",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 501,
+    "productId": 675924,
+    "cardName": "Riolu",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 502,
+    "productId": 675848,
+    "cardName": "Scorbunny   036 217",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 503,
+    "productId": 675871,
+    "cardName": "Tynamo",
+    "number": null,
+    "snapshotPrice": 0.11,
+    "livePrice": 0.11
+  },
+  {
+    "rank": 504,
+    "productId": 675835,
+    "cardName": "Ethan S Slugma",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 505,
+    "productId": 675943,
+    "cardName": "Galarian Linoone",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 506,
+    "productId": 675936,
+    "cardName": "Haunter",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 507,
+    "productId": 675900,
+    "cardName": "Kirlia",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 508,
+    "productId": 675845,
+    "cardName": "N S Darmanitan",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 509,
+    "productId": 675955,
+    "cardName": "Pecharunt",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 510,
+    "productId": 675868,
+    "cardName": "Raichu",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 511,
+    "productId": 675973,
+    "cardName": "Team Rocket S Meowth",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 512,
+    "productId": 675931,
+    "cardName": "Carkol",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 513,
+    "productId": 675826,
+    "cardName": "Cascoon",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 514,
+    "productId": 675971,
+    "cardName": "Drakloak   159 217",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 515,
+    "productId": 675837,
+    "cardName": "Entei",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 516,
+    "productId": 675818,
+    "cardName": "Erika S Victreebel",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 517,
+    "productId": 675865,
+    "cardName": "Frosmoth",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 518,
+    "productId": 675944,
+    "cardName": "Galarian Obstagoon   132 217",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 519,
+    "productId": 675935,
+    "cardName": "Gastly",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 520,
+    "productId": 675881,
+    "cardName": "Iono S Tadbulb",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 521,
+    "productId": 675883,
+    "cardName": "Iono S Wattrel   071 217",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 522,
+    "productId": 675895,
+    "cardName": "Marill   083 217",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 523,
+    "productId": 675897,
+    "cardName": "Misdreavus   085 217",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 524,
+    "productId": 675968,
+    "cardName": "Noibat",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 525,
+    "productId": 675969,
+    "cardName": "Noivern",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 526,
+    "productId": 675952,
+    "cardName": "Pangoro",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 527,
+    "productId": 675912,
+    "cardName": "Team Rocket S Diglett",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 528,
+    "productId": 675853,
+    "cardName": "Totodile",
+    "number": null,
+    "snapshotPrice": 0.09,
+    "livePrice": 0.09
+  },
+  {
+    "rank": 529,
+    "productId": 675929,
+    "cardName": "Carbink   117 217",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 530,
+    "productId": 675932,
+    "cardName": "Coalossal",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 531,
+    "productId": 675813,
+    "cardName": "Erika S Oddish",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 532,
+    "productId": 675920,
+    "cardName": "Groudon",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 533,
+    "productId": 675953,
+    "cardName": "Hoopa",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 534,
+    "productId": 675989,
+    "cardName": "Hop S Cramorant",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 535,
+    "productId": 675975,
+    "cardName": "Larry S Dunsparce",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 536,
+    "productId": 675844,
+    "cardName": "N S Darumaka",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 537,
+    "productId": 675861,
+    "cardName": "N S Vanillite",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 538,
+    "productId": 675849,
+    "cardName": "Raboot",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 539,
+    "productId": 675905,
+    "cardName": "Swirlix",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 540,
+    "productId": 675879,
+    "cardName": "Tapu Koko",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 541,
+    "productId": 675889,
+    "cardName": "Team Rocket S Exeggcute",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 542,
+    "productId": 675890,
+    "cardName": "Team Rocket S Exeggutor",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 543,
+    "productId": 675894,
+    "cardName": "Togekiss   082 217",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 544,
+    "productId": 675823,
+    "cardName": "Wurmple",
+    "number": null,
+    "snapshotPrice": 0.08,
+    "livePrice": 0.08
+  },
+  {
+    "rank": 545,
+    "productId": 677186,
+    "cardName": "Code Card   Ascended Heroes Booster Pack",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 546,
+    "productId": 681582,
+    "cardName": "Code Card   Ascended Heroes Elite Trainer Box Digital Bundle",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 547,
+    "productId": 675836,
+    "cardName": "Ethan S Magcargo   024 217",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 548,
+    "productId": 675983,
+    "cardName": "Fan Rotom   171 217",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 549,
+    "productId": 675942,
+    "cardName": "Galarian Zigzagoon",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 550,
+    "productId": 675876,
+    "cardName": "Heliolisk   064 217",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 551,
+    "productId": 675914,
+    "cardName": "Hitmontop   102 217",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 552,
+    "productId": 675985,
+    "cardName": "Larry S Rufflet",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 553,
+    "productId": 675898,
+    "cardName": "Mismagius",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 554,
+    "productId": 675934,
+    "cardName": "Okidogi",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 555,
+    "productId": 675904,
+    "cardName": "Rotom",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 556,
+    "productId": 675846,
+    "cardName": "Salandit",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 557,
+    "productId": 675847,
+    "cardName": "Salazzle   035 217",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 558,
+    "productId": 675856,
+    "cardName": "Sneasel",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 559,
+    "productId": 675950,
+    "cardName": "Vullaby",
+    "number": null,
+    "snapshotPrice": 0.07,
+    "livePrice": 0.07
+  },
+  {
+    "rank": 560,
+    "productId": 675825,
+    "cardName": "Beautifly   013 217",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 561,
+    "productId": 675959,
+    "cardName": "Bisharp",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 562,
+    "productId": 675840,
+    "cardName": "Camerupt",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 563,
+    "productId": 675829,
+    "cardName": "Grubbin",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 564,
+    "productId": 675982,
+    "cardName": "Larry S Staraptor   170 217",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 565,
+    "productId": 675980,
+    "cardName": "Larry S Starly",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 566,
+    "productId": 675916,
+    "cardName": "Medicham   104 217",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 567,
+    "productId": 675913,
+    "cardName": "Team Rocket S Dugtrio   101 217",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 568,
+    "productId": 675990,
+    "cardName": "Terapagos",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 569,
+    "productId": 675857,
+    "cardName": "Weavile   045 217",
+    "number": null,
+    "snapshotPrice": 0.06,
+    "livePrice": 0.06
+  },
+  {
+    "rank": 570,
+    "productId": 675986,
+    "cardName": "Larry S Braviary",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 571,
+    "productId": 675987,
+    "cardName": "Larry S Komala",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 572,
+    "productId": 675915,
+    "cardName": "Meditite",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 573,
+    "productId": 675930,
+    "cardName": "Rolycoly",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 574,
+    "productId": 675906,
+    "cardName": "Slurpuff   094 217",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 575,
+    "productId": 675878,
+    "cardName": "Vikavolt   066 217",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 576,
+    "productId": 675903,
+    "cardName": "Banette   091 217",
+    "number": null,
+    "snapshotPrice": 0.04,
+    "livePrice": 0.04
+  },
+  {
+    "rank": 577,
+    "productId": 675877,
+    "cardName": "Charjabug",
+    "number": null,
+    "snapshotPrice": 0.04,
+    "livePrice": 0.04
+  },
+  {
+    "rank": 578,
+    "productId": 675941,
+    "cardName": "Mightyena   129 217",
+    "number": null,
+    "snapshotPrice": 0.04,
+    "livePrice": 0.04
+  },
+  {
+    "rank": 579,
+    "productId": 675988,
+    "cardName": "Drampa",
+    "number": null,
+    "snapshotPrice": 0.03,
+    "livePrice": 0.03
+  },
+  {
+    "rank": 580,
+    "productId": 675958,
+    "cardName": "Pawniard",
+    "number": null,
+    "snapshotPrice": 0.03,
+    "livePrice": 0.03
+  }
+]

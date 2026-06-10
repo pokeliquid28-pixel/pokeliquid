@@ -41,6 +41,18 @@ export const MARKETS: Market[] = [
     type: "INDEX",
   },
   {
+    id: "AH-INDEX",
+    name: "AH-INDEX-PERP",
+    subtitle: "Ascended Heroes Index \u00B7 All 580 Cards",
+    badge: "INDEX",
+    live: true,
+    oracleAddress: "6HLgqURBR1DkGCBqKfcmCoD9VewEGJrbyY6E6kjThHCJ",
+    programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
+    image: "/ah-index.png",
+    priceApiMarket: "AH-INDEX",
+    type: "INDEX",
+  },
+  {
     id: "PRISMATIC-ETB",
     name: "PRISMATIC-ETB-PERP",
     subtitle: "Prismatic Evolutions \u00B7 Sealed Product",
