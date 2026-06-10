@@ -234,17 +234,17 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       {/* ── HERO ── */}
       <div className="flex flex-col items-center flex-shrink-0 pt-3 md:pt-6">
         <div
-          className="mb-2 md:mb-3 transition-all duration-700"
-          style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)" }}
+          className="transition-all duration-700"
+          style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)", marginBottom: -10 }}
         >
           <div className="block md:hidden"><Logo size={100} /></div>
           <div className="hidden md:block"><Logo width={320} /></div>
         </div>
 
-        {/* Card fan — overflow clipped so cards don't bleed into text */}
+        {/* Card fan — tight under logo */}
         <div
-          className="relative flex items-end justify-center overflow-hidden"
-          style={{ height: 130, width: "100%", maxWidth: 400, marginBottom: 8 }}
+          className="relative flex items-end justify-center"
+          style={{ height: 140, width: "100%", maxWidth: 420, marginBottom: 10 }}
         >
           {LANDING_CARDS.map((card, i) => (
             <div
