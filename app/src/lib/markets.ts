@@ -77,6 +77,18 @@ export const MARKETS: Market[] = [
     type: "INDEX",
   },
   {
+    id: "PF-INDEX",
+    name: "PF-INDEX-PERP",
+    subtitle: "Paldean Fates Index \u00B7 All 257 Cards",
+    badge: "INDEX",
+    live: true,
+    oracleAddress: "5G9BRqbHpftf8qHow5BdH9UkomPZmbDHbERhzniZYDiy",
+    programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
+    image: "/pf-index.jpeg",
+    priceApiMarket: "PF-INDEX",
+    type: "INDEX",
+  },
+  {
     id: "PRISMATIC-ETB",
     name: "PRISMATIC-ETB-PERP",
     subtitle: "Prismatic Evolutions \u00B7 Sealed Product",
