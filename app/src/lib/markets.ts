@@ -53,6 +53,18 @@ export const MARKETS: Market[] = [
     type: "INDEX",
   },
   {
+    id: "PRE-INDEX",
+    name: "PRE-INDEX-PERP",
+    subtitle: "Prismatic Evolutions Index \u00B7 All 356 Cards",
+    badge: "INDEX",
+    live: true,
+    oracleAddress: "AN6qLyifzifBWTihDEACuk4NuTum9zTvNsqXsiGhvNPf",
+    programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
+    image: "/pre-index.png",
+    priceApiMarket: "PRE-INDEX",
+    type: "INDEX",
+  },
+  {
     id: "PRISMATIC-ETB",
     name: "PRISMATIC-ETB-PERP",
     subtitle: "Prismatic Evolutions \u00B7 Sealed Product",

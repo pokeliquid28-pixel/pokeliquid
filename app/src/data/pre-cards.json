@@ -1,0 +1,2850 @@
+[
+  {
+    "rank": 1,
+    "productId": 610516,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 1557.92,
+    "livePrice": 1557.92
+  },
+  {
+    "rank": 2,
+    "productId": 610511,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 502.98,
+    "livePrice": 502.98
+  },
+  {
+    "rank": 3,
+    "productId": 610510,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 332.73,
+    "livePrice": 332.73
+  },
+  {
+    "rank": 4,
+    "productId": 610499,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 331.35,
+    "livePrice": 331.35
+  },
+  {
+    "rank": 5,
+    "productId": 610505,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 297.83,
+    "livePrice": 297.83
+  },
+  {
+    "rank": 6,
+    "productId": 610504,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 291.39,
+    "livePrice": 291.39
+  },
+  {
+    "rank": 7,
+    "productId": 610501,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 203.96,
+    "livePrice": 203.96
+  },
+  {
+    "rank": 8,
+    "productId": 610508,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 196.47,
+    "livePrice": 196.47
+  },
+  {
+    "rank": 9,
+    "productId": 610522,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 189.4,
+    "livePrice": 189.4
+  },
+  {
+    "rank": 10,
+    "productId": 610517,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 179.73,
+    "livePrice": 179.73
+  },
+  {
+    "rank": 11,
+    "productId": 610520,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 143.02,
+    "livePrice": 143.02
+  },
+  {
+    "rank": 12,
+    "productId": 610502,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 101.08,
+    "livePrice": 101.08
+  },
+  {
+    "rank": 13,
+    "productId": 610679,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 84.75,
+    "livePrice": 84.75
+  },
+  {
+    "rank": 14,
+    "productId": 610523,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 80.04,
+    "livePrice": 80.04
+  },
+  {
+    "rank": 15,
+    "productId": 610512,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 77.09,
+    "livePrice": 77.09
+  },
+  {
+    "rank": 16,
+    "productId": 610521,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 72.74,
+    "livePrice": 72.74
+  },
+  {
+    "rank": 17,
+    "productId": 610534,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 72.02,
+    "livePrice": 72.02
+  },
+  {
+    "rank": 18,
+    "productId": 610519,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 51.63,
+    "livePrice": 51.63
+  },
+  {
+    "rank": 19,
+    "productId": 610506,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 47.24,
+    "livePrice": 47.24
+  },
+  {
+    "rank": 20,
+    "productId": 610653,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 44.38,
+    "livePrice": 44.38
+  },
+  {
+    "rank": 21,
+    "productId": 610526,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 43.86,
+    "livePrice": 43.86
+  },
+  {
+    "rank": 22,
+    "productId": 610641,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 40.24,
+    "livePrice": 40.24
+  },
+  {
+    "rank": 23,
+    "productId": 610524,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 39.2,
+    "livePrice": 39.2
+  },
+  {
+    "rank": 24,
+    "productId": 610664,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 37.24,
+    "livePrice": 37.24
+  },
+  {
+    "rank": 25,
+    "productId": 610509,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 37.1,
+    "livePrice": 37.1
+  },
+  {
+    "rank": 26,
+    "productId": 610513,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 37.02,
+    "livePrice": 37.02
+  },
+  {
+    "rank": 27,
+    "productId": 610518,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 34.31,
+    "livePrice": 34.31
+  },
+  {
+    "rank": 28,
+    "productId": 610646,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 32.81,
+    "livePrice": 32.81
+  },
+  {
+    "rank": 29,
+    "productId": 610656,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 30.07,
+    "livePrice": 30.07
+  },
+  {
+    "rank": 30,
+    "productId": 610658,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 29.95,
+    "livePrice": 29.95
+  },
+  {
+    "rank": 31,
+    "productId": 610530,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 28.75,
+    "livePrice": 28.75
+  },
+  {
+    "rank": 32,
+    "productId": 610514,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 27.58,
+    "livePrice": 27.58
+  },
+  {
+    "rank": 33,
+    "productId": 610528,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 26.62,
+    "livePrice": 26.62
+  },
+  {
+    "rank": 34,
+    "productId": 610655,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 26.05,
+    "livePrice": 26.05
+  },
+  {
+    "rank": 35,
+    "productId": 610500,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 24.21,
+    "livePrice": 24.21
+  },
+  {
+    "rank": 36,
+    "productId": 610529,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 20.66,
+    "livePrice": 20.66
+  },
+  {
+    "rank": 37,
+    "productId": 610695,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 20.15,
+    "livePrice": 20.15
+  },
+  {
+    "rank": 38,
+    "productId": 610503,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 19.65,
+    "livePrice": 19.65
+  },
+  {
+    "rank": 39,
+    "productId": 610507,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 17.9,
+    "livePrice": 17.9
+  },
+  {
+    "rank": 40,
+    "productId": 610527,
+    "cardName": "Drayton",
+    "number": null,
+    "snapshotPrice": 17.33,
+    "livePrice": 17.33
+  },
+  {
+    "rank": 41,
+    "productId": 610515,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 16.77,
+    "livePrice": 16.77
+  },
+  {
+    "rank": 42,
+    "productId": 610691,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 16.1,
+    "livePrice": 16.1
+  },
+  {
+    "rank": 43,
+    "productId": 610525,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 15.92,
+    "livePrice": 15.92
+  },
+  {
+    "rank": 44,
+    "productId": 610666,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 14.64,
+    "livePrice": 14.64
+  },
+  {
+    "rank": 45,
+    "productId": 610532,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 12.92,
+    "livePrice": 12.92
+  },
+  {
+    "rank": 46,
+    "productId": 610667,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 12.29,
+    "livePrice": 12.29
+  },
+  {
+    "rank": 47,
+    "productId": 610661,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 12.16,
+    "livePrice": 12.16
+  },
+  {
+    "rank": 48,
+    "productId": 610654,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 11.94,
+    "livePrice": 11.94
+  },
+  {
+    "rank": 49,
+    "productId": 610535,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 11.9,
+    "livePrice": 11.9
+  },
+  {
+    "rank": 50,
+    "productId": 610673,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 11.85,
+    "livePrice": 11.85
+  },
+  {
+    "rank": 51,
+    "productId": 610643,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 11.3,
+    "livePrice": 11.3
+  },
+  {
+    "rank": 52,
+    "productId": 610638,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 11.25,
+    "livePrice": 11.25
+  },
+  {
+    "rank": 53,
+    "productId": 610676,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 9.85,
+    "livePrice": 9.85
+  },
+  {
+    "rank": 54,
+    "productId": 610672,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 9.76,
+    "livePrice": 9.76
+  },
+  {
+    "rank": 55,
+    "productId": 610682,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 9.46,
+    "livePrice": 9.46
+  },
+  {
+    "rank": 56,
+    "productId": 610693,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 9.24,
+    "livePrice": 9.24
+  },
+  {
+    "rank": 57,
+    "productId": 610665,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 9.06,
+    "livePrice": 9.06
+  },
+  {
+    "rank": 58,
+    "productId": 610671,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 8.81,
+    "livePrice": 8.81
+  },
+  {
+    "rank": 59,
+    "productId": 610698,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 8.54,
+    "livePrice": 8.54
+  },
+  {
+    "rank": 60,
+    "productId": 610702,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 8.21,
+    "livePrice": 8.21
+  },
+  {
+    "rank": 61,
+    "productId": 610669,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 7.6,
+    "livePrice": 7.6
+  },
+  {
+    "rank": 62,
+    "productId": 610683,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 7.39,
+    "livePrice": 7.39
+  },
+  {
+    "rank": 63,
+    "productId": 610415,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 7.28,
+    "livePrice": 7.28
+  },
+  {
+    "rank": 64,
+    "productId": 610701,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 6.88,
+    "livePrice": 6.88
+  },
+  {
+    "rank": 65,
+    "productId": 610533,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 6.86,
+    "livePrice": 6.86
+  },
+  {
+    "rank": 66,
+    "productId": 610668,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 6.79,
+    "livePrice": 6.79
+  },
+  {
+    "rank": 67,
+    "productId": 610678,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 6.66,
+    "livePrice": 6.66
+  },
+  {
+    "rank": 68,
+    "productId": 610677,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 6.38,
+    "livePrice": 6.38
+  },
+  {
+    "rank": 69,
+    "productId": 610531,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 6.11,
+    "livePrice": 6.11
+  },
+  {
+    "rank": 70,
+    "productId": 610649,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 6.11,
+    "livePrice": 6.11
+  },
+  {
+    "rank": 71,
+    "productId": 610663,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 6.1,
+    "livePrice": 6.1
+  },
+  {
+    "rank": 72,
+    "productId": 610430,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 6.09,
+    "livePrice": 6.09
+  },
+  {
+    "rank": 73,
+    "productId": 610675,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 6.05,
+    "livePrice": 6.05
+  },
+  {
+    "rank": 74,
+    "productId": 610685,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 5.37,
+    "livePrice": 5.37
+  },
+  {
+    "rank": 75,
+    "productId": 610369,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 5.13,
+    "livePrice": 5.13
+  },
+  {
+    "rank": 76,
+    "productId": 610688,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 4.94,
+    "livePrice": 4.94
+  },
+  {
+    "rank": 77,
+    "productId": 610361,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 4.59,
+    "livePrice": 4.59
+  },
+  {
+    "rank": 78,
+    "productId": 610385,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 4.16,
+    "livePrice": 4.16
+  },
+  {
+    "rank": 79,
+    "productId": 610578,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 4.16,
+    "livePrice": 4.16
+  },
+  {
+    "rank": 80,
+    "productId": 610389,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 4.06,
+    "livePrice": 4.06
+  },
+  {
+    "rank": 81,
+    "productId": 610367,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 3.68,
+    "livePrice": 3.68
+  },
+  {
+    "rank": 82,
+    "productId": 610640,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 3.51,
+    "livePrice": 3.51
+  },
+  {
+    "rank": 83,
+    "productId": 610689,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 3.29,
+    "livePrice": 3.29
+  },
+  {
+    "rank": 84,
+    "productId": 610378,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 3.11,
+    "livePrice": 3.11
+  },
+  {
+    "rank": 85,
+    "productId": 610690,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 3.06,
+    "livePrice": 3.06
+  },
+  {
+    "rank": 86,
+    "productId": 610644,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.92,
+    "livePrice": 2.92
+  },
+  {
+    "rank": 87,
+    "productId": 610659,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.86,
+    "livePrice": 2.86
+  },
+  {
+    "rank": 88,
+    "productId": 610563,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.74,
+    "livePrice": 2.74
+  },
+  {
+    "rank": 89,
+    "productId": 610396,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 2.74,
+    "livePrice": 2.74
+  },
+  {
+    "rank": 90,
+    "productId": 610652,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.61,
+    "livePrice": 2.61
+  },
+  {
+    "rank": 91,
+    "productId": 610381,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 2.54,
+    "livePrice": 2.54
+  },
+  {
+    "rank": 92,
+    "productId": 610645,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.37,
+    "livePrice": 2.37
+  },
+  {
+    "rank": 93,
+    "productId": 610651,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.36,
+    "livePrice": 2.36
+  },
+  {
+    "rank": 94,
+    "productId": 610699,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.35,
+    "livePrice": 2.35
+  },
+  {
+    "rank": 95,
+    "productId": 610383,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 2.33,
+    "livePrice": 2.33
+  },
+  {
+    "rank": 96,
+    "productId": 610613,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.28,
+    "livePrice": 2.28
+  },
+  {
+    "rank": 97,
+    "productId": 610660,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.27,
+    "livePrice": 2.27
+  },
+  {
+    "rank": 98,
+    "productId": 610650,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.22,
+    "livePrice": 2.22
+  },
+  {
+    "rank": 99,
+    "productId": 650960,
+    "cardName": "Calendar",
+    "number": null,
+    "snapshotPrice": 2.15,
+    "livePrice": 2.15
+  },
+  {
+    "rank": 100,
+    "productId": 610670,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 2.1,
+    "livePrice": 2.1
+  },
+  {
+    "rank": 101,
+    "productId": 610687,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.88,
+    "livePrice": 1.88
+  },
+  {
+    "rank": 102,
+    "productId": 610692,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.77,
+    "livePrice": 1.77
+  },
+  {
+    "rank": 103,
+    "productId": 610694,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.72,
+    "livePrice": 1.72
+  },
+  {
+    "rank": 104,
+    "productId": 610681,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.68,
+    "livePrice": 1.68
+  },
+  {
+    "rank": 105,
+    "productId": 610545,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.62,
+    "livePrice": 1.62
+  },
+  {
+    "rank": 106,
+    "productId": 610431,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 1.58,
+    "livePrice": 1.58
+  },
+  {
+    "rank": 107,
+    "productId": 610637,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.54,
+    "livePrice": 1.54
+  },
+  {
+    "rank": 108,
+    "productId": 610540,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.54,
+    "livePrice": 1.54
+  },
+  {
+    "rank": 109,
+    "productId": 610552,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.52,
+    "livePrice": 1.52
+  },
+  {
+    "rank": 110,
+    "productId": 610704,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.5,
+    "livePrice": 1.5
+  },
+  {
+    "rank": 111,
+    "productId": 610437,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 1.46,
+    "livePrice": 1.46
+  },
+  {
+    "rank": 112,
+    "productId": 610697,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.45,
+    "livePrice": 1.45
+  },
+  {
+    "rank": 113,
+    "productId": 610557,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.44,
+    "livePrice": 1.44
+  },
+  {
+    "rank": 114,
+    "productId": 610555,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.43,
+    "livePrice": 1.43
+  },
+  {
+    "rank": 115,
+    "productId": 610639,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.43,
+    "livePrice": 1.43
+  },
+  {
+    "rank": 116,
+    "productId": 610703,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.42,
+    "livePrice": 1.42
+  },
+  {
+    "rank": 117,
+    "productId": 610647,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.38,
+    "livePrice": 1.38
+  },
+  {
+    "rank": 118,
+    "productId": 610700,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.33,
+    "livePrice": 1.33
+  },
+  {
+    "rank": 119,
+    "productId": 610662,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.33,
+    "livePrice": 1.33
+  },
+  {
+    "rank": 120,
+    "productId": 610590,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.32,
+    "livePrice": 1.32
+  },
+  {
+    "rank": 121,
+    "productId": 610696,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.32,
+    "livePrice": 1.32
+  },
+  {
+    "rank": 122,
+    "productId": 610648,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.31,
+    "livePrice": 1.31
+  },
+  {
+    "rank": 123,
+    "productId": 610642,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.28,
+    "livePrice": 1.28
+  },
+  {
+    "rank": 124,
+    "productId": 610428,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 1.26,
+    "livePrice": 1.26
+  },
+  {
+    "rank": 125,
+    "productId": 610680,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.2,
+    "livePrice": 1.2
+  },
+  {
+    "rank": 126,
+    "productId": 616165,
+    "cardName": "Box",
+    "number": null,
+    "snapshotPrice": 1.19,
+    "livePrice": 1.19
+  },
+  {
+    "rank": 127,
+    "productId": 610674,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.17,
+    "livePrice": 1.17
+  },
+  {
+    "rank": 128,
+    "productId": 632695,
+    "cardName": "Collection",
+    "number": null,
+    "snapshotPrice": 1.15,
+    "livePrice": 1.15
+  },
+  {
+    "rank": 129,
+    "productId": 610554,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.15,
+    "livePrice": 1.15
+  },
+  {
+    "rank": 130,
+    "productId": 610686,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.05,
+    "livePrice": 1.05
+  },
+  {
+    "rank": 131,
+    "productId": 610684,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 1.04,
+    "livePrice": 1.04
+  },
+  {
+    "rank": 132,
+    "productId": 610413,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 1.02,
+    "livePrice": 1.02
+  },
+  {
+    "rank": 133,
+    "productId": 610491,
+    "cardName": "Eri",
+    "number": null,
+    "snapshotPrice": 0.99,
+    "livePrice": 0.99
+  },
+  {
+    "rank": 134,
+    "productId": 610492,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.99,
+    "livePrice": 0.99
+  },
+  {
+    "rank": 135,
+    "productId": 610558,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.97,
+    "livePrice": 0.97
+  },
+  {
+    "rank": 136,
+    "productId": 610494,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.95,
+    "livePrice": 0.95
+  },
+  {
+    "rank": 137,
+    "productId": 610588,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.89,
+    "livePrice": 0.89
+  },
+  {
+    "rank": 138,
+    "productId": 610366,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 0.82,
+    "livePrice": 0.82
+  },
+  {
+    "rank": 139,
+    "productId": 610382,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.82,
+    "livePrice": 0.82
+  },
+  {
+    "rank": 140,
+    "productId": 610589,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.81,
+    "livePrice": 0.81
+  },
+  {
+    "rank": 141,
+    "productId": 610612,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.78,
+    "livePrice": 0.78
+  },
+  {
+    "rank": 142,
+    "productId": 610406,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 0.78,
+    "livePrice": 0.78
+  },
+  {
+    "rank": 143,
+    "productId": 610488,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.77,
+    "livePrice": 0.77
+  },
+  {
+    "rank": 144,
+    "productId": 610474,
+    "cardName": "Catcher",
+    "number": null,
+    "snapshotPrice": 0.77,
+    "livePrice": 0.77
+  },
+  {
+    "rank": 145,
+    "productId": 610387,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 0.76,
+    "livePrice": 0.76
+  },
+  {
+    "rank": 146,
+    "productId": 610594,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.74,
+    "livePrice": 0.74
+  },
+  {
+    "rank": 147,
+    "productId": 610471,
+    "cardName": "Rod",
+    "number": null,
+    "snapshotPrice": 0.73,
+    "livePrice": 0.73
+  },
+  {
+    "rank": 148,
+    "productId": 610495,
+    "cardName": "Mela",
+    "number": null,
+    "snapshotPrice": 0.72,
+    "livePrice": 0.72
+  },
+  {
+    "rank": 149,
+    "productId": 610419,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 0.72,
+    "livePrice": 0.72
+  },
+  {
+    "rank": 150,
+    "productId": 610489,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.69,
+    "livePrice": 0.69
+  },
+  {
+    "rank": 151,
+    "productId": 610566,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.68,
+    "livePrice": 0.68
+  },
+  {
+    "rank": 152,
+    "productId": 610372,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.65,
+    "livePrice": 0.65
+  },
+  {
+    "rank": 153,
+    "productId": 610497,
+    "cardName": "Raifort",
+    "number": null,
+    "snapshotPrice": 0.65,
+    "livePrice": 0.65
+  },
+  {
+    "rank": 154,
+    "productId": 610447,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.65,
+    "livePrice": 0.65
+  },
+  {
+    "rank": 155,
+    "productId": 610446,
+    "cardName": "Ex",
+    "number": null,
+    "snapshotPrice": 0.63,
+    "livePrice": 0.63
+  },
+  {
+    "rank": 156,
+    "productId": 610560,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.6,
+    "livePrice": 0.6
+  },
+  {
+    "rank": 157,
+    "productId": 610539,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.59,
+    "livePrice": 0.59
+  },
+  {
+    "rank": 158,
+    "productId": 610548,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.58,
+    "livePrice": 0.58
+  },
+  {
+    "rank": 159,
+    "productId": 610616,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.55,
+    "livePrice": 0.55
+  },
+  {
+    "rank": 160,
+    "productId": 610472,
+    "cardName": "Belt",
+    "number": null,
+    "snapshotPrice": 0.55,
+    "livePrice": 0.55
+  },
+  {
+    "rank": 161,
+    "productId": 610414,
+    "cardName": "Umbreon",
+    "number": null,
+    "snapshotPrice": 0.55,
+    "livePrice": 0.55
+  },
+  {
+    "rank": 162,
+    "productId": 610487,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.54,
+    "livePrice": 0.54
+  },
+  {
+    "rank": 163,
+    "productId": 610386,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.54,
+    "livePrice": 0.54
+  },
+  {
+    "rank": 164,
+    "productId": 610496,
+    "cardName": "Ortega",
+    "number": null,
+    "snapshotPrice": 0.52,
+    "livePrice": 0.52
+  },
+  {
+    "rank": 165,
+    "productId": 610411,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.52,
+    "livePrice": 0.52
+  },
+  {
+    "rank": 166,
+    "productId": 610493,
+    "cardName": "Giacomo",
+    "number": null,
+    "snapshotPrice": 0.49,
+    "livePrice": 0.49
+  },
+  {
+    "rank": 167,
+    "productId": 610593,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.47,
+    "livePrice": 0.47
+  },
+  {
+    "rank": 168,
+    "productId": 610559,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.46,
+    "livePrice": 0.46
+  },
+  {
+    "rank": 169,
+    "productId": 610490,
+    "cardName": "Brassius",
+    "number": null,
+    "snapshotPrice": 0.45,
+    "livePrice": 0.45
+  },
+  {
+    "rank": 170,
+    "productId": 610571,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.45,
+    "livePrice": 0.45
+  },
+  {
+    "rank": 171,
+    "productId": 610498,
+    "cardName": "Tyme",
+    "number": null,
+    "snapshotPrice": 0.45,
+    "livePrice": 0.45
+  },
+  {
+    "rank": 172,
+    "productId": 610581,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.44,
+    "livePrice": 0.44
+  },
+  {
+    "rank": 173,
+    "productId": 610567,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.43,
+    "livePrice": 0.43
+  },
+  {
+    "rank": 174,
+    "productId": 610483,
+    "cardName": "Cyclone",
+    "number": null,
+    "snapshotPrice": 0.43,
+    "livePrice": 0.43
+  },
+  {
+    "rank": 175,
+    "productId": 610388,
+    "cardName": "Espeon",
+    "number": null,
+    "snapshotPrice": 0.42,
+    "livePrice": 0.42
+  },
+  {
+    "rank": 176,
+    "productId": 610569,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.42,
+    "livePrice": 0.42
+  },
+  {
+    "rank": 177,
+    "productId": 610572,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.42,
+    "livePrice": 0.42
+  },
+  {
+    "rank": 178,
+    "productId": 610486,
+    "cardName": "Tracker",
+    "number": null,
+    "snapshotPrice": 0.42,
+    "livePrice": 0.42
+  },
+  {
+    "rank": 179,
+    "productId": 610602,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.41,
+    "livePrice": 0.41
+  },
+  {
+    "rank": 180,
+    "productId": 610384,
+    "cardName": "Jolteon",
+    "number": null,
+    "snapshotPrice": 0.41,
+    "livePrice": 0.41
+  },
+  {
+    "rank": 181,
+    "productId": 610553,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.41,
+    "livePrice": 0.41
+  },
+  {
+    "rank": 182,
+    "productId": 610564,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.4,
+    "livePrice": 0.4
+  },
+  {
+    "rank": 183,
+    "productId": 610615,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.39,
+    "livePrice": 0.39
+  },
+  {
+    "rank": 184,
+    "productId": 610380,
+    "cardName": "Glaceon",
+    "number": null,
+    "snapshotPrice": 0.39,
+    "livePrice": 0.39
+  },
+  {
+    "rank": 185,
+    "productId": 610550,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.39,
+    "livePrice": 0.39
+  },
+  {
+    "rank": 186,
+    "productId": 610592,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.38,
+    "livePrice": 0.38
+  },
+  {
+    "rank": 187,
+    "productId": 610635,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.38,
+    "livePrice": 0.38
+  },
+  {
+    "rank": 188,
+    "productId": 610395,
+    "cardName": "Sylveon",
+    "number": null,
+    "snapshotPrice": 0.38,
+    "livePrice": 0.38
+  },
+  {
+    "rank": 189,
+    "productId": 610565,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.37,
+    "livePrice": 0.37
+  },
+  {
+    "rank": 190,
+    "productId": 610551,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.37,
+    "livePrice": 0.37
+  },
+  {
+    "rank": 191,
+    "productId": 610484,
+    "cardName": "Crystal",
+    "number": null,
+    "snapshotPrice": 0.37,
+    "livePrice": 0.37
+  },
+  {
+    "rank": 192,
+    "productId": 610619,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 193,
+    "productId": 610368,
+    "cardName": "Flareon",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 194,
+    "productId": 610633,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 195,
+    "productId": 610549,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.36,
+    "livePrice": 0.36
+  },
+  {
+    "rank": 196,
+    "productId": 610543,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 197,
+    "productId": 610575,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 198,
+    "productId": 610544,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 199,
+    "productId": 610617,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 200,
+    "productId": 610538,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 201,
+    "productId": 610631,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 202,
+    "productId": 610630,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 203,
+    "productId": 610599,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.35,
+    "livePrice": 0.35
+  },
+  {
+    "rank": 204,
+    "productId": 610607,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 205,
+    "productId": 610596,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 206,
+    "productId": 610621,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 207,
+    "productId": 610624,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 208,
+    "productId": 610626,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 209,
+    "productId": 610360,
+    "cardName": "Leafeon",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 210,
+    "productId": 610546,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 211,
+    "productId": 610399,
+    "cardName": "Munkidori",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 212,
+    "productId": 610603,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 213,
+    "productId": 610577,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 214,
+    "productId": 610377,
+    "cardName": "Vaporeon",
+    "number": null,
+    "snapshotPrice": 0.34,
+    "livePrice": 0.34
+  },
+  {
+    "rank": 215,
+    "productId": 610605,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 216,
+    "productId": 610562,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 217,
+    "productId": 610606,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 218,
+    "productId": 610609,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 219,
+    "productId": 610610,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 220,
+    "productId": 610598,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 221,
+    "productId": 610568,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 222,
+    "productId": 610561,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.33,
+    "livePrice": 0.33
+  },
+  {
+    "rank": 223,
+    "productId": 610429,
+    "cardName": "Eevee",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 224,
+    "productId": 610580,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 225,
+    "productId": 610597,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 226,
+    "productId": 610627,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 227,
+    "productId": 610547,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 228,
+    "productId": 610582,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.32,
+    "livePrice": 0.32
+  },
+  {
+    "rank": 229,
+    "productId": 610583,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 230,
+    "productId": 610461,
+    "cardName": "Vessel",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 231,
+    "productId": 610537,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 232,
+    "productId": 610591,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 233,
+    "productId": 610623,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 234,
+    "productId": 610628,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 235,
+    "productId": 610629,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 236,
+    "productId": 610632,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 237,
+    "productId": 610542,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.31,
+    "livePrice": 0.31
+  },
+  {
+    "rank": 238,
+    "productId": 610614,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 239,
+    "productId": 610435,
+    "cardName": "Dudunsparce",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 240,
+    "productId": 610618,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 241,
+    "productId": 610585,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 242,
+    "productId": 610625,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 243,
+    "productId": 610634,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 244,
+    "productId": 610579,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.3,
+    "livePrice": 0.3
+  },
+  {
+    "rank": 245,
+    "productId": 610611,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 246,
+    "productId": 610620,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 247,
+    "productId": 610622,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 248,
+    "productId": 610573,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 249,
+    "productId": 610600,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.29,
+    "livePrice": 0.29
+  },
+  {
+    "rank": 250,
+    "productId": 610359,
+    "cardName": "Budew",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 251,
+    "productId": 610541,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 252,
+    "productId": 610586,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 253,
+    "productId": 610536,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 254,
+    "productId": 610595,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.28,
+    "livePrice": 0.28
+  },
+  {
+    "rank": 255,
+    "productId": 610449,
+    "cardName": "Underdepths",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 256,
+    "productId": 610608,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 257,
+    "productId": 610392,
+    "cardName": "Dusknoir",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 258,
+    "productId": 610574,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 259,
+    "productId": 610570,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 260,
+    "productId": 610636,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.27,
+    "livePrice": 0.27
+  },
+  {
+    "rank": 261,
+    "productId": 610584,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 262,
+    "productId": 610427,
+    "cardName": "Drakloak",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 263,
+    "productId": 610601,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 264,
+    "productId": 610576,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.26,
+    "livePrice": 0.26
+  },
+  {
+    "rank": 265,
+    "productId": 610460,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 266,
+    "productId": 610418,
+    "cardName": "Houndoom",
+    "number": null,
+    "snapshotPrice": 0.25,
+    "livePrice": 0.25
+  },
+  {
+    "rank": 267,
+    "productId": 610604,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 268,
+    "productId": 610457,
+    "cardName": "Set",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 269,
+    "productId": 610365,
+    "cardName": "Dipplin",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 270,
+    "productId": 610426,
+    "cardName": "Dreepy",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 271,
+    "productId": 610390,
+    "cardName": "Duskull",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 272,
+    "productId": 610444,
+    "cardName": "Hawlucha",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 273,
+    "productId": 610433,
+    "cardName": "Noctowl",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 274,
+    "productId": 610441,
+    "cardName": "Regigigas",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 275,
+    "productId": 610420,
+    "cardName": "Moon",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 276,
+    "productId": 610376,
+    "cardName": "Seaking",
+    "number": null,
+    "snapshotPrice": 0.24,
+    "livePrice": 0.24
+  },
+  {
+    "rank": 277,
+    "productId": 610456,
+    "cardName": "Poffin",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 278,
+    "productId": 610443,
+    "cardName": "Furfrou",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 279,
+    "productId": 610404,
+    "cardName": "Groudon",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 280,
+    "productId": 610482,
+    "cardName": "Stick",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 281,
+    "productId": 610397,
+    "cardName": "Tail",
+    "number": null,
+    "snapshotPrice": 0.23,
+    "livePrice": 0.23
+  },
+  {
+    "rank": 282,
+    "productId": 610450,
+    "cardName": "Mochi",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 283,
+    "productId": 610362,
+    "cardName": "Cottonee",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 284,
+    "productId": 610391,
+    "cardName": "Dusclops",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 285,
+    "productId": 610463,
+    "cardName": "Grounds",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 286,
+    "productId": 610401,
+    "cardName": "Boulder",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 287,
+    "productId": 610479,
+    "cardName": "Rowan",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 288,
+    "productId": 610405,
+    "cardName": "Riolu",
+    "number": null,
+    "snapshotPrice": 0.22,
+    "livePrice": 0.22
+  },
+  {
+    "rank": 289,
+    "productId": 610587,
+    "cardName": "Pattern",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 290,
+    "productId": 610394,
+    "cardName": "Aromatisse",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 291,
+    "productId": 610451,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 292,
+    "productId": 610409,
+    "cardName": "Ursaluna",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 293,
+    "productId": 610458,
+    "cardName": "Carmine",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 294,
+    "productId": 610424,
+    "cardName": "Duraludon",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 295,
+    "productId": 610440,
+    "cardName": "Rotom",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 296,
+    "productId": 610375,
+    "cardName": "Goldeen",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 297,
+    "productId": 610467,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 298,
+    "productId": 610470,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 299,
+    "productId": 610371,
+    "cardName": "Pyroar",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 300,
+    "productId": 610374,
+    "cardName": "Slowking",
+    "number": null,
+    "snapshotPrice": 0.21,
+    "livePrice": 0.21
+  },
+  {
+    "rank": 301,
+    "productId": 610422,
+    "cardName": "Bronzong",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 302,
+    "productId": 610438,
+    "cardName": "Buneary",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 303,
+    "productId": 610459,
+    "cardName": "Codebreaking",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 304,
+    "productId": 610434,
+    "cardName": "Dunsparce",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 305,
+    "productId": 610400,
+    "cardName": "Fezandipiti",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 306,
+    "productId": 610423,
+    "cardName": "Heatran",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 307,
+    "productId": 610436,
+    "cardName": "Miltank",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 308,
+    "productId": 610477,
+    "cardName": "Oak",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 309,
+    "productId": 610373,
+    "cardName": "Slowpoke",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 310,
+    "productId": 610416,
+    "cardName": "Sneasel",
+    "number": null,
+    "snapshotPrice": 0.2,
+    "livePrice": 0.2
+  },
+  {
+    "rank": 311,
+    "productId": 610356,
+    "cardName": "Exeggcute",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 312,
+    "productId": 610462,
+    "cardName": "Guidance",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 313,
+    "productId": 610410,
+    "cardName": "Tusk",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 314,
+    "productId": 610439,
+    "cardName": "Lopunny",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 315,
+    "productId": 610445,
+    "cardName": "Noibat",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 316,
+    "productId": 610393,
+    "cardName": "Spritzee",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 317,
+    "productId": 610379,
+    "cardName": "Suicune",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 318,
+    "productId": 610363,
+    "cardName": "Whimsicott",
+    "number": null,
+    "snapshotPrice": 0.19,
+    "livePrice": 0.19
+  },
+  {
+    "rank": 319,
+    "productId": 610357,
+    "cardName": "Exeggutor",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 320,
+    "productId": 610475,
+    "cardName": "Vitality",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 321,
+    "productId": 610476,
+    "cardName": "Scenario",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 322,
+    "productId": 610478,
+    "cardName": "Elm",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 323,
+    "productId": 610403,
+    "cardName": "Pupitar",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 324,
+    "productId": 610481,
+    "cardName": "Board",
+    "number": null,
+    "snapshotPrice": 0.18,
+    "livePrice": 0.18
+  },
+  {
+    "rank": 325,
+    "productId": 610364,
+    "cardName": "Applin",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 326,
+    "productId": 610425,
+    "cardName": "Archaludon",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 327,
+    "productId": 610455,
+    "cardName": "Briar",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 328,
+    "productId": 625144,
+    "cardName": "Box",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 329,
+    "productId": 610468,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 330,
+    "productId": 610402,
+    "cardName": "Larvitar",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 331,
+    "productId": 610370,
+    "cardName": "Litleo",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 332,
+    "productId": 610473,
+    "cardName": "Mask",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 333,
+    "productId": 610412,
+    "cardName": "Okidogi",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 334,
+    "productId": 610480,
+    "cardName": "Sycamore",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 335,
+    "productId": 610442,
+    "cardName": "Shaymin",
+    "number": null,
+    "snapshotPrice": 0.17,
+    "livePrice": 0.17
+  },
+  {
+    "rank": 336,
+    "productId": 610452,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 337,
+    "productId": 610454,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 338,
+    "productId": 610464,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 339,
+    "productId": 610465,
+    "cardName": "Trumpet",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 340,
+    "productId": 610466,
+    "cardName": "Berry",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 341,
+    "productId": 610417,
+    "cardName": "Houndour",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 342,
+    "productId": 610469,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 343,
+    "productId": 610485,
+    "cardName": "Radar",
+    "number": null,
+    "snapshotPrice": 0.16,
+    "livePrice": 0.16
+  },
+  {
+    "rank": 344,
+    "productId": 610448,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 345,
+    "productId": 610421,
+    "cardName": "Bronzor",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 346,
+    "productId": 610398,
+    "cardName": "Mane",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 347,
+    "productId": 610408,
+    "cardName": "Hippowdon",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 348,
+    "productId": 610432,
+    "cardName": "Hoothoot",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 349,
+    "productId": 610358,
+    "cardName": "Pinsir",
+    "number": null,
+    "snapshotPrice": 0.15,
+    "livePrice": 0.15
+  },
+  {
+    "rank": 350,
+    "productId": 610453,
+    "cardName": "131",
+    "number": null,
+    "snapshotPrice": 0.14,
+    "livePrice": 0.14
+  },
+  {
+    "rank": 351,
+    "productId": 610407,
+    "cardName": "Hippopotas",
+    "number": null,
+    "snapshotPrice": 0.14,
+    "livePrice": 0.14
+  },
+  {
+    "rank": 352,
+    "productId": 616163,
+    "cardName": "Box",
+    "number": null,
+    "snapshotPrice": 0.1,
+    "livePrice": 0.1
+  },
+  {
+    "rank": 353,
+    "productId": 630093,
+    "cardName": "Blister",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 354,
+    "productId": 616180,
+    "cardName": "Collection",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 355,
+    "productId": 616171,
+    "cardName": "Glaceon",
+    "number": null,
+    "snapshotPrice": 0.05,
+    "livePrice": 0.05
+  },
+  {
+    "rank": 356,
+    "productId": 614046,
+    "cardName": "Pack",
+    "number": null,
+    "snapshotPrice": 0.03,
+    "livePrice": 0.03
+  }
+]
