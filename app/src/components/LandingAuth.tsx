@@ -241,10 +241,10 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           <div className="hidden md:block"><Logo width={320} /></div>
         </div>
 
-        {/* Card fan — contained height, no overflow into text */}
+        {/* Card fan — overflow clipped so cards don't bleed into text */}
         <div
-          className="relative flex items-end justify-center"
-          style={{ height: 120, width: "100%", maxWidth: 400, marginBottom: 4 }}
+          className="relative flex items-end justify-center overflow-hidden"
+          style={{ height: 130, width: "100%", maxWidth: 400, marginBottom: 8 }}
         >
           {LANDING_CARDS.map((card, i) => (
             <div
