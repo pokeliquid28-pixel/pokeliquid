@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletReadyState } from "@solana/wallet-adapter-base";
 import { Keypair } from "@solana/web3.js";
+import { LayoutGrid, ArrowUpDown, LineChart } from "lucide-react";
 import {
   setSessionFromPrivateKey,
   setSavedEmail,
@@ -68,13 +69,15 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
   // Animation state
   const [logoVisible, setLogoVisible] = useState(false);
   const [cardsVisible, setCardsVisible] = useState(false);
+  const [stepsVisible, setStepsVisible] = useState(false);
   const [ctaVisible, setCtaVisible] = useState(false);
 
   useEffect(() => {
     const t1 = setTimeout(() => setLogoVisible(true), 100);
     const t2 = setTimeout(() => setCardsVisible(true), 400);
-    const t3 = setTimeout(() => setCtaVisible(true), 800);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t3 = setTimeout(() => setStepsVisible(true), 900);
+    const t4 = setTimeout(() => setCtaVisible(true), 1200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, []);
 
   // When an external wallet connects, pass through
@@ -486,15 +489,21 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
     );
   }
 
+  const STEPS = [
+    { num: 1, label: "PICK A CARD", desc: "Choose from live Pok\u00e9mon card markets", Icon: LayoutGrid },
+    { num: 2, label: "LONG / SHORT", desc: "Bet up or down with up to 25x leverage", Icon: ArrowUpDown },
+    { num: 3, label: "MANAGE PNL", desc: "Track your profit and close anytime", Icon: LineChart },
+  ];
+
   // Landing page with card fan
   return (
     <div
-      className="h-[100dvh] flex flex-col items-center justify-center px-4 overflow-hidden"
+      className="min-h-[100dvh] flex flex-col items-center justify-center px-4 py-8 overflow-hidden"
       style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* Logo */}
       <div
-        className="mb-4 md:mb-6 transition-all duration-700"
+        className="mb-4 md:mb-5 transition-all duration-700"
         style={{
           opacity: logoVisible ? 1 : 0,
           transform: logoVisible ? "translateY(0)" : "translateY(-20px)",
@@ -508,11 +517,43 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         </div>
       </div>
 
+      {/* Headline */}
+      <h1
+        className="text-center font-mono font-bold transition-all duration-700 mb-2 md:mb-3 px-2"
+        style={{
+          color: "#ffffff",
+          fontSize: "clamp(20px, 4vw, 32px)",
+          lineHeight: 1.2,
+          maxWidth: 600,
+          opacity: logoVisible ? 1 : 0,
+          transform: logoVisible ? "translateY(0)" : "translateY(-10px)",
+        }}
+      >
+        Bet on Pok&eacute;mon card prices without owning the card.
+      </h1>
+
+      {/* Subline */}
+      <p
+        className="text-center font-mono transition-all duration-700 mb-4 md:mb-5 px-4"
+        style={{
+          color: "#666",
+          fontSize: "clamp(11px, 1.8vw, 13px)",
+          lineHeight: 1.6,
+          maxWidth: 520,
+          opacity: logoVisible ? 1 : 0,
+          transform: logoVisible ? "translateY(0)" : "translateY(-10px)",
+          transitionDelay: "100ms",
+        }}
+      >
+        Go long if you think it goes up. Go short if you think it drops.
+        Set your collateral, choose your leverage, manage risk with stop loss and take profit.
+      </p>
+
       {/* Card fan */}
       <div
-        className="relative mb-8 md:mb-6 flex items-end justify-center"
+        className="relative mb-6 md:mb-5 flex items-end justify-center"
         style={{
-          height: "clamp(120px, 25vw, 300px)",
+          height: "clamp(100px, 22vw, 260px)",
           width: "100%",
           maxWidth: 600,
         }}
@@ -531,7 +572,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                 transitionDelay: `${i * 100}ms`,
                 left: `${10 + i * 16}%`,
                 bottom: 0,
-                width: "clamp(70px, 14vw, 140px)",
+                width: "clamp(60px, 13vw, 130px)",
                 zIndex: isCenter ? 10 : 5 - Math.abs(i - 2),
                 transformOrigin: "bottom center",
               }}
@@ -550,18 +591,72 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         })}
       </div>
 
-      {/* Tagline */}
-      <p
-        className="text-center mb-4 md:mb-6 font-mono transition-all duration-700"
-        style={{
-          color: "#666",
-          fontSize: "clamp(12px, 2vw, 14px)",
-          opacity: ctaVisible ? 1 : 0,
-          transform: ctaVisible ? "translateY(0)" : "translateY(10px)",
-        }}
+      {/* 3-Step Onboarding */}
+      <div
+        className="flex flex-col md:flex-row items-center md:items-start justify-center gap-4 md:gap-0 mb-6 md:mb-5 w-full"
+        style={{ maxWidth: 640 }}
       >
-        Pok&eacute;mon card perpetual futures on Solana
-      </p>
+        {STEPS.map((step, i) => (
+          <div key={step.num} className="flex items-center md:flex-col">
+            {/* Step card */}
+            <div
+              className="flex flex-row md:flex-col items-center md:items-center gap-3 md:gap-2 px-4 md:px-3 transition-all duration-600 ease-out"
+              style={{
+                opacity: stepsVisible ? 1 : 0,
+                transform: stepsVisible ? "translateX(0)" : "translateX(-20px)",
+                transitionDelay: `${i * 150}ms`,
+              }}
+            >
+              {/* Number badge */}
+              <div
+                className="flex-shrink-0 flex items-center justify-center font-mono font-bold"
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: "#00ff41",
+                  color: "#000",
+                  fontSize: 13,
+                }}
+              >
+                {step.num}
+              </div>
+
+              {/* Icon + text */}
+              <div className="flex flex-col md:items-center">
+                <step.Icon size={18} color="#00ff41" strokeWidth={1.5} className="mb-1 hidden md:block" />
+                <span
+                  className="font-mono font-bold text-xs tracking-wider"
+                  style={{ color: "#ffffff", fontSize: 11 }}
+                >
+                  {step.label}
+                </span>
+                <span
+                  className="font-mono text-xs mt-0.5"
+                  style={{ color: "#555", fontSize: 10, maxWidth: 180, textAlign: "center" }}
+                >
+                  {step.desc}
+                </span>
+              </div>
+            </div>
+
+            {/* Arrow between steps (not after last) */}
+            {i < STEPS.length - 1 && (
+              <span
+                className="hidden md:block mx-3 font-mono font-bold transition-all duration-600"
+                style={{
+                  color: "#00ff41",
+                  fontSize: 16,
+                  opacity: stepsVisible ? 1 : 0,
+                  transitionDelay: `${i * 150 + 75}ms`,
+                  marginTop: 14,
+                }}
+              >
+                &rarr;
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
 
       {/* CTA buttons */}
       <div
