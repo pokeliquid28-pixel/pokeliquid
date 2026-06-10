@@ -241,10 +241,10 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           <div className="hidden md:block"><Logo width={320} /></div>
         </div>
 
-        {/* Card fan */}
+        {/* Card fan — contained height, no overflow into text */}
         <div
-          className="relative mb-1 flex items-end justify-center"
-          style={{ height: "clamp(70px, 15vw, 160px)", width: "100%", maxWidth: 480 }}
+          className="relative flex items-end justify-center"
+          style={{ height: 120, width: "100%", maxWidth: 400, marginBottom: 4 }}
         >
           {LANDING_CARDS.map((card, i) => (
             <div
@@ -253,25 +253,25 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
               style={{
                 opacity: cardsVisible ? 1 : 0,
                 transform: cardsVisible
-                  ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i]}px) scale(${CARD_SCALES[i]})`
-                  : `rotate(0deg) translateY(60px) scale(1)`,
+                  ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i] * 0.6}px) scale(${CARD_SCALES[i]})`
+                  : `rotate(0deg) translateY(40px) scale(1)`,
                 transitionDelay: `${i * 100}ms`,
-                left: `${10 + i * 16}%`, bottom: 0,
-                width: "clamp(45px, 10vw, 95px)",
+                left: `${12 + i * 15}%`, bottom: 0,
+                width: 72,
                 zIndex: i === 2 ? 10 : 5 - Math.abs(i - 2),
                 transformOrigin: "bottom center",
               }}
             >
-              <img src={card.image} alt={card.name} className="w-full h-auto" style={{ filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.6))" }} draggable={false} />
+              <img src={card.image} alt={card.name} className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))" }} draggable={false} />
             </div>
           ))}
         </div>
 
-        <p className="text-center font-mono transition-all duration-700 mb-1" style={{ color: "#666", fontSize: "clamp(9px, 1.4vw, 11px)", opacity: cardsVisible ? 1 : 0 }}>
+        <p className="text-center font-mono transition-all duration-700 mb-1.5" style={{ color: "#666", fontSize: 11, opacity: cardsVisible ? 1 : 0 }}>
           Pok&eacute;mon card perpetual futures on Solana
         </p>
 
-        <p className="text-center font-mono transition-all duration-700 mb-3 md:mb-4 px-2" style={{ color: "#777", fontSize: "clamp(10px, 1.3vw, 12px)", lineHeight: 1.5, maxWidth: 520, opacity: logoVisible ? 1 : 0 }}>
+        <p className="text-center font-mono transition-all duration-700 mb-4 md:mb-5 px-2" style={{ color: "#777", fontSize: 12, lineHeight: 1.6, maxWidth: 520, opacity: logoVisible ? 1 : 0 }}>
           Bet on Pok&eacute;mon card prices without owning the card. Go long if you think Charizard goes up. Go short if you think it drops. Set your USDC collateral, choose leverage, and manage risk with stop loss / take profit.
         </p>
       </div>
