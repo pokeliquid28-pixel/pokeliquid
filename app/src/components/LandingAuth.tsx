@@ -232,19 +232,20 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* ── HERO ── */}
-      <div className="flex flex-col items-center flex-shrink-0 pt-3 md:pt-6">
+      <div className="flex flex-col items-center flex-shrink-0 pt-2 md:pt-4">
+        {/* Logo */}
         <div
-          className="transition-all duration-700"
+          className="transition-all duration-700 mb-0"
           style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)" }}
         >
           <div className="block md:hidden"><Logo size={100} /></div>
           <div className="hidden md:block"><Logo width={320} /></div>
         </div>
 
-        {/* Card fan — tight under logo */}
+        {/* Card fan — directly under logo, contained */}
         <div
-          className="relative flex items-end justify-center"
-          style={{ height: 140, width: "100%", maxWidth: 420, marginTop: -50, marginBottom: 10 }}
+          className="relative flex items-center justify-center"
+          style={{ height: 110, width: "100%", maxWidth: 400 }}
         >
           {LANDING_CARDS.map((card, i) => (
             <div
@@ -253,13 +254,15 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
               style={{
                 opacity: cardsVisible ? 1 : 0,
                 transform: cardsVisible
-                  ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i] * 0.6}px) scale(${CARD_SCALES[i]})`
+                  ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i] * 0.5}px) scale(${CARD_SCALES[i]})`
                   : `rotate(0deg) translateY(40px) scale(1)`,
                 transitionDelay: `${i * 100}ms`,
-                left: `${12 + i * 15}%`, bottom: 0,
-                width: 72,
+                left: `${12 + i * 15}%`,
+                top: "50%",
+                marginTop: -45,
+                width: 68,
                 zIndex: i === 2 ? 10 : 5 - Math.abs(i - 2),
-                transformOrigin: "bottom center",
+                transformOrigin: "center center",
               }}
             >
               <img src={card.image} alt={card.name} className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))" }} draggable={false} />
@@ -267,7 +270,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           ))}
         </div>
 
-        <p className="text-center font-mono transition-all duration-700 mb-1.5" style={{ color: "#666", fontSize: 11, opacity: cardsVisible ? 1 : 0 }}>
+        <p className="text-center font-mono transition-all duration-700 mt-1 mb-1" style={{ color: "#666", fontSize: 11, opacity: cardsVisible ? 1 : 0 }}>
           Pok&eacute;mon card perpetual futures on Solana
         </p>
 
