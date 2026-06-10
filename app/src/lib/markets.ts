@@ -89,6 +89,18 @@ export const MARKETS: Market[] = [
     type: "INDEX",
   },
   {
+    id: "DR-INDEX",
+    name: "DR-INDEX-PERP",
+    subtitle: "Destined Rivals Index \u00B7 All 256 Cards",
+    badge: "INDEX",
+    live: true,
+    oracleAddress: "13gcdJdVfn3mUFJtdDrnh956nPxNM9nFSuARrxZsGU3",
+    programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
+    image: "/dr-index.jpeg",
+    priceApiMarket: "DR-INDEX",
+    type: "INDEX",
+  },
+  {
     id: "PRISMATIC-ETB",
     name: "PRISMATIC-ETB-PERP",
     subtitle: "Prismatic Evolutions \u00B7 Sealed Product",
