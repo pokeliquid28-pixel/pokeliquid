@@ -235,7 +235,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       <div className="flex flex-col items-center flex-shrink-0 pt-3 md:pt-6">
         <div
           className="transition-all duration-700"
-          style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)", marginBottom: -10 }}
+          style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)", marginBottom: -60 }}
         >
           <div className="block md:hidden"><Logo size={100} /></div>
           <div className="hidden md:block"><Logo width={320} /></div>
