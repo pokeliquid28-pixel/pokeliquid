@@ -559,12 +559,7 @@ export default function PositionsPage() {
 function PositionsContent() {
   const margin = useMarginAccount();
   const { connected } = useWallet();
-
-  const totalPnl = margin.positions.reduce((sum, pos) => {
-    const oracle = getMarketForOracle(pos.oracle);
-    // We can't easily get oracle price here without hooks, so we show it per-card
-    return sum;
-  }, 0);
+  const [tab, setTab] = useState<"positions" | "history">("positions");
 
   return (
     <div
@@ -576,86 +571,110 @@ function PositionsContent() {
       }}
     >
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.05em" }}>
-            POSITIONS
-          </div>
-          <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
-            {margin.positions.length > 0
-              ? `${margin.positions.length} open position${margin.positions.length > 1 ? "s" : ""}`
-              : "No open positions"}
-          </div>
+        {/* Tab toggle */}
+        <div style={{ display: "flex", marginBottom: 24 }}>
+          {(["positions", "history"] as const).map((t) => {
+            const active = tab === t;
+            const label = t === "positions" ? "POSITIONS" : "TRADE HISTORY";
+            return (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                style={{
+                  flex: 1,
+                  padding: "12px 0",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  background: "none",
+                  border: "none",
+                  borderBottom: active ? "2px solid #00ff41" : "2px solid #1a1a1a",
+                  color: active ? "#00ff41" : "#555",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  transition: "color 0.15s, border-color 0.15s",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Account summary */}
-        {margin.exists && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-              gap: 1,
-              background: "#1a1a1a",
-              border: "1px solid #1a1a1a",
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ background: "#111", padding: "12px 16px" }}>
-              <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>Free Collateral</div>
-              <div style={{ fontSize: 14, color: "#00ff41", fontWeight: 700, marginTop: 4 }}>
-                ${rawToUsdc(margin.collateral).toFixed(2)}
+        {tab === "positions" ? (
+          <>
+            {/* Account summary */}
+            {margin.exists && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: 1,
+                  background: "#1a1a1a",
+                  border: "1px solid #1a1a1a",
+                  marginBottom: 24,
+                }}
+              >
+                <div style={{ background: "#111", padding: "12px 16px" }}>
+                  <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>Free Collateral</div>
+                  <div style={{ fontSize: 14, color: "#00ff41", fontWeight: 700, marginTop: 4 }}>
+                    ${rawToUsdc(margin.collateral).toFixed(2)}
+                  </div>
+                </div>
+                <div style={{ background: "#111", padding: "12px 16px" }}>
+                  <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>Open Positions</div>
+                  <div style={{ fontSize: 14, color: "#ccc", fontWeight: 700, marginTop: 4 }}>
+                    {margin.positions.length} / 5
+                  </div>
+                </div>
+                <div style={{ background: "#111", padding: "12px 16px" }}>
+                  <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Notional</div>
+                  <div style={{ fontSize: 14, color: "#ccc", fontWeight: 700, marginTop: 4 }}>
+                    ${rawToUsdc(margin.positions.reduce((s, p) => s + p.notional, 0)).toFixed(2)}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div style={{ background: "#111", padding: "12px 16px" }}>
-              <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>Open Positions</div>
-              <div style={{ fontSize: 14, color: "#ccc", fontWeight: 700, marginTop: 4 }}>
-                {margin.positions.length} / 5
-              </div>
-            </div>
-            <div style={{ background: "#111", padding: "12px 16px" }}>
-              <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Notional</div>
-              <div style={{ fontSize: 14, color: "#ccc", fontWeight: 700, marginTop: 4 }}>
-                ${rawToUsdc(margin.positions.reduce((s, p) => s + p.notional, 0)).toFixed(2)}
-              </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Positions */}
-        {margin.isLoading ? (
-          <div style={{ textAlign: "center", padding: "48px 16px", fontSize: 12, color: "#666" }}>
-            Loading positions...
-          </div>
-        ) : !connected ? (
-          <div style={{ textAlign: "center", padding: "48px 16px", fontSize: 12, color: "#666" }}>
-            Connect your wallet to view positions
-          </div>
-        ) : margin.positions.length === 0 ? (
-          <div style={{
-            textAlign: "center", padding: "48px 16px", fontSize: 12, color: "#666",
-            background: "#111", border: "1px solid #1a1a1a",
-          }}>
-            <div style={{ marginBottom: 8 }}>No open positions</div>
-            <a href="/" style={{ color: "#00ff41", textDecoration: "none", fontSize: 11 }}>
-              Open your first position &rarr;
-            </a>
-          </div>
+            {/* Positions */}
+            {margin.isLoading ? (
+              <div style={{ textAlign: "center", padding: "48px 16px", fontSize: 12, color: "#666" }}>
+                Loading positions...
+              </div>
+            ) : !connected ? (
+              <div style={{ textAlign: "center", padding: "48px 16px", fontSize: 12, color: "#666" }}>
+                Connect your wallet to view positions
+              </div>
+            ) : margin.positions.length === 0 ? (
+              <div style={{
+                textAlign: "center", padding: "48px 16px", fontSize: 12, color: "#666",
+                background: "#111", border: "1px solid #1a1a1a",
+              }}>
+                <div style={{ marginBottom: 8 }}>No open positions</div>
+                <a href="/" style={{ color: "#00ff41", textDecoration: "none", fontSize: 11 }}>
+                  Open your first position &rarr;
+                </a>
+              </div>
+            ) : (
+              margin.positions.map((pos) => (
+                <PositionCardStandalone
+                  key={pos.index}
+                  pos={pos}
+                  freeCollateral={margin.collateral}
+                  onMarginRefresh={margin.refresh}
+                />
+              ))
+            )}
+          </>
         ) : (
-          margin.positions.map((pos) => (
-            <PositionCardStandalone
-              key={pos.index}
-              pos={pos}
-              freeCollateral={margin.collateral}
-              onMarginRefresh={margin.refresh}
-            />
-          ))
-        )}
-
-        {/* Trade History */}
-        {connected && (
-          <div style={{ marginTop: 24 }}>
-            <TradeHistory />
-          </div>
+          /* Trade History tab */
+          connected ? (
+            <TradeHistory expanded />
+          ) : (
+            <div style={{ textAlign: "center", padding: "48px 16px", fontSize: 12, color: "#666" }}>
+              Connect your wallet to view trade history
+            </div>
+          )
         )}
       </div>
     </div>
