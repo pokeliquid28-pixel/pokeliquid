@@ -10,14 +10,14 @@ import { useOracle } from "@/hooks/useOracle";
 import { useProtocolState } from "@/hooks/useProtocolState";
 import { useMarginAccount, Position } from "@/hooks/useMarginAccount";
 import { useMarket } from "@/hooks/useMarket";
-import { useOrderBook } from "@/hooks/useOrderBook";
 import { useMarketState } from "@/hooks/useMarketState";
 import { usePositionPrice } from "@/hooks/usePositionPrice";
 import { useNotifications } from "@/providers/NotificationProvider";
 import { incrementTradeCount } from "@/components/SaveWalletSheet";
 import { getProgram } from "@/lib/program";
-import { MARKETS, Market } from "@/lib/markets";
+import { MARKETS, Market, MarketType } from "@/lib/markets";
 import { LandingAuth } from "@/components/LandingAuth";
+import { BinderCard } from "@/components/BinderCard";
 import { SwapModal } from "@/components/SwapModal";
 import { TradeHistory } from "@/components/TradeHistory";
 import { Skeleton } from "@/components/Skeleton";
@@ -91,44 +91,6 @@ function useStats(marketId?: string) {
   return stats;
 }
 
-// ── Recent Trades Hook ──────────────────────────────────────────────────────
-
-type RecentTrade = {
-  id: number;
-  timestamp: number;
-  user_pubkey: string;
-  direction: string;
-  notional: number;
-  entry_price: number | null;
-  exit_price: number | null;
-  pnl: number | null;
-  action: string;
-};
-
-function useRecentTrades(marketId: string) {
-  const [trades, setTrades] = useState<RecentTrade[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = () =>
-      fetch(`${API_BASE}/trades/recent?limit=20`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (!cancelled) {
-            setTrades(data.trades || []);
-            setLoading(false);
-          }
-        })
-        .catch(() => { if (!cancelled) setLoading(false); });
-    load();
-    const id = setInterval(load, 10_000);
-    return () => { cancelled = true; clearInterval(id); };
-  }, [marketId]);
-
-  return { trades, loading };
-}
-
 // ── Wallet Balance Hook ─────────────────────────────────────────────────────
 
 function useWalletUsdc() {
@@ -156,133 +118,6 @@ function useWalletUsdc() {
   return balance;
 }
 
-// ── Sidebar market item with its own oracle ─────────────────────────────────
-
-function MarketListItem({
-  m,
-  selected,
-  onSelect,
-}: {
-  m: Market;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const { price, readings, isLoading } = useOracle(m.oracleAddress, m.priceApiMarket);
-  const priceUsd = price / 1_000_000;
-
-  let pctChange = 0;
-  if (readings.length >= 2) {
-    const oldest = readings[0].price / 1_000_000;
-    if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
-  }
-
-  const noPrice = !isLoading && price === 0;
-  const disabled = !m.live || noPrice;
-
-  return (
-    <button
-      onClick={() => !disabled && onSelect()}
-      disabled={disabled}
-      className={`w-full text-left p-3 border-b border-border/50 transition-colors ${
-        selected
-          ? "border-l-2 border-l-long bg-long/5"
-          : "border-l-2 border-l-transparent hover:bg-white/[.02]"
-      } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        {m.image && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={m.image} alt={m.name} width={40} height={40} className="object-contain flex-shrink-0" style={{ imageRendering: "auto" }} />
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-primary truncate">{m.name}</span>
-            {!m.live && (
-              <span className="text-[8px] px-1.5 py-0.5 border border-secondary text-secondary uppercase flex-shrink-0 ml-1">Soon</span>
-            )}
-            {noPrice && m.live && (
-              <span className="text-[8px] px-1.5 py-0.5 border border-yellow-500/40 text-yellow-500 uppercase flex-shrink-0 ml-1">Awaiting Price</span>
-            )}
-            {m.badge && m.live && !noPrice && (
-              <span className="text-[8px] px-1.5 py-0.5 border border-long/40 text-long uppercase flex-shrink-0 ml-1">{m.badge}</span>
-            )}
-          </div>
-          <div className="text-[9px] text-secondary truncate">{m.subtitle}</div>
-          {m.live && (
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[11px] font-bold text-primary">
-                {isLoading ? "-.--" : noPrice ? "—" : `$${priceUsd.toFixed(2)}`}
-              </span>
-              {!isLoading && !noPrice && (
-                <span className={`text-[10px] font-bold ${pctChange >= 0 ? "text-long" : "text-short"}`}>
-                  {`${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2)}%`}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-// ── Mobile market sheet item ──────────────────────────────────────────────
-
-function MobileMarketItem({
-  m,
-  selected,
-  onSelect,
-}: {
-  m: Market;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const { price, readings, isLoading } = useOracle(m.oracleAddress, m.priceApiMarket);
-  const priceUsd = price / 1_000_000;
-
-  let pctChange = 0;
-  if (readings.length >= 2) {
-    const oldest = readings[0].price / 1_000_000;
-    if (oldest > 0) pctChange = ((priceUsd - oldest) / oldest) * 100;
-  }
-
-  const shortName = m.name.replace("-PERP", "");
-
-  return (
-    <button
-      onClick={onSelect}
-      className={`w-full flex items-center gap-3 px-4 py-3 border-b border-border/30 transition-colors ${
-        selected ? "bg-long/10 border-l-2 border-l-long" : "border-l-2 border-l-transparent active:bg-white/5"
-      }`}
-    >
-      {m.image && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={m.image} alt="" width={36} height={36} className="object-contain flex-shrink-0 rounded" />
-      )}
-      <div className="flex-1 min-w-0 text-left">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-primary truncate">{shortName}</span>
-          {m.badge && (
-            <span className="text-[8px] px-1 py-0.5 border border-long/40 text-long uppercase flex-shrink-0">{m.badge}</span>
-          )}
-        </div>
-        <div className="text-[10px] text-secondary truncate">{m.subtitle}</div>
-      </div>
-      <div className="text-right flex-shrink-0">
-        <div className="text-xs font-bold text-primary">
-          {isLoading ? "-.--" : `$${priceUsd.toFixed(2)}`}
-        </div>
-        {!isLoading && priceUsd > 0 && (
-          <div className={`text-[10px] font-bold ${pctChange >= 0 ? "text-long" : "text-short"}`}>
-            {pctChange >= 0 ? "+" : ""}{pctChange.toFixed(2)}%
-          </div>
-        )}
-      </div>
-      {selected && <span className="text-long text-sm flex-shrink-0">✓</span>}
-    </button>
-  );
-}
-
 // ═════════════════════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ═════════════════════════════════════════════════════════════════════════════
@@ -296,17 +131,15 @@ export default function TradePage() {
   const protocol = useProtocolState();
   const marketState = useMarketState(selectedMarket.id);
   const margin = useMarginAccount();
-  const { asks, bids } = useOrderBook(selectedMarket.id);
   const stats = useStats(selectedMarket.id);
-  const { trades: recentTrades, loading: tradesLoading } = useRecentTrades(selectedMarket.id);
   const walletUsdc = useWalletUsdc();
   const { addNotification } = useNotifications();
   const [refreshKey, setRefreshKey] = useState(0);
-  const [marketSearch, setMarketSearch] = useState("");
-  const [mobileTab, setMobileTab] = useState<"trade" | "positions">("trade");
-  const [mobileMarketOpen, setMobileMarketOpen] = useState(false);
   const [showCardInfo, setShowCardInfo] = useState(false);
   const [cardInfo, setCardInfo] = useState<CardInfoData | null>(null);
+  const [tradeSheetOpen, setTradeSheetOpen] = useState(false);
+  const [binderSearch, setBinderSearch] = useState("");
+  const [binderFilter, setBinderFilter] = useState<"ALL" | MarketType>("ALL");
 
   // Fetch card info for selected market
   useEffect(() => {
@@ -352,258 +185,90 @@ export default function TradePage() {
     if (first > 0) change24h = ((last - first) / first) * 100;
   }
 
-  const filteredMarkets = markets.filter((m) =>
-    m.name.toLowerCase().includes(marketSearch.toLowerCase()) ||
-    m.subtitle.toLowerCase().includes(marketSearch.toLowerCase())
-  );
+  // Binder filtering
+  const binderMarkets = markets.filter((m) => {
+    const matchesSearch =
+      binderSearch === "" ||
+      m.name.toLowerCase().includes(binderSearch.toLowerCase()) ||
+      m.subtitle.toLowerCase().includes(binderSearch.toLowerCase());
+    const matchesFilter = binderFilter === "ALL" || m.type === binderFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const handleOpenTrade = (m: Market) => {
+    setSelectedMarket(m);
+    setTradeSheetOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setTradeSheetOpen(false);
+  };
+
+  const FILTER_CHIPS: { label: string; value: "ALL" | MarketType }[] = [
+    { label: "ALL", value: "ALL" },
+    { label: "SEALED", value: "SEALED" },
+    { label: "CARDS", value: "CARDS" },
+    { label: "INDEX", value: "INDEX" },
+  ];
 
   return (
-    <div className="flex flex-col">
-      {/* 3-column layout — fills viewport */}
-      <div className="flex h-[calc(100dvh-56px-56px)] md:h-[calc(100dvh-72px)]">
-        {/* ── LEFT COLUMN: Markets ──────────────────────────────────── */}
-        <div className="hidden lg:flex flex-col w-[220px] border-r border-border bg-panel flex-shrink-0">
-          {/* Markets header */}
-          <div className="p-3 border-b border-border">
-            <div className="text-[10px] uppercase tracking-wider text-secondary mb-2">Markets</div>
-            <input
-              type="text"
-              value={marketSearch}
-              onChange={(e) => setMarketSearch(e.target.value)}
-              placeholder="Search..."
-              className="field-input text-[11px] py-1.5"
-            />
-          </div>
+    <div className="flex flex-col min-h-[calc(100dvh-56px-56px)] md:min-h-[calc(100dvh-72px)]" style={{ backgroundColor: "#0a0a0a" }}>
 
-          {/* Market list */}
-          <div className="flex-1 overflow-y-auto">
-            {filteredMarkets.map((m) => (
-              <MarketListItem
-                key={m.id}
-                m={m}
-                selected={selectedMarket.id === m.id}
-                onSelect={() => setSelectedMarket(m)}
-              />
+      {/* ── BINDER GRID ──────────────────────────────────────────── */}
+      <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6 flex-1">
+        {/* Search + filters */}
+        <div className="max-w-[1200px] mx-auto mb-4 md:mb-6 space-y-3">
+          <input
+            type="text"
+            value={binderSearch}
+            onChange={(e) => setBinderSearch(e.target.value)}
+            placeholder="Search cards..."
+            className="w-full font-mono text-sm px-4 py-2.5"
+            style={{
+              background: "#111",
+              border: "1px solid #1a1a1a",
+              borderRadius: 8,
+              color: "#fff",
+              outline: "none",
+            }}
+          />
+          <div className="flex gap-2">
+            {FILTER_CHIPS.map((chip) => (
+              <button
+                key={chip.value}
+                onClick={() => setBinderFilter(chip.value)}
+                className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 transition-colors"
+                style={{
+                  borderRadius: 6,
+                  border: binderFilter === chip.value ? "1px solid #00ff41" : "1px solid #222",
+                  background: binderFilter === chip.value ? "rgba(0,255,65,0.08)" : "transparent",
+                  color: binderFilter === chip.value ? "#00ff41" : "#666",
+                  cursor: "pointer",
+                }}
+              >
+                {chip.label}
+              </button>
             ))}
           </div>
-
         </div>
 
-        {/* ── CENTER COLUMN: Chart + Order Entry ────────────────────── */}
-        <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
-          {/* Mobile tab bar: Trade / Positions — always visible when connected */}
-          {connected && (
-            <div className="md:hidden flex border-b border-border bg-panel sticky top-0 z-20">
-              <button
-                onClick={() => setMobileTab("trade")}
-                className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
-                  mobileTab === "trade" ? "text-primary border-b-2 border-long" : "text-secondary"
-                }`}
-              >
-                Trade
-              </button>
-              <button
-                onClick={() => setMobileTab("positions")}
-                className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-colors relative ${
-                  mobileTab === "positions" ? "text-primary border-b-2 border-long" : "text-secondary"
-                }`}
-              >
-                Positions ({margin.positions.length})
-                {margin.positions.length > 0 && mobileTab !== "positions" && (
-                  <span className="absolute top-1.5 right-[calc(50%-40px)] w-2 h-2 bg-long rounded-full" />
-                )}
-              </button>
-            </div>
-          )}
-          {/* Mobile: full-screen positions view */}
-          {mobileTab === "positions" && connected && (
-            <div className="md:hidden flex-1">
-              {margin.positions.length > 0 && (
-                <PositionsTable
-                  positions={margin.positions}
-                  protocol={protocol}
-                  margin={margin}
-                  onRefresh={handleRefresh}
-                  fullHeight
-                />
-              )}
-              <TradeHistory />
-            </div>
-          )}
-
-          {/* Trade content (hidden on mobile when positions tab active) */}
-          <div className={mobileTab === "positions" ? "hidden md:contents" : "contents"}>
-          {/* Market header bar */}
-          <div className="flex items-center gap-4 md:gap-6 px-4 py-3 border-b border-border bg-panel flex-wrap">
-            {/* Mobile: market selector button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setMobileMarketOpen(true)}
-                className="lg:hidden flex items-center gap-2"
-              >
-                {selectedMarket.image && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={selectedMarket.image} alt="" width={24} height={24} className="object-contain flex-shrink-0" />
-                )}
-                <span className="text-sm font-bold text-primary" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                  {selectedMarket.name.replace("-PERP", "").split("-").slice(0, 1)[0]}
-                </span>
-                <span className="text-secondary text-[10px]">&#9662;</span>
-              </button>
-              <span className="hidden lg:inline text-sm font-bold text-primary">{selectedMarket.name}</span>
-              <span className="hidden lg:inline text-secondary text-xs cursor-pointer">&#9662;</span>
-              {selectedMarket.badge && <span className="text-[9px] px-1.5 py-0.5 border border-long/40 text-long uppercase">{selectedMarket.badge}</span>}
-            </div>
-            <div>
-              <div className="text-lg font-bold text-long">${oracle.isLoading ? "—" : currentPrice.toFixed(2)}</div>
-            </div>
-            <div className="text-[11px]">
-              <div className="text-secondary text-[9px] uppercase">24h Change</div>
-              <div className={change24h >= 0 ? "text-long" : "text-short"}>
-                {readings.length < 2 ? "—" : `${change24h >= 0 ? "+" : ""}${change24h.toFixed(2)}%`}
-              </div>
-            </div>
-            <div className="text-[11px]">
-              <div className="text-secondary text-[9px] uppercase">24h Volume</div>
-              <div className="text-primary">
-                {stats ? `$${stats.total_volume_24h.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
-              </div>
-            </div>
-            <div className="text-[11px]">
-              <div className="text-secondary text-[9px] uppercase">Open Interest</div>
-              <div className="text-primary">
-                {protocol.isLoading ? "—" : `$${rawToUsdc(totalOI).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-              </div>
-            </div>
-          </div>
-
-          {/* Chart */}
-          <div className="border-b border-border bg-panel">
-            <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketId={selectedMarket.id} marketImage={selectedMarket.image} showCardInfo={showCardInfo} cardInfo={cardInfo} positions={margin.positions} selectedOracleAddress={selectedMarket.oracleAddress} />
-          </div>
-
-          {/* OI Bar */}
-          <div className="px-4 py-2 border-b border-border bg-panel flex items-center gap-3 text-[10px]">
-            <span className="text-secondary uppercase">Open Interest</span>
-            <div className="flex-1 flex h-1.5 bg-border overflow-hidden">
-              {totalOI > 0 ? (
-                <>
-                  <div className="bg-long transition-all" style={{ width: `${(marketState.longOi / totalOI) * 100}%` }} />
-                  <div className="bg-short transition-all" style={{ width: `${(marketState.shortOi / totalOI) * 100}%` }} />
-                </>
-              ) : (
-                <div className="bg-border w-full" />
-              )}
-            </div>
-            <span className="text-long">${rawToUsdc(marketState.longOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-            <span className="text-secondary">/</span>
-            <span className="text-short">${rawToUsdc(marketState.shortOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-            {cardInfo && (
-              <button
-                onClick={() => setShowCardInfo(!showCardInfo)}
-                className={`ml-1 px-2 py-0.5 uppercase tracking-wider border transition-colors ${
-                  showCardInfo
-                    ? "text-long border-long/40 bg-long/10"
-                    : "text-secondary border-border hover:text-primary hover:border-primary/30"
-                }`}
-              >
-                Market Data
-              </button>
-            )}
-          </div>
-
-          {/* Order Entry */}
-          <div className="p-4 bg-panel">
-            <OrderEntry
-              oracle={oracle}
-              protocol={protocol}
-              margin={margin}
-              walletUsdc={walletUsdc}
-              onRefresh={handleRefresh}
-              oracleAddress={selectedMarket.oracleAddress}
-              marketId={selectedMarket.id}
-              onPositionOpened={() => setMobileTab("positions")}
-            />
-          </div>
-          </div>{/* end trade content wrapper */}
+        {/* Grid */}
+        <div
+          className="max-w-[1200px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
+        >
+          {binderMarkets.map((m) => (
+            <BinderCard key={m.id} market={m} onTrade={handleOpenTrade} />
+          ))}
         </div>
 
-        {/* ── RIGHT COLUMN: Order Book + Recent Trades ──────────────── */}
-        <div className="hidden xl:flex flex-col w-[260px] border-l border-border bg-panel flex-shrink-0">
-          {/* Order Book */}
-          <div className="flex-1 border-b border-border">
-            <div className="p-3 border-b border-border">
-              <div className="text-[10px] uppercase tracking-wider text-secondary">Order Book</div>
-            </div>
-            <div className="p-3">
-              {asks.length === 0 && bids.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-[10px] text-secondary">Order book coming soon</div>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <div className="grid grid-cols-3 text-[9px] uppercase text-secondary mb-2">
-                    <span>Price</span>
-                    <span className="text-right">Size</span>
-                    <span className="text-right">Total</span>
-                  </div>
-                  {asks.map((a, i) => (
-                    <div key={`a-${i}`} className="grid grid-cols-3 text-[11px]">
-                      <span className="text-short">${a.price.toFixed(2)}</span>
-                      <span className="text-right text-primary">{a.size.toFixed(2)}</span>
-                      <span className="text-right text-secondary">{a.total.toFixed(2)}</span>
-                    </div>
-                  ))}
-                  {bids.map((b, i) => (
-                    <div key={`b-${i}`} className="grid grid-cols-3 text-[11px]">
-                      <span className="text-long">${b.price.toFixed(2)}</span>
-                      <span className="text-right text-primary">{b.size.toFixed(2)}</span>
-                      <span className="text-right text-secondary">{b.total.toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+        {binderMarkets.length === 0 && (
+          <div className="text-center py-12 font-mono text-sm" style={{ color: "#555" }}>
+            No markets match your search.
           </div>
-
-          {/* Recent Trades */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="p-3 border-b border-border">
-              <div className="text-[10px] uppercase tracking-wider text-secondary">Recent Trades</div>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {tradesLoading ? (
-                <div className="p-3 text-[10px] text-secondary">Loading...</div>
-              ) : recentTrades.length === 0 ? (
-                <div className="p-3 text-center py-8">
-                  <div className="text-[10px] text-secondary">No trades yet</div>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-3 text-[9px] uppercase text-secondary px-3 py-2 border-b border-border/50">
-                    <span>Price</span>
-                    <span className="text-right">Size</span>
-                    <span className="text-right">Time</span>
-                  </div>
-                  {recentTrades.map((t) => (
-                    <div key={t.id} className="grid grid-cols-3 text-[11px] px-3 py-1.5 border-b border-border/30 hover:bg-white/[.01]">
-                      <span className={t.direction === "long" ? "text-long" : "text-short"}>
-                        ${(t.entry_price ?? t.exit_price ?? 0).toFixed(2)}
-                      </span>
-                      <span className="text-right text-primary">${t.notional.toFixed(0)}</span>
-                      <span className="text-right text-secondary">
-                        {new Date(t.timestamp * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* ── POSITIONS TABLE (full width, below) ──────────────────────── */}
+      {/* ── Positions bar (always visible below binder when connected) ── */}
       {connected && margin.positions.length > 0 && (
         <PositionsTable
           positions={margin.positions}
@@ -613,35 +278,131 @@ export default function TradePage() {
         />
       )}
 
-      {/* ── TRADE HISTORY (desktop, below positions) ──────────────────── */}
       {connected && (
         <div className="hidden md:block">
           <TradeHistory />
         </div>
       )}
 
-      {/* ── MOBILE MARKET SELECTOR SHEET ──────────────────────────────── */}
-      {mobileMarketOpen && (
+      {/* ── TRADE SHEET OVERLAY ──────────────────────────────────── */}
+      {tradeSheetOpen && (
         <>
+          {/* Backdrop */}
           <div
-            onClick={() => setMobileMarketOpen(false)}
-            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm lg:hidden"
+            onClick={handleCloseSheet}
+            className="fixed inset-0 z-[200]"
+            style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           />
-          <div className="fixed inset-x-0 bottom-0 z-[101] lg:hidden max-h-[75dvh] flex flex-col bg-panel border-t border-border rounded-t-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <span className="text-xs font-bold text-secondary uppercase tracking-wider">Select Market</span>
-              <button onClick={() => setMobileMarketOpen(false)} className="text-secondary text-lg px-2">✕</button>
+
+          {/* Sheet */}
+          <div
+            className="fixed inset-0 z-[201] flex flex-col overflow-y-auto md:inset-auto md:top-0 md:right-0 md:bottom-0 md:w-[520px] lg:w-[600px]"
+            style={{
+              backgroundColor: "#0a0a0a",
+              borderLeft: "1px solid #1a1a1a",
+            }}
+          >
+            {/* Close button */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-border" style={{ backgroundColor: "#0a0a0a" }}>
+              <div className="flex items-center gap-2">
+                {selectedMarket.image && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={selectedMarket.image} alt="" width={28} height={28} className="object-contain flex-shrink-0" style={{ borderRadius: 4 }} />
+                )}
+                <span className="text-sm font-bold text-primary font-mono">{selectedMarket.name.replace("-PERP", "")}</span>
+                {selectedMarket.badge && <span className="text-[9px] px-1.5 py-0.5 border border-long/40 text-long uppercase font-mono">{selectedMarket.badge}</span>}
+              </div>
+              <button
+                onClick={handleCloseSheet}
+                className="text-secondary hover:text-primary text-lg px-2 font-mono"
+              >
+                &times;
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {markets.filter((m) => m.live).map((m) => (
-                <MobileMarketItem
-                  key={m.id}
-                  m={m}
-                  selected={selectedMarket.id === m.id}
-                  onSelect={() => { setSelectedMarket(m); setMobileMarketOpen(false); }}
-                />
-              ))}
+
+            {/* Market header stats */}
+            <div className="flex items-center gap-4 md:gap-6 px-4 py-3 border-b border-border flex-wrap" style={{ backgroundColor: "#111" }}>
+              <div>
+                <div className="text-lg font-bold text-long font-mono">${oracle.isLoading ? "\u2014" : currentPrice.toFixed(2)}</div>
+              </div>
+              <div className="text-[11px]">
+                <div className="text-secondary text-[9px] uppercase font-mono">24h Change</div>
+                <div className={`font-mono ${change24h >= 0 ? "text-long" : "text-short"}`}>
+                  {readings.length < 2 ? "\u2014" : `${change24h >= 0 ? "+" : ""}${change24h.toFixed(2)}%`}
+                </div>
+              </div>
+              <div className="text-[11px]">
+                <div className="text-secondary text-[9px] uppercase font-mono">24h Volume</div>
+                <div className="text-primary font-mono">
+                  {stats ? `$${stats.total_volume_24h.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "\u2014"}
+                </div>
+              </div>
+              <div className="text-[11px]">
+                <div className="text-secondary text-[9px] uppercase font-mono">Open Interest</div>
+                <div className="text-primary font-mono">
+                  {protocol.isLoading ? "\u2014" : `$${rawToUsdc(totalOI).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                </div>
+              </div>
             </div>
+
+            {/* Chart */}
+            <div className="border-b border-border" style={{ backgroundColor: "#111" }}>
+              <ChartSection oracle={oracle} priceApiMarket={selectedMarket.priceApiMarket} marketId={selectedMarket.id} marketImage={selectedMarket.image} showCardInfo={showCardInfo} cardInfo={cardInfo} positions={margin.positions} selectedOracleAddress={selectedMarket.oracleAddress} />
+            </div>
+
+            {/* OI Bar */}
+            <div className="px-4 py-2 border-b border-border flex items-center gap-3 text-[10px]" style={{ backgroundColor: "#111" }}>
+              <span className="text-secondary uppercase font-mono">OI</span>
+              <div className="flex-1 flex h-1.5 bg-border overflow-hidden">
+                {totalOI > 0 ? (
+                  <>
+                    <div className="bg-long transition-all" style={{ width: `${(marketState.longOi / totalOI) * 100}%` }} />
+                    <div className="bg-short transition-all" style={{ width: `${(marketState.shortOi / totalOI) * 100}%` }} />
+                  </>
+                ) : (
+                  <div className="bg-border w-full" />
+                )}
+              </div>
+              <span className="text-long font-mono">${rawToUsdc(marketState.longOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              <span className="text-secondary">/</span>
+              <span className="text-short font-mono">${rawToUsdc(marketState.shortOi).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              {cardInfo && (
+                <button
+                  onClick={() => setShowCardInfo(!showCardInfo)}
+                  className={`ml-1 px-2 py-0.5 uppercase tracking-wider border transition-colors font-mono ${
+                    showCardInfo
+                      ? "text-long border-long/40 bg-long/10"
+                      : "text-secondary border-border hover:text-primary hover:border-primary/30"
+                  }`}
+                >
+                  Market Data
+                </button>
+              )}
+            </div>
+
+            {/* Order Entry */}
+            <div className="p-4" style={{ backgroundColor: "#111" }}>
+              <OrderEntry
+                oracle={oracle}
+                protocol={protocol}
+                margin={margin}
+                walletUsdc={walletUsdc}
+                onRefresh={handleRefresh}
+                oracleAddress={selectedMarket.oracleAddress}
+                marketId={selectedMarket.id}
+                onPositionOpened={() => {}}
+              />
+            </div>
+
+            {/* Positions in sheet */}
+            {connected && margin.positions.length > 0 && (
+              <PositionsTable
+                positions={margin.positions}
+                protocol={protocol}
+                margin={margin}
+                onRefresh={handleRefresh}
+              />
+            )}
           </div>
         </>
       )}

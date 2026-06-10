@@ -1,3 +1,5 @@
+export type MarketType = "CARDS" | "SEALED" | "INDEX";
+
 export type Market = {
   id: string;
   name: string;
@@ -10,6 +12,7 @@ export type Market = {
   image?: string;
   /** Keeper API market query param (e.g. "ETB", "CHARIZARD-X") */
   priceApiMarket: string;
+  type: MarketType;
 };
 
 export const MARKETS: Market[] = [
@@ -23,6 +26,7 @@ export const MARKETS: Market[] = [
     programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
     image: "/pl500.svg",
     priceApiMarket: "PL500",
+    type: "INDEX",
   },
   {
     id: "PRISMATIC-ETB",
@@ -35,6 +39,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 593355,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/593355.jpg",
     priceApiMarket: "ETB",
+    type: "SEALED",
   },
   {
     id: "CHARIZARD-125/094-PFL",
@@ -47,6 +52,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 662184,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/662184.jpg",
     priceApiMarket: "CHARIZARD-X",
+    type: "CARDS",
   },
   {
     id: "CHARMANDER-038-MEP",
@@ -59,6 +65,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 684462,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/684462.jpg",
     priceApiMarket: "CHARMANDER",
+    type: "CARDS",
   },
   {
     id: "PIKACHU-276/217-AH",
@@ -71,6 +78,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 676088,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/676088.jpg",
     priceApiMarket: "PIKACHU",
+    type: "CARDS",
   },
   {
     id: "GRENINJA-116/086-CR",
@@ -83,6 +91,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 693517,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/693517.jpg",
     priceApiMarket: "GRENINJA",
+    type: "CARDS",
   },
   {
     id: "ASCENDED-HEROES-ETB",
@@ -95,6 +104,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 668496,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/668496.jpg",
     priceApiMarket: "AH-ETB",
+    type: "SEALED",
   },
   {
     id: "PSYDUCK-226/217-AH",
@@ -107,6 +117,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 676038,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/676038.jpg",
     priceApiMarket: "PSYDUCK",
+    type: "CARDS",
   },
   {
     id: "MEOWTH-106/094-PFL",
@@ -119,6 +130,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 662195,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/662195.jpg",
     priceApiMarket: "MEOWTH",
+    type: "CARDS",
   },
   {
     id: "BLACK-BOLT-ETB",
@@ -131,6 +143,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 630686,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/630686.jpg",
     priceApiMarket: "BB-ETB",
+    type: "SEALED",
   },
   {
     id: "MAGNETON-159-PROMO",
@@ -143,6 +156,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 594386,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/594386.jpg",
     priceApiMarket: "MAGNETON",
+    type: "CARDS",
   },
   {
     id: "CHARIZARD-199/165-151",
@@ -155,6 +169,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 517045,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/517045.jpg",
     priceApiMarket: "CHARIZARD-151",
+    type: "CARDS",
   },
   {
     id: "MISTYS-PSYDUCK-193/182-DR",
@@ -167,6 +182,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 632993,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/632993.jpg",
     priceApiMarket: "MISTYS-PSYDUCK",
+    type: "CARDS",
   },
   {
     id: "UMBREON-161/131-PE",
@@ -179,6 +195,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 610516,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/610516.jpg",
     priceApiMarket: "UMBREON",
+    type: "CARDS",
   },
   {
     id: "MEW-232/091-PF",
@@ -191,6 +208,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 534919,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/534919.jpg",
     priceApiMarket: "MEW",
+    type: "CARDS",
   },
   {
     id: "PIKACHU-238/191-SS",
@@ -203,6 +221,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 590027,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/590027.jpg",
     priceApiMarket: "PIKACHU-SS",
+    type: "CARDS",
   },
   {
     id: "GIRATINA-GG69/GG70-CZ",
@@ -215,6 +234,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 478100,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/478100.jpg",
     priceApiMarket: "GIRATINA",
+    type: "CARDS",
   },
   {
     id: "CHAOS-RISING-BB",
@@ -227,6 +247,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 684444,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/684444.jpg",
     priceApiMarket: "CR-BB",
+    type: "SEALED",
   },
   {
     id: "KABUTO-FOSSIL-1E",
@@ -239,6 +260,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 44452,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/44452.jpg",
     priceApiMarket: "KABUTO",
+    type: "CARDS",
   },
   {
     id: "GENGAR-284/217-AH",
@@ -251,6 +273,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 676096,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/676096.jpg",
     priceApiMarket: "GENGAR",
+    type: "CARDS",
   },
   {
     id: "DRAGONITE-290/217-AH",
@@ -263,6 +286,7 @@ export const MARKETS: Market[] = [
     tcgplayerId: 676102,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/676102.jpg",
     priceApiMarket: "DRAGONITE",
+    type: "CARDS",
   },
   {
     id: "CLEFAIRY-094/088-PO",
@@ -275,5 +299,6 @@ export const MARKETS: Market[] = [
     tcgplayerId: 684415,
     image: "https://product-images.tcgplayer.com/fit-in/400x400/684415.jpg",
     priceApiMarket: "CLEFAIRY",
+    type: "CARDS",
   },
 ];
