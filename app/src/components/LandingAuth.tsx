@@ -228,7 +228,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
   // ── Landing page ──
   return (
     <div
-      className="h-[100dvh] flex flex-col items-center px-3 md:px-6 overflow-hidden"
+      className="min-h-[calc(100dvh-90px)] flex flex-col items-center px-3 md:px-6"
       style={{ backgroundColor: "#0a0a0a" }}
     >
       {/* ── HERO ── */}
@@ -277,15 +277,15 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       </div>
 
       {/* ── 3 STEPS ── */}
-      <div className="w-full flex-1 min-h-0 flex flex-col transition-all duration-700" style={{ opacity: stepsVisible ? 1 : 0, transform: stepsVisible ? "translateY(0)" : "translateY(20px)", maxWidth: 960 }}>
+      <div className="w-full flex flex-col transition-all duration-700" style={{ opacity: stepsVisible ? 1 : 0, transform: stepsVisible ? "translateY(0)" : "translateY(20px)", maxWidth: 960 }}>
         <h2 className="text-center font-mono font-bold mb-3 md:mb-4 flex-shrink-0" style={{ fontSize: "clamp(13px, 2.5vw, 18px)", color: "#fff" }}>
           TRADE POKEMON PERPS IN <span style={{ color: "#00ff41" }}>3 SIMPLE STEPS</span>
         </h2>
 
-        <div className="flex flex-col md:flex-row items-stretch gap-3 md:gap-3 flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col md:flex-row items-stretch gap-3 md:gap-3">
 
           {/* STEP 1 */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col">
             <StepCard num={1} title="PICK CARD" subtitle="Browse the market and choose your card" delay={0} visible={stepsVisible}>
               <div style={{ padding: "8px 8px 6px" }}>
                 <div style={{ background: "#1a1a1a", borderRadius: 3, padding: "4px 6px", marginBottom: 6 }}>
@@ -325,7 +325,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           </div>
 
           {/* STEP 2 */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col">
             <StepCard num={2} title="LONG / SHORT" subtitle="Choose direction and configure your trade" delay={150} visible={stepsVisible}>
               <div style={{ padding: "8px 8px 6px" }}>
                 <div className="flex items-center gap-2 mb-2" style={{ background: "#1a1a1a", borderRadius: 3, padding: "4px 6px" }}>
@@ -392,7 +392,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           </div>
 
           {/* STEP 3 */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col">
             <StepCard num={3} title="MANAGE PNL" subtitle="Track your position and manage risk" delay={300} visible={stepsVisible}>
               <div style={{ padding: "8px 8px 6px" }}>
                 <div className="flex items-center gap-2 mb-1.5" style={{ background: "#1a1a1a", borderRadius: 3, padding: "4px 6px" }}>
@@ -487,7 +487,7 @@ function StepCard({ num, title, subtitle, delay, visible, children }: { num: num
         </div>
         <div style={{ fontSize: 8, color: "#555", fontFamily: "monospace", paddingLeft: 22 }}>{subtitle}</div>
       </div>
-      <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
+      <div className="flex-1">{children}</div>
     </div>
   );
 }
