@@ -70,6 +70,7 @@ function PoolContent() {
 
   const [feeVaultBalance, setFeeVaultBalance] = useState<number | null>(null);
   const [insuranceBalance, setInsuranceBalance] = useState<number | null>(null);
+  const [blendedApr, setBlendedApr] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +89,56 @@ function PoolContent() {
     const id = setInterval(fetchVaultBalances, 15_000);
     return () => { cancelled = true; clearInterval(id); };
   }, [connection]);
+
+  // Fetch 7-day fee data for dynamic blended APR
+  const poolTvl = rawToUsdc(pool.totalUsdc);
+  useEffect(() => {
+    if (pool.isLoading || poolTvl <= 0) return;
+    let cancelled = false;
+    const fetchApr = async () => {
+      try {
+        const dates: string[] = [];
+        for (let i = 1; i <= 7; i++) {
+          const d = new Date();
+          d.setUTCDate(d.getUTCDate() - i);
+          dates.push(d.toISOString().split("T")[0]);
+        }
+        const results = await Promise.all(
+          dates.map((date) =>
+            fetch(`/api/keeper/daily-volume?date=${date}`)
+              .then((r) => r.json())
+              .catch(() => null)
+          )
+        );
+        if (cancelled) return;
+        let tradingTotal = 0, fundingTotal = 0, liqTotal = 0;
+        let daysWithData = 0;
+        for (const res of results) {
+          if (!res) continue;
+          const t = res.tradingFees ?? 0;
+          const f = res.fundingFees ?? 0;
+          const l = res.liquidationFees ?? 0;
+          if (t > 0 || f > 0 || l > 0) daysWithData++;
+          tradingTotal += t;
+          fundingTotal += f;
+          liqTotal += l;
+        }
+        // LP's blended share of fees
+        const lpFees7d = tradingTotal * 0.50 + fundingTotal * 0.70 + liqTotal * 0.44;
+        const days = Math.max(daysWithData, 1);
+        const dailyLpFees = lpFees7d / days;
+        if (dailyLpFees > 0) {
+          setBlendedApr((dailyLpFees / poolTvl) * 365 * 100);
+        } else {
+          setBlendedApr(0);
+        }
+      } catch {
+        if (!cancelled) setBlendedApr(null);
+      }
+    };
+    fetchApr();
+    return () => { cancelled = true; };
+  }, [pool.isLoading, poolTvl]);
 
   const [depositInput, setDepositInput] = useState("");
   const [withdrawSharesInput, setWithdrawSharesInput] = useState("");
@@ -109,9 +160,8 @@ function PoolContent() {
       ? Math.max(0, Math.floor((lpPos.shares / pool.totalShares) * (pool.accumulatedFees - pool.totalFeesClaimed)))
       : 0;
 
-  // APY estimate: (accumulated_fees / tvl) * annualized
-  // Simple estimate assuming fees accumulated since pool inception
-  const estApy = tvl > 0 ? (rawToUsdc(pool.accumulatedFees) / tvl) * 52 * 100 : 0;
+  // Dynamic blended APR from 7-day fee data (LP share only)
+  const displayApr = blendedApr;
 
   // Preview calculations for deposit
   const depositAmount = parseFloat(depositInput) || 0;
@@ -284,9 +334,9 @@ function PoolContent() {
           value={pool.isLoading ? "..." : `$${rawToUsdc(pool.accumulatedFees).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
         />
         <StatCard
-          label="Est. APY"
-          value={pool.isLoading ? "..." : `${estApy.toFixed(1)}%`}
-          highlight={estApy > 0}
+          label="APR (7d)"
+          value={pool.isLoading || displayApr === null ? "..." : `${displayApr.toFixed(1)}%`}
+          highlight={displayApr !== null && displayApr > 0}
         />
         <StatCard
           label="Your Share"
@@ -345,7 +395,7 @@ function PoolContent() {
                 <StatRow label="Total Shares" value={pool.totalShares.toLocaleString()} mono />
                 <StatRow label="Share Price" value={`$${rawToUsdc(sharePrice).toFixed(6)}`} mono />
                 <StatRow label="Accumulated Fees" value={`$${rawToUsdc(pool.accumulatedFees).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
-                <StatRow label="Est. APY" value={`${estApy.toFixed(1)}%`} mono />
+                <StatRow label="APR (7d)" value={displayApr === null ? "..." : `${displayApr.toFixed(1)}%`} mono />
               </div>
             )}
           </Section>

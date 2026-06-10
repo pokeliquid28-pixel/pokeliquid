@@ -114,8 +114,8 @@ pub fn handler(
         }
     }
 
-    // Per-account per-market per-direction collateral cap ($100 USDC = 100_000_000)
-    let market_collateral_cap: u64 = 100_000_000;
+    // Per-account per-market per-direction collateral cap ($350 USDC = 350_000_000)
+    let market_collateral_cap: u64 = 350_000_000;
     let oracle_key = oracle.key();
     let existing_market_collateral: u64 = ctx.accounts.margin_account.positions.iter()
         .filter_map(|p| p.as_ref())

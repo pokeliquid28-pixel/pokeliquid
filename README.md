@@ -84,6 +84,7 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 - **Collateral:** USDC (real SPL Token, 6 decimals)
 - **Positions:** Up to 5 simultaneous per account (`[Option<Position>; 5]`)
 - **Leverage:** 1x – 10x
+- **Max collateral:** $350 per account per market per direction
 - **Open fee:** 2% of collateral (90% fee vault / 10% insurance)
 - **Close fee:** 2% of collateral (same split)
 - **Profit cap:** 500% of collateral

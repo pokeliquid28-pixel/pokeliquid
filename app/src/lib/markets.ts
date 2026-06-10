@@ -29,6 +29,18 @@ export const MARKETS: Market[] = [
     type: "INDEX",
   },
   {
+    id: "SV151",
+    name: "SV151-PERP",
+    subtitle: "SV 151 Index \u00B7 All 215 Scarlet & Violet 151 Cards",
+    badge: "INDEX",
+    live: true,
+    oracleAddress: "7oMqfryXRbhDDhhmwoPHJybLaB8dVmS74C2ZALUtdQDB",
+    programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
+    image: "/sv151.svg",
+    priceApiMarket: "SV151",
+    type: "INDEX",
+  },
+  {
     id: "PRISMATIC-ETB",
     name: "PRISMATIC-ETB-PERP",
     subtitle: "Prismatic Evolutions \u00B7 Sealed Product",
