@@ -267,11 +267,11 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           ))}
         </div>
 
-        <p className="text-center font-mono mb-1" style={{ color: "#666", fontSize: 11 }}>
+        <p className="text-center font-mono mb-2" style={{ color: "#ccc", fontSize: "clamp(14px, 2.5vw, 18px)", fontWeight: 700, letterSpacing: "0.02em" }}>
           Pok&eacute;mon card perpetual futures on Solana
         </p>
 
-        <p className="text-center font-mono mb-4 px-2" style={{ color: "#777", fontSize: 12, lineHeight: 1.6, maxWidth: 520 }}>
+        <p className="text-center font-mono mb-4 px-2" style={{ color: "#666", fontSize: 11, lineHeight: 1.6, maxWidth: 520 }}>
           Bet on Pok&eacute;mon card prices without owning the card. Go long if you think Charizard goes up. Go short if you think it drops. Set your USDC collateral, choose leverage, and manage risk with stop loss / take profit.
         </p>
       </div>
@@ -282,10 +282,10 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
           TRADE POKEMON PERPS IN <span style={{ color: "#00ff41" }}>3 SIMPLE STEPS</span>
         </h2>
 
-        <div className="flex flex-col md:flex-row items-stretch gap-3 md:gap-3">
+        <div className="flex flex-col md:flex-row md:items-stretch gap-3 md:gap-0">
 
           {/* STEP 1 */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1">
             <StepCard num={1} title="PICK CARD" subtitle="Browse the market and choose your card" delay={0} visible={stepsVisible}>
               <div style={{ padding: "8px 8px 6px" }}>
                 <div style={{ background: "#1a1a1a", borderRadius: 3, padding: "4px 6px", marginBottom: 6 }}>
@@ -319,13 +319,15 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                 </div>
               </div>
             </StepCard>
-            <div className="hidden md:flex items-center justify-end mt-2">
-              <span style={{ color: "#00ff41", fontSize: 18, fontFamily: "monospace" }}>&rarr;</span>
-            </div>
+          </div>
+
+          {/* Arrow 1→2 */}
+          <div className="hidden md:flex items-center justify-center" style={{ width: 32 }}>
+            <span style={{ color: "#00ff41", fontSize: 18, fontFamily: "monospace" }}>&rarr;</span>
           </div>
 
           {/* STEP 2 */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1">
             <StepCard num={2} title="LONG / SHORT" subtitle="Choose direction and configure your trade" delay={150} visible={stepsVisible}>
               <div style={{ padding: "8px 8px 6px" }}>
                 <div className="flex items-center gap-2 mb-2" style={{ background: "#1a1a1a", borderRadius: 3, padding: "4px 6px" }}>
@@ -386,13 +388,15 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                 </div>
               </div>
             </StepCard>
-            <div className="hidden md:flex items-center justify-end mt-2">
-              <span style={{ color: "#00ff41", fontSize: 18, fontFamily: "monospace" }}>&rarr;</span>
-            </div>
+          </div>
+
+          {/* Arrow 2→3 */}
+          <div className="hidden md:flex items-center justify-center" style={{ width: 32 }}>
+            <span style={{ color: "#00ff41", fontSize: 18, fontFamily: "monospace" }}>&rarr;</span>
           </div>
 
           {/* STEP 3 */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1">
             <StepCard num={3} title="MANAGE PNL" subtitle="Track your position and manage risk" delay={300} visible={stepsVisible}>
               <div style={{ padding: "8px 8px 6px" }}>
                 <div className="flex items-center gap-2 mb-1.5" style={{ background: "#1a1a1a", borderRadius: 3, padding: "4px 6px" }}>
@@ -412,14 +416,14 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                   <div style={{ fontSize: 16, color: pnlColor, fontFamily: "monospace", fontWeight: 700, lineHeight: 1 }}>{pnlStr}</div>
                   <div style={{ fontSize: 9, color: pnlColor, fontFamily: "monospace" }}>{pnlPctStr}</div>
                 </div>
-                <div className="mb-2" style={{ height: 32, position: "relative", overflow: "hidden" }}>
-                  <svg width="100%" height="32" viewBox="0 0 200 32" preserveAspectRatio="none">
-                    <polyline points="0,28 20,24 40,26 60,20 80,22 100,16 120,14 140,12 155,9 170,6 185,8 200,4" fill="none" stroke="#00ff41" strokeWidth="1.5" />
+                <div className="mb-2" style={{ height: 28, position: "relative", overflow: "hidden" }}>
+                  <svg width="100%" height="28" viewBox="0 0 200 28" preserveAspectRatio="none">
+                    <polyline points="0,24 20,21 40,22 60,17 80,19 100,14 120,12 140,10 155,8 170,5 185,7 200,3" fill="none" stroke="#00ff41" strokeWidth="1.5" />
                     <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#00ff41" stopOpacity="0.15" />
                       <stop offset="100%" stopColor="#00ff41" stopOpacity="0" />
                     </linearGradient>
-                    <polygon points="0,28 20,24 40,26 60,20 80,22 100,16 120,14 140,12 155,9 170,6 185,8 200,4 200,32 0,32" fill="url(#cg)" />
+                    <polygon points="0,24 20,21 40,22 60,17 80,19 100,14 120,12 140,10 155,8 170,5 185,7 200,3 200,28 0,28" fill="url(#cg)" />
                   </svg>
                 </div>
                 <div className="space-y-1 mb-2">
@@ -432,16 +436,8 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                     <span style={{ fontSize: 8, color: "#00ff41", fontFamily: "monospace", fontWeight: 700 }}>{currentStr}</span>
                   </div>
                   <div className="flex justify-between px-0.5">
-                    <span style={{ fontSize: 7, color: "#555", fontFamily: "monospace" }}>LIQUIDATION PRICE</span>
+                    <span style={{ fontSize: 7, color: "#555", fontFamily: "monospace" }}>LIQ. PRICE</span>
                     <span style={{ fontSize: 8, color: "#ff3355", fontFamily: "monospace", fontWeight: 700 }}>{liqStr}</span>
-                  </div>
-                </div>
-                <div className="flex gap-1.5 mb-1.5">
-                  <div className="flex-1 flex items-center justify-center" style={{ border: "1px solid #333", borderRadius: 3, padding: "3px 0" }}>
-                    <span style={{ fontSize: 7, color: "#aaa", fontFamily: "monospace", fontWeight: 700 }}>ADD MARGIN</span>
-                  </div>
-                  <div className="flex-1 flex items-center justify-center" style={{ border: "1px solid #333", borderRadius: 3, padding: "3px 0" }}>
-                    <span style={{ fontSize: 7, color: "#aaa", fontFamily: "monospace", fontWeight: 700 }}>SET STOP LOSS</span>
                   </div>
                 </div>
                 <div style={{ background: "rgba(255,51,85,0.15)", border: "1px solid rgba(255,51,85,0.4)", borderRadius: 3, padding: "5px 0", textAlign: "center" }}>
