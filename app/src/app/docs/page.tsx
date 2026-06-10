@@ -13,6 +13,7 @@ const SECTIONS = [
   { id: "risk", label: "Risk Management" },
   { id: "oracle", label: "Oracle" },
   { id: "lp", label: "Liquidity Pool" },
+  { id: "referral", label: "Referral" },
   { id: "protocol", label: "Protocol" },
   { id: "api", label: "API Reference" },
   { id: "faq", label: "FAQ" },
@@ -280,9 +281,9 @@ export default function DocsPage() {
             <H2 id="overview">Overview</H2>
             <P>
               Pokeliquid is the first on-chain perpetual futures DEX for Pok&eacute;mon TCG products.
-              Built on Solana using the Anchor framework, it lets traders go long or short on sealed products
-              and single cards with up to 10x leverage. Prices are sourced from TCGPlayer market data via
-              an automated Playwright scraper with adaptive EWMA smoothing.
+              Built on Solana using the Anchor framework, it offers 22 markets letting traders go long or short
+              on sealed products and single cards with up to 10x leverage. Prices are sourced from TCGPlayer
+              market data via an automated Playwright scraper with adaptive EWMA smoothing.
             </P>
             <P>Live on Solana Mainnet with real USDC.</P>
 
@@ -291,10 +292,28 @@ export default function DocsPage() {
             <Table
               headers={["Market", "Card", "Set", "Card #", "Live"]}
               rows={[
+                ["PL500-PERP", "PL500 Index", "Index", "\u2014", "Yes"],
                 ["PRISMATIC-ETB-PERP", "Prismatic Evolutions ETB", "Sealed Product", "\u2014", "Yes"],
                 ["CHARIZARD-125/094-PFL-PERP", "Mega Charizard X ex", "Phantasmal Flames", "125/094", "Yes"],
-                ["CHARMANDER-038-MEP-PERP", "Charmander", "Mega Evolution Promo", "#038", "Yes"],
+                ["CHARMANDER-038-MEP-PERP", "Charmander", "Mega Evolution Promo", "038", "Yes"],
                 ["PIKACHU-276/217-AH-PERP", "Pikachu ex", "Ascended Heroes", "276/217", "Yes"],
+                ["GRENINJA-116/086-CR-PERP", "Mega Greninja ex", "Chaos Rising", "116/086", "Yes"],
+                ["ASCENDED-HEROES-ETB-PERP", "Ascended Heroes ETB", "Sealed Product", "\u2014", "Yes"],
+                ["PSYDUCK-226/217-AH-PERP", "Psyduck", "Ascended Heroes", "226/217", "Yes"],
+                ["MEOWTH-106/094-PFL-PERP", "Meowth", "Phantasmal Flames", "106/094", "Yes"],
+                ["BLACK-BOLT-ETB-PERP", "Black Bolt ETB", "Sealed Product", "\u2014", "Yes"],
+                ["MAGNETON-159-PROMO-PERP", "Magneton", "SV Promo", "159", "Yes"],
+                ["CHARIZARD-199/165-151-PERP", "Charizard ex", "SV 151", "199/165", "Yes"],
+                ["MISTYS-PSYDUCK-193/182-DR-PERP", "Misty's Psyduck", "Destined Rivals", "193/182", "Yes"],
+                ["UMBREON-161/131-PE-PERP", "Umbreon ex", "Prismatic Evolutions", "161/131", "Yes"],
+                ["MEW-232/091-PF-PERP", "Mew ex", "Paldean Fates", "232/091", "Yes"],
+                ["PIKACHU-238/191-SS-PERP", "Pikachu ex", "Surging Sparks", "238/191", "Yes"],
+                ["GIRATINA-GG69/GG70-CZ-PERP", "Giratina VSTAR", "Crown Zenith", "GG69/GG70", "Yes"],
+                ["CHAOS-RISING-BB-PERP", "Chaos Rising Booster Box", "Sealed Product", "\u2014", "Yes"],
+                ["KABUTO-FOSSIL-1E-PERP", "Kabuto", "Fossil 1st Edition", "\u2014", "Yes"],
+                ["GENGAR-284/217-AH-PERP", "Mega Gengar ex", "Ascended Heroes", "284/217", "Yes"],
+                ["DRAGONITE-290/217-AH-PERP", "Mega Dragonite ex", "Ascended Heroes", "290/217", "Yes"],
+                ["CLEFAIRY-094/088-PO-PERP", "Clefairy", "Perfect Order", "094/088", "Yes"],
               ]}
             />
 
@@ -481,17 +500,12 @@ Liquidation Price (Short):
             <P>
               Prices are scraped from TCGPlayer product pages using Playwright (headless Chromium).
               The keeper runs a browser instance, navigates to each product page, and extracts the
-              current market price. All 4 live markets are scraped in parallel.
+              current market price. All 22 live markets are scraped in parallel.
             </P>
-            <Table
-              headers={["Market", "TCGPlayer Product ID", "Oracle Address"]}
-              rows={[
-                ["PRISMATIC-ETB-PERP", "593355", "4v5ogQ...jW12"],
-                ["CHARIZARD-125/094-PFL-PERP", "662184", "8UWP5Y...HAfg"],
-                ["CHARMANDER-038-MEP-PERP", "684462", "6WQUKKr...a3XD"],
-                ["PIKACHU-276/217-AH-PERP", "676088", "B1BWNQ...QRYs"],
-              ]}
-            />
+            <P>
+              Each market has its own oracle PDA. See the Protocol section below for key addresses.
+              All oracle PDAs are derived from seeds <code>[&quot;oracle&quot;, market_id]</code>.
+            </P>
 
             <H3>Update Frequency</H3>
             <P>
@@ -516,8 +530,7 @@ Liquidation Price (Short):
             <Code>{`EWMA formula: new_ewma = alpha * raw_price + (1 - alpha) * prev_ewma
 
 Price floor protection: if candidate < floor, update is rejected entirely.
-  ETB floor: $100 | Charizard-X floor: $200
-  Charmander floor: $1 | Pikachu floor: $10`}</Code>
+Each market has a configurable price floor to reject invalid data.`}</Code>
 
             <H3>Staleness Protection</H3>
             <P>
@@ -562,6 +575,26 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <P>
               Call <code>lp_withdraw</code> with the number of shares to burn. USDC is returned proportionally.
               There is no lockup period — withdraw anytime.
+            </P>
+
+            {/* ════════════ REFERRAL ════════════ */}
+            <H2 id="referral">Referral Program</H2>
+            <P>
+              Pokeliquid has an on-chain referral system. Register a unique username, share your referral link,
+              and earn a percentage of trading fees from users who sign up through your link.
+            </P>
+            <H3>How It Works</H3>
+            <P>
+              1. Go to the Referral page and register a username (stored on-chain as a ReferralAccount PDA).
+            </P>
+            <P>
+              2. Share your link: pokeliquid.xyz/ref/your-username
+            </P>
+            <P>
+              3. When someone signs up through your link, their trades attribute fees to your referral account.
+            </P>
+            <P>
+              4. Claim accumulated referral fees anytime from the Referral page.
             </P>
 
             {/* ════════════ PROTOCOL ════════════ */}
@@ -620,6 +653,8 @@ Price floor protection: if candidate < floor, update is rejected entirely.
                 ["update_params", "Admin", "Update protocol parameters"],
                 ["withdraw_fees", "Admin", "Withdraw from fee vault"],
                 ["withdraw_insurance", "Admin", "Withdraw from insurance fund"],
+                ["register_referral", "User", "Register a referral username (on-chain)"],
+                ["claim_referral", "User", "Claim accumulated referral fees"],
               ]}
             />
 
@@ -641,7 +676,7 @@ Price floor protection: if candidate < floor, update is rejected entirely.
             <Table
               headers={["Param", "Type", "Default", "Description"]}
               rows={[
-                ["market", "string", "ETB", "Market ID (ETB, CHARIZARD-X, CHARMANDER, PIKACHU)"],
+                ["market", "string", "ETB", "Market ID (e.g. ETB, CHARIZARD-X, GRENINJA, UMBREON \u2014 see /prices endpoint)"],
                 ["limit", "number", "50", "Number of rows (max 500)"],
                 ["from", "number", "\u2014", "Unix timestamp range start"],
                 ["to", "number", "\u2014", "Unix timestamp range end"],

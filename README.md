@@ -1,6 +1,6 @@
 # Pokeliquid — Pokemon Card Perps
 
-A perpetual futures DEX on Solana for trading **Pokemon TCG products** — real-world cards and sealed product priced via live TCGPlayer market data. 21 markets live on mainnet.
+A perpetual futures DEX on Solana for trading **Pokemon TCG products** — real-world cards and sealed product priced via live TCGPlayer market data. 22 markets live on mainnet.
 
 ```
 TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana Program (Anchor)
@@ -49,13 +49,15 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 | **USDC Mint** | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (real USDC) |
 | **Admin** | Squads v4 multisig vault (`2iVcXi6XXkm1X6w4qLbVvzC1fZ3yS57HxEyn5ghWopak` original, transferred to multisig) |
 | **Secondary Auth** | `2XsE4rWJa7LRjFWfMFUmWFxBeqNaKmuXdfJk5iWy1ssH` |
+| **$POKE Token** | `6TPQEMKviAYz3h7gWwtTZJSACMtF2tbofNnPwSyLpump` |
 
 ---
 
-## Markets (21 live)
+## Markets (22 live)
 
 | Market ID | Card / Product | Oracle PDA |
 |-----------|---------------|------------|
+| PL500-INDEX | PL500 Index (Top 500 Pokemon Cards) | `DtvddgrZ8h44AcJangbBbc3F8ByuYzWMnvKHG11U5WqP` |
 | PRISMATIC-ETB | Prismatic Evolutions ETB | `FbPBfXaCY1Chm23pyVv7gcesRVK7FxFXHgd5xNb84r4Q` |
 | CHARIZARD-125/094-PFL | Mega Charizard X ex (Phantasmal Flames) | `8KU9oyrCAhX58Mz73z8MjKH8P88CyqPcx8zCm61HWzeP` |
 | CHARMANDER-038-MEP | Charmander (Mega Evolution Promo) | `EN3Y7vWu2a2PXma2V5vfm6swFed8YTFHCG75EQxoHETY` |
@@ -123,6 +125,8 @@ TCGPlayer ──scrape──> Keeper (Node.js) ──update_oracle──> Solana
 | `init_liquidity_pool` | Admin | Initialize LP pool + vault. |
 | `lp_deposit(amount)` | User | Deposit USDC into LP pool. |
 | `lp_withdraw(shares)` | User | Withdraw USDC from LP pool (auto-claims pending fees). |
+| `register_referral(username)` | User | Register a referral username on-chain. |
+| `claim_referral` | User | Claim accumulated referral fees. |
 
 ---
 
@@ -148,7 +152,7 @@ programs/pokeliquid/src/
   error.rs                  # ErrorCode enum
   events.rs                 # All program events
   constants.rs              # Seeds, defaults, rates
-  instructions/             # 25 instruction handlers (one file each)
+  instructions/             # 27 instruction handlers (one file each)
 
 programs/pokeliquid/tests/
   test_initialize.rs        # Integration tests
@@ -173,6 +177,8 @@ app/                        # Next.js 14 frontend
       stats/page.tsx        # Protocol statistics + charts
       leaderboard/page.tsx  # Top traders leaderboard
       prize-pool/page.tsx   # Prize pool with bonus winners
+      referral/page.tsx     # Referral program dashboard
+      ref/[username]/page.tsx  # Referral signup landing page
       docs/page.tsx         # Documentation
       api-docs/             # API documentation
       privacy/page.tsx      # Privacy policy
@@ -187,6 +193,7 @@ app/                        # Next.js 14 frontend
         forgot-password/        # POST — Send reset email via Resend
         reset-password/         # POST — Change password (requires current password)
         reset-password-with-token/ # POST — Reset password via emailed token
+        referrer/               # GET  — Look up referrer by publicKey
     components/
       LandingAuth.tsx       # Login / signup / reset password landing page
       AuthGuard.tsx         # Route guard — redirects unauthenticated users
@@ -224,7 +231,7 @@ app/                        # Next.js 14 frontend
       usePositionPrice.ts   # Position-specific price tracking
       useWalletBalances.ts  # SOL + USDC balances
     lib/
-      markets.ts            # 21 market definitions (IDs, oracle addresses, TCGPlayer IDs, images)
+      markets.ts            # 22 market definitions (IDs, oracle addresses, TCGPlayer IDs, images)
       session-wallet.ts     # SessionWalletAdapter (custom wallet adapter, only wallet option)
       addresses.ts          # PDA derivation
       program.ts            # Anchor program setup
@@ -250,7 +257,7 @@ app/                        # Next.js 14 frontend
 
 ### Build & Deploy
 ```bash
-anchor build --features mainnet
+anchor build -- --features mainnet
 solana program deploy target/deploy/pokeliquid.so \
   --program-id 5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6 \
   --url mainnet-beta
@@ -335,12 +342,10 @@ Users authenticate with email + password. No external wallet extensions required
 - **Env var:** `ADMIN_KEYPAIR_PATH=/root/keeper/admin.json`
 - **Logs:** `pm2 logs pokeliquid-keeper`
 
-### Volume Farm
-- **Script:** `/root/volume-farm/volume-farm.js` (runs via pm2 as `volume-farm`)
-- **Wallets:** `/root/volume-farm/farm-wallets.json` (40 wallets)
-- Trades 6 markets with randomized intervals, direction, 10x leverage
-- Closes positions after $0.50 PnL move or 5min hold cap
-- CLI: `--setup`, `--drain`, `--status`, `--withdraw-fees <amt>`
+### Volume Farm (Inactive)
+- Previously ran 40 wallets trading 6 markets
+- **Drained** — all positions closed, collateral returned to fee vault
+- Scripts in `scripts/drain-farm.js` for reference
 
 ### Vercel Frontend
 - **URL:** `https://pokeliquid.xyz`
@@ -477,7 +482,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 
 ## Current Strengths
 
-- **Unique market** — perpetual futures on physical TCG products (21 markets live)
+- **Unique market** — perpetual futures on physical TCG products (22 markets live)
 - **Full vertical stack** — on-chain program + keeper + scraper + frontend, all integrated
 - **No wallet extension required** — session wallet in localStorage, email+password auth for persistence
 - **Professional trading UX** — inline SL/TP, margin ratio bar, PnL flash, close confirmation
@@ -500,25 +505,7 @@ rewards: 1% liquidator, 9% insurance, 90% stays in vault
 - **Custom domain** — `pokeliquid.xyz` with verified email sending via Resend
 - **Leaderboard + prize pool** — competitive trading with prize distribution
 - **Security.txt** — on-chain security contact info via `solana-security-txt`
-- **Volume farm** — automated volume generation across 6 markets (40 wallets)
-
-## Known Limitations & Roadmap
-
-### Important
-- [ ] **No partial close** — can't close a percentage of a position
-- [ ] **Single admin oracle** — one keypair pushes price, no decentralized oracle fallback
-- [ ] **No limit orders** — market orders only
-
-### Nice to have
-- [x] Mainnet deployment with real USDC
-- [x] MasterChef LP fee distribution
-- [x] Admin transfer to multisig
-- [x] 21 markets live
-- [x] PnL export cards
-- [ ] Referral / fee sharing system
-- [ ] $POKE governance token
-
----
+- **Referral system** — on-chain referral accounts with fee sharing
 
 ## Tech Notes
 
