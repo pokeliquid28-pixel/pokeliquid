@@ -245,7 +245,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         {/* Card fan — simple inline images, no absolute nonsense */}
         <div
           className="flex items-end justify-center transition-all duration-700"
-          style={{ opacity: cardsVisible ? 1 : 0, marginBottom: 8 }}
+          style={{ opacity: cardsVisible ? 1 : 0, marginBottom: 40 }}
         >
           {LANDING_CARDS.map((card, i) => (
             <img
