@@ -65,6 +65,18 @@ export const MARKETS: Market[] = [
     type: "INDEX",
   },
   {
+    id: "PAE-INDEX",
+    name: "PAE-INDEX-PERP",
+    subtitle: "Paldea Evolved Index \u00B7 All 288 Cards",
+    badge: "INDEX",
+    live: true,
+    oracleAddress: "EzXGzFjPeG8KDsHmXFLnuNerRPfzPZpSBFJz9Yc7EGK6",
+    programId: "5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6",
+    image: "/pae-index.png",
+    priceApiMarket: "PAE-INDEX",
+    type: "INDEX",
+  },
+  {
     id: "PRISMATIC-ETB",
     name: "PRISMATIC-ETB-PERP",
     subtitle: "Prismatic Evolutions \u00B7 Sealed Product",
