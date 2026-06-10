@@ -296,7 +296,7 @@ export default function TradePage() {
 
           {/* Sheet */}
           <div
-            className="fixed inset-0 z-[201] flex flex-col overflow-y-auto md:inset-auto md:top-0 md:right-0 md:bottom-0 md:w-[520px] lg:w-[600px]"
+            className="fixed top-0 right-0 bottom-0 left-0 md:left-auto md:w-[520px] lg:w-[600px] z-[201] flex flex-col overflow-y-auto"
             style={{
               backgroundColor: "#0a0a0a",
               borderLeft: "1px solid #1a1a1a",

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletReadyState } from "@solana/wallet-adapter-base";
 import { Keypair } from "@solana/web3.js";
-import { LayoutGrid, ArrowUpDown, LineChart } from "lucide-react";
 import {
   setSessionFromPrivateKey,
   setSavedEmail,
@@ -489,182 +488,405 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
     );
   }
 
-  const STEPS = [
-    { num: 1, label: "PICK A CARD", desc: "Choose from live Pok\u00e9mon card markets", Icon: LayoutGrid },
-    { num: 2, label: "LONG / SHORT", desc: "Bet up or down with up to 25x leverage", Icon: ArrowUpDown },
-    { num: 3, label: "MANAGE PNL", desc: "Track your profit and close anytime", Icon: LineChart },
-  ];
-
-  // Landing page with card fan
+  // Landing page
   return (
     <div
-      className="min-h-[100dvh] flex flex-col items-center justify-center px-4 py-8 overflow-hidden"
+      className="min-h-[100dvh] flex flex-col items-center px-4 py-8 overflow-x-hidden"
       style={{ backgroundColor: "#0a0a0a" }}
     >
-      {/* Logo */}
-      <div
-        className="mb-4 md:mb-5 transition-all duration-700"
-        style={{
-          opacity: logoVisible ? 1 : 0,
-          transform: logoVisible ? "translateY(0)" : "translateY(-20px)",
-        }}
-      >
-        <div className="block md:hidden">
-          <Logo size={120} />
-        </div>
-        <div className="hidden md:block">
-          <Logo width={400} />
-        </div>
-      </div>
-
-      {/* Headline */}
-      <h1
-        className="text-center font-mono font-bold transition-all duration-700 mb-2 md:mb-3 px-2"
-        style={{
-          color: "#ffffff",
-          fontSize: "clamp(20px, 4vw, 32px)",
-          lineHeight: 1.2,
-          maxWidth: 600,
-          opacity: logoVisible ? 1 : 0,
-          transform: logoVisible ? "translateY(0)" : "translateY(-10px)",
-        }}
-      >
-        Bet on Pok&eacute;mon card prices without owning the card.
-      </h1>
-
-      {/* Subline */}
-      <p
-        className="text-center font-mono transition-all duration-700 mb-4 md:mb-5 px-4"
-        style={{
-          color: "#666",
-          fontSize: "clamp(11px, 1.8vw, 13px)",
-          lineHeight: 1.6,
-          maxWidth: 520,
-          opacity: logoVisible ? 1 : 0,
-          transform: logoVisible ? "translateY(0)" : "translateY(-10px)",
-          transitionDelay: "100ms",
-        }}
-      >
-        Go long if you think it goes up. Go short if you think it drops.
-        Set your collateral, choose your leverage, manage risk with stop loss and take profit.
-      </p>
-
-      {/* Card fan */}
-      <div
-        className="relative mb-6 md:mb-5 flex items-end justify-center"
-        style={{
-          height: "clamp(100px, 22vw, 260px)",
-          width: "100%",
-          maxWidth: 600,
-        }}
-      >
-        {LANDING_CARDS.map((card, i) => {
-          const isCenter = i === 2;
-          return (
-            <div
-              key={card.id}
-              className="absolute transition-all duration-700 ease-out"
-              style={{
-                opacity: cardsVisible ? 1 : 0,
-                transform: cardsVisible
-                  ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i]}px) scale(${CARD_SCALES[i]})`
-                  : `rotate(0deg) translateY(60px) scale(1)`,
-                transitionDelay: `${i * 100}ms`,
-                left: `${10 + i * 16}%`,
-                bottom: 0,
-                width: "clamp(60px, 13vw, 130px)",
-                zIndex: isCenter ? 10 : 5 - Math.abs(i - 2),
-                transformOrigin: "bottom center",
-              }}
-            >
-              <img
-                src={card.image}
-                alt={card.name}
-                className="w-full h-auto transition-transform duration-200 hover:-translate-y-3"
-                style={{
-                  filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))",
-                }}
-                draggable={false}
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 3-Step Onboarding */}
-      <div
-        className="flex flex-col md:flex-row items-center md:items-start justify-center gap-4 md:gap-0 mb-6 md:mb-5 w-full"
-        style={{ maxWidth: 640 }}
-      >
-        {STEPS.map((step, i) => (
-          <div key={step.num} className="flex items-center md:flex-col">
-            {/* Step card */}
-            <div
-              className="flex flex-row md:flex-col items-center md:items-center gap-3 md:gap-2 px-4 md:px-3 transition-all duration-600 ease-out"
-              style={{
-                opacity: stepsVisible ? 1 : 0,
-                transform: stepsVisible ? "translateX(0)" : "translateX(-20px)",
-                transitionDelay: `${i * 150}ms`,
-              }}
-            >
-              {/* Number badge */}
-              <div
-                className="flex-shrink-0 flex items-center justify-center font-mono font-bold"
-                style={{
-                  width: 28,
-                  height: 28,
-                  background: "#00ff41",
-                  color: "#000",
-                  fontSize: 13,
-                }}
-              >
-                {step.num}
-              </div>
-
-              {/* Icon + text */}
-              <div className="flex flex-col md:items-center">
-                <step.Icon size={18} color="#00ff41" strokeWidth={1.5} className="mb-1 hidden md:block" />
-                <span
-                  className="font-mono font-bold text-xs tracking-wider"
-                  style={{ color: "#ffffff", fontSize: 11 }}
-                >
-                  {step.label}
-                </span>
-                <span
-                  className="font-mono text-xs mt-0.5"
-                  style={{ color: "#555", fontSize: 10, maxWidth: 180, textAlign: "center" }}
-                >
-                  {step.desc}
-                </span>
-              </div>
-            </div>
-
-            {/* Arrow between steps (not after last) */}
-            {i < STEPS.length - 1 && (
-              <span
-                className="hidden md:block mx-3 font-mono font-bold transition-all duration-600"
-                style={{
-                  color: "#00ff41",
-                  fontSize: 16,
-                  opacity: stepsVisible ? 1 : 0,
-                  transitionDelay: `${i * 150 + 75}ms`,
-                  marginTop: 14,
-                }}
-              >
-                &rarr;
-              </span>
-            )}
+      {/* ── HERO SECTION ── */}
+      <div className="flex flex-col items-center justify-center flex-shrink-0 pt-4 md:pt-10">
+        {/* Logo */}
+        <div
+          className="mb-4 md:mb-5 transition-all duration-700"
+          style={{
+            opacity: logoVisible ? 1 : 0,
+            transform: logoVisible ? "translateY(0)" : "translateY(-20px)",
+          }}
+        >
+          <div className="block md:hidden">
+            <Logo size={120} />
           </div>
-        ))}
+          <div className="hidden md:block">
+            <Logo width={400} />
+          </div>
+        </div>
+
+        {/* Card fan */}
+        <div
+          className="relative mb-2 md:mb-3 flex items-end justify-center"
+          style={{
+            height: "clamp(100px, 22vw, 220px)",
+            width: "100%",
+            maxWidth: 560,
+          }}
+        >
+          {LANDING_CARDS.map((card, i) => {
+            const isCenter = i === 2;
+            return (
+              <div
+                key={card.id}
+                className="absolute transition-all duration-700 ease-out"
+                style={{
+                  opacity: cardsVisible ? 1 : 0,
+                  transform: cardsVisible
+                    ? `rotate(${CARD_ROTATIONS[i]}deg) translateY(${CARD_OFFSETS_Y[i]}px) scale(${CARD_SCALES[i]})`
+                    : `rotate(0deg) translateY(60px) scale(1)`,
+                  transitionDelay: `${i * 100}ms`,
+                  left: `${10 + i * 16}%`,
+                  bottom: 0,
+                  width: "clamp(55px, 12vw, 115px)",
+                  zIndex: isCenter ? 10 : 5 - Math.abs(i - 2),
+                  transformOrigin: "bottom center",
+                }}
+              >
+                <img
+                  src={card.image}
+                  alt={card.name}
+                  className="w-full h-auto"
+                  style={{
+                    filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.6))",
+                  }}
+                  draggable={false}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Subtitle */}
+        <p
+          className="text-center font-mono transition-all duration-700 mb-6 md:mb-8"
+          style={{
+            color: "#666",
+            fontSize: "clamp(10px, 1.6vw, 12px)",
+            opacity: cardsVisible ? 1 : 0,
+          }}
+        >
+          Pok&eacute;mon card perpetual futures on Solana
+        </p>
+
+        {/* Description */}
+        <p
+          className="text-center font-mono transition-all duration-700 mb-8 md:mb-12 px-4"
+          style={{
+            color: "#888",
+            fontSize: "clamp(11px, 1.6vw, 13px)",
+            lineHeight: 1.7,
+            maxWidth: 560,
+            opacity: logoVisible ? 1 : 0,
+          }}
+        >
+          Bet on Pok&eacute;mon card prices without owning the card. Go long if you think Charizard goes up. Go short if you think it drops. Set your USDC collateral, choose leverage, and manage risk with stop loss / take profit.
+        </p>
       </div>
 
-      {/* CTA buttons */}
+      {/* ── 3 STEPS SECTION ── */}
       <div
-        className="flex flex-col items-center gap-3 w-full transition-all duration-700"
+        className="w-full transition-all duration-700"
+        style={{
+          opacity: stepsVisible ? 1 : 0,
+          transform: stepsVisible ? "translateY(0)" : "translateY(30px)",
+          maxWidth: 1000,
+        }}
+      >
+        {/* Section header */}
+        <h2
+          className="text-center font-mono font-bold mb-8 md:mb-10"
+          style={{ fontSize: "clamp(16px, 3vw, 22px)", color: "#fff" }}
+        >
+          TRADE POKEMON PERPS IN{" "}
+          <span style={{ color: "#00ff41" }}>3 SIMPLE STEPS</span>
+        </h2>
+
+        {/* Step cards row */}
+        <div className="flex flex-col md:flex-row items-stretch gap-6 md:gap-4 px-2">
+
+          {/* ── STEP 1: Pick Card ── */}
+          <div className="flex-1 flex flex-col">
+            <StepCard
+              num={1}
+              title="PICK CARD"
+              titleIcon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ff41" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>}
+              subtitle="Browse the market and choose your card"
+              delay={0}
+              visible={stepsVisible}
+            >
+              <div style={{ padding: "12px 10px 8px" }}>
+                {/* Mini search bar */}
+                <div style={{ background: "#1a1a1a", borderRadius: 4, padding: "5px 8px", marginBottom: 8 }}>
+                  <span style={{ color: "#555", fontSize: 9, fontFamily: "monospace" }}>Search cards...</span>
+                </div>
+                {/* Filter chips */}
+                <div className="flex gap-1.5 mb-3">
+                  {["ALL", "SEALED", "CARDS"].map((f, i) => (
+                    <span key={f} style={{
+                      fontSize: 8, fontFamily: "monospace", fontWeight: 700,
+                      padding: "2px 6px", borderRadius: 3,
+                      border: i === 0 ? "1px solid #00ff41" : "1px solid #333",
+                      color: i === 0 ? "#00ff41" : "#555",
+                      background: i === 0 ? "rgba(0,255,65,0.08)" : "transparent",
+                    }}>{f}</span>
+                  ))}
+                </div>
+                {/* Mini card grid */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {LANDING_CARDS.slice(0, 3).map((c) => (
+                    <div key={c.id} style={{ background: "#1a1a1a", borderRadius: 4, padding: 3 }}>
+                      <img src={c.image} alt="" className="w-full" style={{ borderRadius: 3 }} draggable={false} />
+                    </div>
+                  ))}
+                </div>
+                {/* Bottom row with thumbnails */}
+                <div className="flex gap-1 mt-2">
+                  {LANDING_CARDS.slice(0, 4).map((c) => (
+                    <div key={c.id + "-thumb"} style={{ width: "25%", background: "#1a1a1a", borderRadius: 3, padding: 2 }}>
+                      <img src={c.image} alt="" className="w-full" style={{ borderRadius: 2 }} draggable={false} />
+                    </div>
+                  ))}
+                </div>
+                {/* Price bar */}
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>MARKET PRICE</span>
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 11, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>$245.68</span>
+                    <span style={{ fontSize: 9, color: "#00ff41", fontFamily: "monospace", fontWeight: 700 }}>+6.24%</span>
+                  </div>
+                </div>
+              </div>
+            </StepCard>
+
+            {/* Arrow (desktop only) */}
+            <div className="hidden md:flex items-center justify-end pr-0 mt-3">
+              <span style={{ color: "#00ff41", fontSize: 20, fontFamily: "monospace" }}>&rarr;</span>
+            </div>
+          </div>
+
+          {/* ── STEP 2: Long/Short ── */}
+          <div className="flex-1 flex flex-col">
+            <StepCard
+              num={2}
+              title="LONG / SHORT"
+              titleIcon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ff41" strokeWidth="2"><path d="M7 4v16M17 4v16M7 12h10M7 4l-3 3M7 4l3 3M17 20l-3-3M17 20l3-3"/></svg>}
+              subtitle="Choose direction and configure your trade"
+              delay={150}
+              visible={stepsVisible}
+            >
+              <div style={{ padding: "12px 10px 8px" }}>
+                {/* Trade ticket header */}
+                <div className="flex items-center gap-2 mb-3" style={{ background: "#1a1a1a", borderRadius: 4, padding: "6px 8px" }}>
+                  <div style={{ width: 20, height: 20, borderRadius: 3, overflow: "hidden", flexShrink: 0 }}>
+                    <img src={LANDING_CARDS[3].image} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>TRADE TICKET</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <img src={LANDING_CARDS[3].image} alt="" style={{ width: 18, height: 18, borderRadius: 2, objectFit: "cover" }} />
+                  <div>
+                    <span style={{ fontSize: 9, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>Pikachu ex - 276/217</span>
+                    <div style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>Ascended Heroes (ASC)</div>
+                  </div>
+                </div>
+
+                {/* Direction label */}
+                <div style={{ fontSize: 8, color: "#555", fontFamily: "monospace", marginBottom: 4, paddingLeft: 4 }}>CHOOSE DIRECTION</div>
+                {/* Long/Short buttons */}
+                <div className="flex gap-2 mb-3">
+                  <div className="flex-1 flex items-center justify-center gap-1" style={{
+                    background: "rgba(0,255,65,0.1)", border: "1px solid rgba(0,255,65,0.4)",
+                    borderRadius: 4, padding: "6px 0", cursor: "default",
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00ff41" strokeWidth="2"><path d="M2 20l10-14 10 14"/></svg>
+                    <span style={{ fontSize: 10, color: "#00ff41", fontFamily: "monospace", fontWeight: 700 }}>LONG</span>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center gap-1" style={{
+                    background: "transparent", border: "1px solid #333",
+                    borderRadius: 4, padding: "6px 0", cursor: "default",
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff3355" strokeWidth="2"><path d="M2 4l10 14L22 4"/></svg>
+                    <span style={{ fontSize: 10, color: "#ff3355", fontFamily: "monospace", fontWeight: 700 }}>SHORT</span>
+                  </div>
+                </div>
+
+                {/* Leverage */}
+                <div style={{ fontSize: 8, color: "#555", fontFamily: "monospace", marginBottom: 4, paddingLeft: 4 }}>LEVERAGE</div>
+                <div className="flex gap-1.5 mb-3">
+                  {["1x", "2x", "5x", "10x", "20x"].map((lev, i) => (
+                    <span key={lev} style={{
+                      flex: 1, textAlign: "center",
+                      fontSize: 9, fontFamily: "monospace", fontWeight: 700,
+                      padding: "4px 0", borderRadius: 3,
+                      border: i === 1 ? "1px solid #00ff41" : "1px solid #333",
+                      color: i === 1 ? "#000" : "#666",
+                      background: i === 1 ? "#00ff41" : "transparent",
+                    }}>{lev}</span>
+                  ))}
+                </div>
+
+                {/* Slider placeholder */}
+                <div className="mb-3 px-1">
+                  <div style={{ height: 3, background: "#333", borderRadius: 2, position: "relative" }}>
+                    <div style={{ width: "15%", height: "100%", background: "#00ff41", borderRadius: 2 }} />
+                    <div style={{ position: "absolute", top: -3, left: "15%", width: 9, height: 9, background: "#00ff41", borderRadius: "50%", transform: "translateX(-50%)" }} />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span style={{ fontSize: 7, color: "#555", fontFamily: "monospace" }}>1x</span>
+                    <span style={{ fontSize: 7, color: "#555", fontFamily: "monospace" }}>25x</span>
+                  </div>
+                </div>
+
+                {/* Price + collateral */}
+                <div className="space-y-1.5 mb-3">
+                  <div className="flex justify-between px-1">
+                    <span style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>ENTRY PRICE (EST.)</span>
+                    <span style={{ fontSize: 10, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>$1276.19</span>
+                  </div>
+                  <div className="flex justify-between px-1">
+                    <span style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>COLLATERAL (USDC)</span>
+                    <div className="flex items-center gap-1">
+                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#2775ca" }} />
+                      <span style={{ fontSize: 10, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>100.00</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Review button */}
+                <div style={{
+                  background: "#00ff41", borderRadius: 4, padding: "7px 0",
+                  textAlign: "center", cursor: "default",
+                }}>
+                  <span style={{ fontSize: 10, color: "#000", fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.05em" }}>REVIEW TRADE &gt;</span>
+                </div>
+              </div>
+            </StepCard>
+
+            {/* Arrow */}
+            <div className="hidden md:flex items-center justify-end pr-0 mt-3">
+              <span style={{ color: "#00ff41", fontSize: 20, fontFamily: "monospace" }}>&rarr;</span>
+            </div>
+          </div>
+
+          {/* ── STEP 3: Manage PNL ── */}
+          <div className="flex-1 flex flex-col">
+            <StepCard
+              num={3}
+              title="MANAGE PNL"
+              titleIcon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ff41" strokeWidth="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>}
+              subtitle="Track your position and manage risk"
+              delay={300}
+              visible={stepsVisible}
+            >
+              <div style={{ padding: "12px 10px 8px" }}>
+                {/* Position header */}
+                <div className="flex items-center gap-2 mb-2" style={{ background: "#1a1a1a", borderRadius: 4, padding: "6px 8px" }}>
+                  <span style={{ fontSize: 9, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>MY POSITION</span>
+                  <span style={{ fontSize: 7, background: "rgba(0,255,65,0.15)", color: "#00ff41", padding: "1px 4px", borderRadius: 2, fontFamily: "monospace", fontWeight: 700 }}>LONG</span>
+                  <span style={{ fontSize: 7, color: "#555", fontFamily: "monospace" }}>2x</span>
+                </div>
+
+                {/* Card info */}
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <img src={LANDING_CARDS[3].image} alt="" style={{ width: 18, height: 18, borderRadius: 2, objectFit: "cover" }} />
+                  <div>
+                    <span style={{ fontSize: 9, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>Pikachu ex - 276/217</span>
+                    <div style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>Ascended Heroes (ASC)</div>
+                  </div>
+                </div>
+
+                {/* PNL display */}
+                <div className="mb-3 px-1">
+                  <div style={{ fontSize: 7, color: "#555", fontFamily: "monospace", marginBottom: 2 }}>OPEN PNL (USDC)</div>
+                  <div style={{ fontSize: 20, color: "#00ff41", fontFamily: "monospace", fontWeight: 700, lineHeight: 1 }}>+$48.36</div>
+                  <div style={{ fontSize: 10, color: "#00ff41", fontFamily: "monospace" }}>(+24.18%)</div>
+                </div>
+
+                {/* Mini chart placeholder */}
+                <div className="mb-3" style={{ height: 40, position: "relative", overflow: "hidden" }}>
+                  <svg width="100%" height="40" viewBox="0 0 200 40" preserveAspectRatio="none">
+                    <polyline
+                      points="0,35 20,30 40,32 60,25 80,28 100,20 120,18 140,15 155,12 170,8 185,10 200,5"
+                      fill="none"
+                      stroke="#00ff41"
+                      strokeWidth="1.5"
+                    />
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00ff41" stopOpacity="0.15" />
+                      <stop offset="100%" stopColor="#00ff41" stopOpacity="0" />
+                    </linearGradient>
+                    <polygon
+                      points="0,35 20,30 40,32 60,25 80,28 100,20 120,18 140,15 155,12 170,8 185,10 200,5 200,40 0,40"
+                      fill="url(#chartGrad)"
+                    />
+                  </svg>
+                  {/* Y-axis labels */}
+                  <div style={{ position: "absolute", right: 2, top: 0, fontSize: 7, color: "#555", fontFamily: "monospace" }}>+30%</div>
+                  <div style={{ position: "absolute", right: 2, bottom: 0, fontSize: 7, color: "#555", fontFamily: "monospace" }}>0%</div>
+                </div>
+
+                {/* Stats */}
+                <div className="space-y-1.5 mb-3">
+                  <div className="flex justify-between px-1">
+                    <span style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>ENTRY PRICE</span>
+                    <span style={{ fontSize: 9, color: "#fff", fontFamily: "monospace", fontWeight: 700 }}>$245.68</span>
+                  </div>
+                  <div className="flex justify-between px-1">
+                    <span style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>CURRENT PRICE</span>
+                    <span style={{ fontSize: 9, color: "#00ff41", fontFamily: "monospace", fontWeight: 700 }}>$257.84</span>
+                  </div>
+                  <div className="flex justify-between px-1">
+                    <span style={{ fontSize: 8, color: "#555", fontFamily: "monospace" }}>LIQUIDATION PRICE</span>
+                    <span style={{ fontSize: 9, color: "#ff3355", fontFamily: "monospace", fontWeight: 700 }}>$173.21</span>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2 mb-2">
+                  <div className="flex-1 flex items-center justify-center gap-1" style={{
+                    border: "1px solid #333", borderRadius: 4, padding: "5px 0", cursor: "default",
+                  }}>
+                    <span style={{ fontSize: 8, color: "#aaa", fontFamily: "monospace", fontWeight: 700 }}>ADD MARGIN</span>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center gap-1" style={{
+                    border: "1px solid #333", borderRadius: 4, padding: "5px 0", cursor: "default",
+                  }}>
+                    <span style={{ fontSize: 8, color: "#aaa", fontFamily: "monospace", fontWeight: 700 }}>SET STOP LOSS</span>
+                  </div>
+                </div>
+                <div style={{
+                  background: "rgba(255,51,85,0.15)", border: "1px solid rgba(255,51,85,0.4)",
+                  borderRadius: 4, padding: "7px 0", textAlign: "center", cursor: "default",
+                }}>
+                  <span style={{ fontSize: 9, color: "#ff3355", fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.05em" }}>CLOSE POSITION</span>
+                </div>
+              </div>
+            </StepCard>
+          </div>
+        </div>
+
+        {/* Trust badges */}
+        <div className="flex items-center justify-center gap-6 mt-6 md:mt-8 mb-8 md:mb-10">
+          {[
+            { icon: "~", label: "Non-Custodial" },
+            { icon: "\u26A1", label: "Fast Execution" },
+            { icon: "\u{1F512}", label: "Built on Solana" },
+          ].map((b) => (
+            <div key={b.label} className="flex items-center gap-1.5">
+              <span style={{ fontSize: 10 }}>{b.icon}</span>
+              <span style={{ fontSize: 9, color: "#555", fontFamily: "monospace" }}>{b.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CTA BUTTONS ── */}
+      <div
+        className="flex flex-col items-center gap-3 w-full transition-all duration-700 mb-6"
         style={{
           opacity: ctaVisible ? 1 : 0,
           transform: ctaVisible ? "translateY(0)" : "translateY(10px)",
-          maxWidth: 320,
+          maxWidth: 380,
         }}
       >
         <button
@@ -725,7 +947,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       {/* Read Docs link */}
       <Link
         href="/docs"
-        className="mt-4 text-xs font-mono transition-all duration-700 underline underline-offset-2"
+        className="mb-6 text-xs font-mono transition-all duration-700 underline underline-offset-2"
         style={{
           color: "#666",
           opacity: ctaVisible ? 1 : 0,
@@ -735,6 +957,55 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         Read the Docs
       </Link>
 
+    </div>
+  );
+}
+
+/* ── Step Card wrapper ── */
+function StepCard({
+  num,
+  title,
+  titleIcon,
+  subtitle,
+  delay,
+  visible,
+  children,
+}: {
+  num: number;
+  title: string;
+  titleIcon: React.ReactNode;
+  subtitle: string;
+  delay: number;
+  visible: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="flex-1 transition-all duration-700 ease-out"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(20px)",
+        transitionDelay: `${delay}ms`,
+        background: "#111",
+        border: "1px solid rgba(0,255,65,0.2)",
+        borderRadius: 8,
+        overflow: "hidden",
+      }}
+    >
+      {/* Header */}
+      <div style={{ padding: "10px 12px 6px", borderBottom: "1px solid #1a1a1a" }}>
+        <div className="flex items-center gap-2 mb-1">
+          <span style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            width: 18, height: 18, background: "#00ff41", color: "#000",
+            fontSize: 10, fontWeight: 700, fontFamily: "monospace", borderRadius: 3,
+          }}>{num}</span>
+          <span style={{ fontSize: 11, color: "#fff", fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.05em" }}>{title}</span>
+          {titleIcon}
+        </div>
+        <div style={{ fontSize: 9, color: "#555", fontFamily: "monospace", paddingLeft: 26 }}>{subtitle}</div>
+      </div>
+      {children}
     </div>
   );
 }
