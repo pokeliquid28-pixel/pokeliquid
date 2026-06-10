@@ -235,7 +235,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       <div className="flex flex-col items-center flex-shrink-0 pt-3 md:pt-6">
         <div
           className="transition-all duration-700"
-          style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)", marginBottom: -60 }}
+          style={{ opacity: logoVisible ? 1 : 0, transform: logoVisible ? "translateY(0)" : "translateY(-20px)" }}
         >
           <div className="block md:hidden"><Logo size={100} /></div>
           <div className="hidden md:block"><Logo width={320} /></div>
@@ -244,7 +244,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
         {/* Card fan — tight under logo */}
         <div
           className="relative flex items-end justify-center"
-          style={{ height: 140, width: "100%", maxWidth: 420, marginBottom: 10 }}
+          style={{ height: 140, width: "100%", maxWidth: 420, marginTop: -50, marginBottom: 10 }}
         >
           {LANDING_CARDS.map((card, i) => (
             <div
