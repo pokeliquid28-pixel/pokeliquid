@@ -222,12 +222,10 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
 
             {filtered.map((t) => {
               const badge = actionBadge(t.action, t.close_reason);
-              const clickable = isClose(t);
               return (
                 <div
                   key={t.id}
-                  className={`grid grid-cols-10 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10 ${clickable ? "cursor-pointer" : ""}`}
-                  onClick={clickable ? () => setSelectedTrade(t) : undefined}
+                  className="grid grid-cols-10 gap-2 text-xs font-mono py-2 border-b border-border/30 last:border-0 hover:bg-border/10"
                 >
                   <div className="text-secondary truncate">{formatTime(t.timestamp)}</div>
                   <div>
@@ -265,13 +263,8 @@ export function TradeHistory({ expanded = false }: { expanded?: boolean }) {
           <div className="md:hidden space-y-2">
             {filtered.map((t) => {
               const badge = actionBadge(t.action, t.close_reason);
-              const clickable = isClose(t);
               return (
-                <div
-                  key={t.id}
-                  className={`border border-border/50 bg-bg p-3 space-y-2 ${clickable ? "cursor-pointer" : ""}`}
-                  onClick={clickable ? () => setSelectedTrade(t) : undefined}
-                >
+                <div key={t.id} className="border border-border/50 bg-bg p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className={`px-1.5 py-0.5 text-[10px] font-bold border ${badge.color}`}>

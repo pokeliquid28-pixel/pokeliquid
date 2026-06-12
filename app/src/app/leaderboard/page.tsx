@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Connection, PublicKey } from "@solana/web3.js";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://mainnet.helius-rpc.com/?api-key=358c9ec3-db8b-46a1-ac6c-d702d3a19340";
-const PROGRAM_ID = new PublicKey("5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6");
-const REFERRAL_SEED = Buffer.from("referral");
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,7 +12,6 @@ type TraderRow = {
   wins: number;
   trades: number;
   volume: number;
-  username?: string;
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -24,10 +19,6 @@ type TraderRow = {
 function truncateWallet(pubkey: string): string {
   if (pubkey.length <= 8) return pubkey;
   return `${pubkey.slice(0, 4)}...${pubkey.slice(-4)}`;
-}
-
-function displayName(row: TraderRow): string {
-  return row.username || truncateWallet(row.pubkey);
 }
 
 function formatPnl(pnl: number): string {
@@ -59,42 +50,21 @@ function useLeaderboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const r = await fetch(`${API_BASE}/leaderboard`);
-        const data = await r.json();
-        const traders: TraderRow[] = (data.traders ?? []).map((t: { user_pubkey: string; total_pnl: number; wins: number; trades: number; volume: number }) => ({
-          pubkey: t.user_pubkey,
-          totalPnl: t.total_pnl,
-          wins: t.wins,
-          trades: t.trades,
-          volume: t.volume,
-        }));
-
-        // Batch-fetch referral usernames
-        try {
-          const connection = new Connection(RPC_URL, "confirmed");
-          const pdas = traders.map((t) => {
-            const [pda] = PublicKey.findProgramAddressSync(
-              [REFERRAL_SEED, new PublicKey(t.pubkey).toBuffer()],
-              PROGRAM_ID,
-            );
-            return pda;
-          });
-          const accounts = await connection.getMultipleAccountsInfo(pdas);
-          accounts.forEach((acc, i) => {
-            if (!acc?.data || acc.data.length < 73) return; // 8 disc + 32 owner + 32 username + 1 len
-            const usernameLen = acc.data[72]; // offset 8+32+32 = 72
-            if (usernameLen > 0 && usernameLen <= 32) {
-              const username = acc.data.slice(40, 40 + usernameLen).toString("utf-8").replace(/\0/g, "");
-              if (username.length > 0) traders[i].username = username;
-            }
-          });
-        } catch {}
-
-        setRows(traders);
-      } catch {}
-      setLoading(false);
+    const load = () => {
+      fetch(`${API_BASE}/leaderboard`)
+        .then((r) => r.json())
+        .then((data) => {
+          const traders = (data.traders ?? []).map((t: { user_pubkey: string; total_pnl: number; wins: number; trades: number; volume: number }) => ({
+            pubkey: t.user_pubkey,
+            totalPnl: t.total_pnl,
+            wins: t.wins,
+            trades: t.trades,
+            volume: t.volume,
+          }));
+          setRows(traders);
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
     };
 
     load();
@@ -261,7 +231,7 @@ function LeaderboardTable({
                     style={{ fontSize: 12, color: "#cccccc", letterSpacing: "0.02em" }}
                     title={row.pubkey}
                   >
-                    {displayName(row)}
+                    {truncateWallet(row.pubkey)}
                   </div>
                   <div
                     style={{
@@ -311,7 +281,7 @@ function LeaderboardTable({
                     style={{ fontSize: 11, color: "#cccccc", letterSpacing: "0.02em" }}
                     title={row.pubkey}
                   >
-                    {displayName(row)}
+                    {truncateWallet(row.pubkey)}
                   </div>
                   <div
                     style={{
