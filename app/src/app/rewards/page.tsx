@@ -121,66 +121,55 @@ const pokeballStyles = `
   /* ── Sparkle particles on win ──────────────────────────── */
   .sparkles {
     position: absolute;
-    width: 220px;
-    height: 220px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    width: 160px;
+    height: 160px;
     pointer-events: none;
   }
 
   .sparkles.active .sparkle {
-    animation: sparkle-fly 1s ease-out forwards;
+    animation: sparkle-fly 0.9s ease-out forwards;
   }
 
   .sparkle {
     position: absolute;
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     opacity: 0;
     top: 50%;
     left: 50%;
-    margin: -3px 0 0 -3px;
+    margin: -5px 0 0 -5px;
   }
 
-  /* Three colors like the games — gold, white, green */
-  .sparkle:nth-child(3n+1) { background: #ffcc00; box-shadow: 0 0 6px #ffcc00; }
-  .sparkle:nth-child(3n+2) { background: #ffffff; box-shadow: 0 0 6px #ffffff; }
-  .sparkle:nth-child(3n+3) { background: #00ff41; box-shadow: 0 0 6px #00ff41; }
+  .sparkle:nth-child(3n+1) { background: #ffcc00; box-shadow: 0 0 10px 3px #ffcc00; }
+  .sparkle:nth-child(3n+2) { background: #ffffff; box-shadow: 0 0 10px 3px #ffffff; }
+  .sparkle:nth-child(3n+3) { background: #00ff41; box-shadow: 0 0 10px 3px #00ff41; }
 
-  /* Each sparkle flies in a different direction */
-  .sparkle:nth-child(1)  { --angle: 0deg;   --dist: 90px;  animation-delay: 0s; }
-  .sparkle:nth-child(2)  { --angle: 45deg;  --dist: 100px; animation-delay: 0.05s; }
-  .sparkle:nth-child(3)  { --angle: 90deg;  --dist: 85px;  animation-delay: 0.1s; }
-  .sparkle:nth-child(4)  { --angle: 135deg; --dist: 95px;  animation-delay: 0.03s; }
-  .sparkle:nth-child(5)  { --angle: 180deg; --dist: 90px;  animation-delay: 0.08s; }
-  .sparkle:nth-child(6)  { --angle: 225deg; --dist: 100px; animation-delay: 0.12s; }
-  .sparkle:nth-child(7)  { --angle: 270deg; --dist: 88px;  animation-delay: 0.02s; }
-  .sparkle:nth-child(8)  { --angle: 315deg; --dist: 95px;  animation-delay: 0.07s; }
-  .sparkle:nth-child(9)  { --angle: 22deg;  --dist: 80px;  animation-delay: 0.15s; }
-  .sparkle:nth-child(10) { --angle: 67deg;  --dist: 105px; animation-delay: 0.18s; }
-  .sparkle:nth-child(11) { --angle: 112deg; --dist: 75px;  animation-delay: 0.2s; }
-  .sparkle:nth-child(12) { --angle: 157deg; --dist: 110px; animation-delay: 0.22s; }
+  .sparkle:nth-child(1)  { --tx: 100px;  --ty: 0px;     animation-delay: 0s; }
+  .sparkle:nth-child(2)  { --tx: 70px;   --ty: -70px;   animation-delay: 0.05s; }
+  .sparkle:nth-child(3)  { --tx: 0px;    --ty: -100px;  animation-delay: 0.1s; }
+  .sparkle:nth-child(4)  { --tx: -70px;  --ty: -70px;   animation-delay: 0.03s; }
+  .sparkle:nth-child(5)  { --tx: -100px; --ty: 0px;     animation-delay: 0.08s; }
+  .sparkle:nth-child(6)  { --tx: -70px;  --ty: 70px;    animation-delay: 0.12s; }
+  .sparkle:nth-child(7)  { --tx: 0px;    --ty: 100px;   animation-delay: 0.02s; }
+  .sparkle:nth-child(8)  { --tx: 70px;   --ty: 70px;    animation-delay: 0.07s; }
+  .sparkle:nth-child(9)  { --tx: 90px;   --ty: -40px;   animation-delay: 0.15s; }
+  .sparkle:nth-child(10) { --tx: -40px;  --ty: -90px;   animation-delay: 0.18s; }
+  .sparkle:nth-child(11) { --tx: -90px;  --ty: 40px;    animation-delay: 0.2s; }
+  .sparkle:nth-child(12) { --tx: 40px;   --ty: 90px;    animation-delay: 0.22s; }
 
   @keyframes sparkle-fly {
     0% {
       opacity: 1;
-      transform: translate(0, 0) scale(1);
+      transform: translate(0, 0) scale(0.5);
     }
-    60% {
+    50% {
       opacity: 1;
-      transform: translate(
-        calc(cos(var(--angle)) * var(--dist)),
-        calc(sin(var(--angle)) * var(--dist))
-      ) scale(1.5);
+      transform: translate(calc(var(--tx) * 0.7), calc(var(--ty) * 0.7)) scale(1.8);
     }
     100% {
       opacity: 0;
-      transform: translate(
-        calc(cos(var(--angle)) * var(--dist) * 1.2),
-        calc(sin(var(--angle)) * var(--dist) * 1.2)
-      ) scale(0);
+      transform: translate(var(--tx), var(--ty)) scale(0);
     }
   }
 
@@ -198,13 +187,11 @@ const pokeballStyles = `
     position: absolute;
     width: 190px;
     height: 190px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     border-radius: 50%;
-    border: 2px solid rgba(0, 255, 65, 0.3);
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.15), inset 0 0 20px rgba(0, 255, 65, 0.05);
+    border: 2px solid rgba(0, 255, 65, 0.4);
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.2), inset 0 0 25px rgba(0, 255, 65, 0.05);
     animation: glow-pulse 2s ease-in-out infinite;
+    pointer-events: none;
   }
 
   @keyframes glow-pulse {
@@ -273,16 +260,21 @@ function PokeballSpin({
 
   return (
     <div className="pokeball-container">
-      <div className={`pokeball-glow ${!freeEligible || state !== "idle" ? "hidden" : ""}`} />
+      {/* Wrapper keeps glow + sparkles centered on the ball */}
+      <div style={{ position: "relative", width: 160, height: 160 }}>
+        <div className={`pokeball-glow ${!freeEligible || state !== "idle" ? "hidden" : ""}`}
+          style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} />
 
-      <div className={`sparkles ${state === "won" ? "active" : ""}`}>
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="sparkle" />
-        ))}
-      </div>
+        <div className={`sparkles ${state === "won" ? "active" : ""}`}
+          style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="sparkle" />
+          ))}
+        </div>
 
-      <div className={pokeballClass} onClick={!disabled ? spin : undefined}>
-        <div className="pokeball__button" />
+        <div className={pokeballClass} onClick={!disabled ? spin : undefined}>
+          <div className="pokeball__button" />
+        </div>
       </div>
 
       <div className="mt-6 text-center">
