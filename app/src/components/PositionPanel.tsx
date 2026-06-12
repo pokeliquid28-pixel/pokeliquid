@@ -7,7 +7,6 @@ import { useState, useEffect, useRef } from "react";
 
 import { getProgram } from "@/lib/program";
 import { useNotifications } from "@/providers/NotificationProvider";
-import { useSpinCheck, SpinPopup } from "@/components/SpinNotification";
 import BN from "bn.js";
 import {
   PROTOCOL_STATE,
@@ -109,7 +108,6 @@ function PositionCard({
   const { publicKey } = useWallet();
   const anchorWallet = useAnchorWallet();
   const { addNotification } = useNotifications();
-  const { showSpinPopup, setShowSpinPopup, checkSpin } = useSpinCheck();
   const [loading, setLoading] = useState(false);
   const [txStatus, setTxStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [slInput, setSlInput] = useState(pos.slPrice ? rawToPrice(pos.slPrice).toFixed(2) : "");
@@ -254,7 +252,6 @@ function PositionCard({
       );
       setConfirmClose(false);
       setTimeout(onRefresh, 2000);
-      setTimeout(checkSpin, 3000);
     } catch (e: any) {
       setTxStatus({ type: "error", msg: e?.message ?? "Transaction failed" });
       addNotification("error", "Close Position Failed", e?.message ?? "Transaction failed");
@@ -362,7 +359,6 @@ function PositionCard({
 
   return (
     <div className={`border border-border border-l-2 ${borderColor} bg-panel`}>
-      <SpinPopup show={showSpinPopup} onClose={() => setShowSpinPopup(false)} />
       {/* ── Header row ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div className="flex items-center gap-2.5">
