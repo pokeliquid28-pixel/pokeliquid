@@ -212,6 +212,7 @@ function PokeballSpin({
   const { publicKey } = useWallet();
   const [state, setState] = useState<PokeballState>("idle");
   const [result, setResult] = useState<SpinRecord | null>(null);
+  const [wonSpinId, setWonSpinId] = useState<number | null>(null);
 
   const spin = useCallback(async () => {
     if (!publicKey || state !== "idle") return;
@@ -242,6 +243,7 @@ function PokeballSpin({
 
       const won = data.tier !== "nothing";
       setState(won ? "won" : "lost");
+      if (won) setWonSpinId(data.spin_id);
 
       const spinRecord: SpinRecord = {
         id: data.spin_id,
@@ -337,6 +339,86 @@ function PokeballSpin({
           )}
         </div>
       )}
+
+      {wonSpinId && publicKey && (
+        <WonCard spinId={wonSpinId} userPubkey={publicKey.toBase58()} />
+      )}
+    </div>
+  );
+}
+
+// ── Won Card Display ─────────────────────────────────────────────────────────
+
+function WonCard({ spinId, userPubkey }: { spinId: number; userPubkey: string }) {
+  const [card, setCard] = useState<{ name: string; image: string; nft: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const poll = async () => {
+      for (let i = 0; i < 20; i++) {
+        try {
+          const res = await fetch(`${API_BASE}/spins?user=${userPubkey}&limit=10`);
+          const data = await res.json();
+          const spin = (data.spins || []).find((s: { id: number; nft_mint?: string; fulfilled: number }) => s.id === spinId);
+          if (spin?.nft_mint && spin.fulfilled === 2) {
+            const rpcUrl = "https://mainnet.helius-rpc.com/?api-key=358c9ec3-db8b-46a1-ac6c-d702d3a19340";
+            const metaRes = await fetch(rpcUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getAsset", params: { id: spin.nft_mint } }),
+            });
+            const metaData = await metaRes.json();
+            const asset = metaData.result;
+            if (!cancelled && asset) {
+              setCard({
+                name: asset.content?.metadata?.name || "Pokemon Card",
+                image: asset.content?.links?.image || asset.content?.files?.[0]?.uri || "",
+                nft: spin.nft_mint,
+              });
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {}
+        await new Promise(r => setTimeout(r, 3000));
+      }
+      if (!cancelled) setLoading(false);
+    };
+    poll();
+    return () => { cancelled = true; };
+  }, [spinId, userPubkey]);
+
+  if (loading) {
+    return (
+      <div className="mt-6 text-center">
+        <div className="text-xs font-mono text-accent animate-pulse">Opening pack...</div>
+      </div>
+    );
+  }
+
+  if (!card) return null;
+
+  return (
+    <div className="mt-6 border border-accent bg-panel p-4 max-w-[320px] mx-auto text-center">
+      <div className="text-xs font-mono text-accent mb-2 font-bold">YOUR CARD</div>
+      {card.image && (
+        <img
+          src={card.image}
+          alt={card.name}
+          className="w-full max-w-[250px] mx-auto rounded mb-3"
+          style={{ imageRendering: "auto" }}
+        />
+      )}
+      <div className="text-sm font-mono text-primary font-bold">{card.name}</div>
+      <a
+        href={`https://collectorcrypt.com/assets/solana/${card.nft}`}
+        target="_blank"
+        rel="noopener"
+        className="inline-block mt-2 px-3 py-1.5 text-[10px] font-mono border border-accent text-accent hover:bg-accent/10 transition-colors"
+      >
+        VIEW ON COLLECTOR CRYPT
+      </a>
     </div>
   );
 }
