@@ -14,6 +14,7 @@ import { useMarketState } from "@/hooks/useMarketState";
 import { usePositionPrice } from "@/hooks/usePositionPrice";
 import { useNotifications } from "@/providers/NotificationProvider";
 import { incrementTradeCount } from "@/components/SaveWalletSheet";
+import { useSpinCheck, SpinPopup } from "@/components/SpinNotification";
 import { getProgram } from "@/lib/program";
 import { MARKETS, Market, MarketType } from "@/lib/markets";
 import { LandingAuth } from "@/components/LandingAuth";
@@ -134,6 +135,7 @@ export default function TradePage() {
   const stats = useStats(selectedMarket.id);
   const walletUsdc = useWalletUsdc();
   const { addNotification } = useNotifications();
+  const { showSpinPopup, setShowSpinPopup, checkSpin } = useSpinCheck();
   const [refreshKey, setRefreshKey] = useState(0);
   const [showCardInfo, setShowCardInfo] = useState(false);
   const [cardInfo, setCardInfo] = useState<CardInfoData | null>(null);
@@ -213,6 +215,7 @@ export default function TradePage() {
 
   return (
     <div className="flex flex-col min-h-[calc(100dvh-56px-56px)] md:min-h-[calc(100dvh-72px)]" style={{ backgroundColor: "#0a0a0a" }}>
+      <SpinPopup show={showSpinPopup} onClose={() => setShowSpinPopup(false)} />
 
       {/* ── BINDER GRID ──────────────────────────────────────────── */}
       <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6 flex-1">
@@ -391,6 +394,7 @@ export default function TradePage() {
                 oracleAddress={selectedMarket.oracleAddress}
                 marketId={selectedMarket.id}
                 onPositionOpened={() => {}}
+                checkSpin={checkSpin}
               />
             </div>
 
@@ -798,6 +802,7 @@ function OrderEntry({
   onRefresh,
   oracleAddress,
   marketId,
+  checkSpin,
   onPositionOpened,
 }: {
   oracle: ReturnType<typeof useOracle>;
@@ -808,6 +813,7 @@ function OrderEntry({
   oracleAddress?: string;
   marketId?: string;
   onPositionOpened?: () => void;
+  checkSpin?: () => void;
 }) {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
@@ -882,6 +888,7 @@ function OrderEntry({
       setTxStatus({ type: "success", msg: `${side} position opened at $${currentPriceUsd.toFixed(2)}` });
       incrementTradeCount();
       addNotification("success", `${side} Position Opened`, `$${positionSizeUsdc.toFixed(2)} at $${currentPriceUsd.toFixed(2)} (${leverage}x)`);
+      if (checkSpin) setTimeout(checkSpin, 3000);
       setCollateralInput("");
       setSlInput("");
       setTpInput("");
