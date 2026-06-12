@@ -205,14 +205,15 @@ type PokeballState = "idle" | "shaking" | "won" | "lost";
 function PokeballSpin({
   onResult,
   freeEligible,
+  onWin,
 }: {
   onResult: (r: SpinRecord | null) => void;
   freeEligible: boolean;
+  onWin: (spinId: number) => void;
 }) {
   const { publicKey } = useWallet();
   const [state, setState] = useState<PokeballState>("idle");
   const [result, setResult] = useState<SpinRecord | null>(null);
-  const [wonSpinId, setWonSpinId] = useState<number | null>(null);
 
   const spin = useCallback(async () => {
     if (!publicKey || state !== "idle") return;
@@ -243,7 +244,7 @@ function PokeballSpin({
 
       const won = data.tier !== "nothing";
       setState(won ? "won" : "lost");
-      if (won) setWonSpinId(data.spin_id);
+      if (won) onWin(data.spin_id);
 
       const spinRecord: SpinRecord = {
         id: data.spin_id,
@@ -340,18 +341,16 @@ function PokeballSpin({
         </div>
       )}
 
-      {wonSpinId && publicKey && (
-        <WonCard spinId={wonSpinId} userPubkey={publicKey.toBase58()} />
-      )}
     </div>
   );
 }
 
 // ── Won Card Display ─────────────────────────────────────────────────────────
 
-function WonCard({ spinId, userPubkey }: { spinId: number; userPubkey: string }) {
+function WonCardReveal({ spinId, userPubkey, onClose }: { spinId: number; userPubkey: string; onClose: () => void }) {
   const [card, setCard] = useState<{ name: string; image: string; nft: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -377,6 +376,7 @@ function WonCard({ spinId, userPubkey }: { spinId: number; userPubkey: string })
                 nft: spin.nft_mint,
               });
               setLoading(false);
+              setTimeout(() => setRevealed(true), 300);
               return;
             }
           }
@@ -389,36 +389,85 @@ function WonCard({ spinId, userPubkey }: { spinId: number; userPubkey: string })
     return () => { cancelled = true; };
   }, [spinId, userPubkey]);
 
-  if (loading) {
-    return (
-      <div className="mt-6 text-center">
-        <div className="text-xs font-mono text-accent animate-pulse">Opening pack...</div>
-      </div>
-    );
-  }
-
-  if (!card) return null;
-
   return (
-    <div className="mt-6 border border-accent bg-panel p-4 max-w-[320px] mx-auto text-center">
-      <div className="text-xs font-mono text-accent mb-2 font-bold">YOUR CARD</div>
-      {card.image && (
-        <img
-          src={card.image}
-          alt={card.name}
-          className="w-full max-w-[250px] mx-auto rounded mb-3"
-          style={{ imageRendering: "auto" }}
-        />
-      )}
-      <div className="text-sm font-mono text-primary font-bold">{card.name}</div>
-      <a
-        href={`https://collectorcrypt.com/assets/solana/${card.nft}`}
-        target="_blank"
-        rel="noopener"
-        className="inline-block mt-2 px-3 py-1.5 text-[10px] font-mono border border-accent text-accent hover:bg-accent/10 transition-colors"
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: "rgba(0, 0, 0, 0.85)", backdropFilter: "blur(8px)" }}
+      onClick={!loading ? onClose : undefined}
+    >
+      <div
+        className="flex flex-col items-center max-w-sm mx-4"
+        onClick={(e) => e.stopPropagation()}
       >
-        VIEW ON COLLECTOR CRYPT
-      </a>
+        {loading ? (
+          <div className="text-center">
+            <div className="text-2xl mb-4">✨</div>
+            <div className="text-sm font-mono text-accent animate-pulse">Opening your pack...</div>
+            <div className="text-xs font-mono text-secondary mt-2">Your card is being revealed</div>
+          </div>
+        ) : card ? (
+          <div
+            className="text-center"
+            style={{
+              opacity: revealed ? 1 : 0,
+              transform: revealed ? "scale(1) translateY(0)" : "scale(0.8) translateY(20px)",
+              transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}
+          >
+            <div className="text-xs font-mono text-accent font-bold tracking-widest mb-4">
+              YOU WON!
+            </div>
+
+            {card.image && (
+              <div
+                className="relative mx-auto mb-4"
+                style={{
+                  maxWidth: 280,
+                  boxShadow: "0 0 30px rgba(0, 255, 65, 0.3), 0 0 60px rgba(0, 255, 65, 0.1), 0 20px 60px rgba(0, 0, 0, 0.5)",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={card.image}
+                  alt={card.name}
+                  className="w-full"
+                  style={{ display: "block" }}
+                />
+              </div>
+            )}
+
+            <div className="text-sm font-mono text-primary font-bold mb-1">
+              {card.name}
+            </div>
+            <div className="text-xs font-mono text-secondary mb-4">
+              Graded Pokemon Card — delivered to your wallet
+            </div>
+
+            <div className="flex gap-2 justify-center">
+              <a
+                href={`https://collectorcrypt.com/assets/solana/${card.nft}`}
+                target="_blank"
+                rel="noopener"
+                className="px-4 py-2 text-xs font-mono font-bold border-2 border-accent text-accent hover:bg-accent/10 transition-colors"
+              >
+                VIEW CARD
+              </a>
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-mono border border-border text-secondary hover:text-primary transition-colors"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="text-sm font-mono text-secondary">Could not load card details</div>
+            <button onClick={onClose} className="mt-4 px-4 py-2 text-xs font-mono border border-border text-secondary">CLOSE</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -429,6 +478,7 @@ export default function RewardsPage() {
   const { publicKey, connected } = useWallet();
   const [history, setHistory] = useState<SpinRecord[]>([]);
   const [freeEligible, setFreeEligible] = useState(false);
+  const [wonSpinId, setWonSpinId] = useState<number | null>(null);
   const [eligibility, setEligibility] = useState<{
     has_traded_today: boolean;
     has_used_free_spin: boolean;
@@ -513,7 +563,7 @@ export default function RewardsPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center mb-10">
-              <PokeballSpin onResult={handleResult} freeEligible={freeEligible} />
+              <PokeballSpin onResult={handleResult} freeEligible={freeEligible} onWin={(id) => setWonSpinId(id)} />
             </div>
           )}
 
@@ -581,6 +631,14 @@ export default function RewardsPage() {
           )}
         </div>
       </div>
+
+      {wonSpinId && publicKey && (
+        <WonCardReveal
+          spinId={wonSpinId}
+          userPubkey={publicKey.toBase58()}
+          onClose={() => setWonSpinId(null)}
+        />
+      )}
     </>
   );
 }
