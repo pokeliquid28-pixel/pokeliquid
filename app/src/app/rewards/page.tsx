@@ -183,23 +183,19 @@ const pokeballStyles = `
     100% { transform: scale(1); opacity: 0.7; }
   }
 
-  .pokeball-glow {
-    position: absolute;
-    width: 190px;
-    height: 190px;
-    border-radius: 50%;
-    border: 2px solid rgba(0, 255, 65, 0.4);
-    box-shadow: 0 0 25px rgba(0, 255, 65, 0.2), inset 0 0 25px rgba(0, 255, 65, 0.05);
-    animation: glow-pulse 2s ease-in-out infinite;
-    pointer-events: none;
+  .pokeball.glow {
+    box-shadow:
+      0 0 15px rgba(0, 255, 65, 0.4),
+      0 0 30px rgba(0, 255, 65, 0.2),
+      0 0 60px rgba(0, 255, 65, 0.1),
+      inset -8px 8px 0 8px rgba(0,0,0,0.05);
+    animation: pokeball-glow-pulse 2s ease-in-out infinite;
   }
 
-  @keyframes glow-pulse {
-    0%, 100% { transform: scale(1); opacity: 0.3; }
-    50%      { transform: scale(1.1); opacity: 0.6; }
+  @keyframes pokeball-glow-pulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(0,255,65,0.3), 0 0 30px rgba(0,255,65,0.15), 0 0 60px rgba(0,255,65,0.05), inset -8px 8px 0 8px rgba(0,0,0,0.05); }
+    50%      { box-shadow: 0 0 20px rgba(0,255,65,0.5), 0 0 40px rgba(0,255,65,0.25), 0 0 80px rgba(0,255,65,0.1), inset -8px 8px 0 8px rgba(0,0,0,0.05); }
   }
-
-  .pokeball-glow.hidden { display: none; }
 `;
 
 // ── Pokeball Component ───────────────────────────────────────────────────────
@@ -256,17 +252,14 @@ function PokeballSpin({
     state === "won" ? "won" : "",
     state === "lost" ? "lost" : "",
     disabled && state === "idle" ? "locked" : "",
+    freeEligible && state === "idle" ? "glow" : "",
   ].filter(Boolean).join(" ");
 
   return (
     <div className="pokeball-container">
-      {/* Wrapper keeps glow + sparkles centered on the ball */}
-      <div style={{ position: "relative", width: 160, height: 160 }}>
-        <div className={`pokeball-glow ${!freeEligible || state !== "idle" ? "hidden" : ""}`}
-          style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} />
-
+      <div style={{ position: "relative", width: 172, height: 172 }}>
         <div className={`sparkles ${state === "won" ? "active" : ""}`}
-          style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+          style={{ position: "absolute", top: 0, left: 0, width: 172, height: 172 }}>
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="sparkle" />
           ))}
