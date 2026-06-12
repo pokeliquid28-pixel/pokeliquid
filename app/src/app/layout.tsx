@@ -6,6 +6,7 @@ import { SaveWalletSheet } from "@/components/SaveWalletSheet";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { RiskDisclaimer } from "@/components/RiskDisclaimer";
 import { Footer } from "@/components/Footer";
+import { SpinEligibilityBanner } from "@/components/SpinNotification";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -50,6 +51,7 @@ export default function RootLayout({
             <ErrorBoundary>{children}</ErrorBoundary>
           </main>
           <Footer />
+          <SpinEligibilityBanner />
           <SaveWalletSheet />
         </AppProviders>
       </body>
