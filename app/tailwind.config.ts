@@ -22,7 +22,8 @@ const config: Config = {
         info: "#00d4ff",
       },
       fontFamily: {
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        mono: ["Space Mono", "Consolas", "monospace"],
       },
       keyframes: {
         flash: {
