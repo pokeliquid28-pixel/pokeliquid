@@ -111,20 +111,17 @@ function PoolContent() {
           )
         );
         if (cancelled) return;
-        let tradingTotal = 0, fundingTotal = 0, liqTotal = 0;
+        let totalFees7d = 0;
         let daysWithData = 0;
         for (const res of results) {
           if (!res) continue;
-          const t = res.tradingFees ?? 0;
-          const f = res.fundingFees ?? 0;
-          const l = res.liquidationFees ?? 0;
-          if (t > 0 || f > 0 || l > 0) daysWithData++;
-          tradingTotal += t;
-          fundingTotal += f;
-          liqTotal += l;
+          // Support both formats: broken-down fees or single dailyFees
+          const fees = (res.tradingFees ?? 0) + (res.fundingFees ?? 0) + (res.liquidationFees ?? 0) || (res.dailyFees ?? 0);
+          if (fees > 0) daysWithData++;
+          totalFees7d += fees;
         }
-        // LP's blended share of fees
-        const lpFees7d = tradingTotal * 0.50 + fundingTotal * 0.70 + liqTotal * 0.44;
+        // LP receives ~50% of trading fees (dominant component)
+        const lpFees7d = totalFees7d * 0.50;
         const days = Math.max(daysWithData, 1);
         const dailyLpFees = lpFees7d / days;
         if (dailyLpFees > 0) {
