@@ -224,25 +224,42 @@ function PokeballSpin({
     setState("shaking");
     setResult(null);
 
-    // TEMP: fake spin result for testing animation
-    await new Promise((r) => setTimeout(r, 1800));
+    try {
+      const res = await fetch(`${API_BASE}/spin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: publicKey.toBase58(), wheel: "free" }),
+      });
+      const data = await res.json();
 
-    const won = Math.random() < 0.5; // 50% for testing
-    setState(won ? "won" : "lost");
+      if (!data.success) {
+        alert(data.error || "Spin failed");
+        setState("idle");
+        return;
+      }
 
-    const spinRecord: SpinRecord = {
-      id: Math.floor(Math.random() * 1000),
-      timestamp: Math.floor(Date.now() / 1000),
-      wheel_type: "free",
-      tier: won ? "rare" : "nothing",
-      prize_description: won ? "$50 Elite Pokemon Gacha Pack" : "Nothing",
-      prize_usd: won ? 50 : 0,
-      fulfilled: 0,
-    };
-    setResult(spinRecord);
-    onResult(spinRecord);
+      await new Promise((r) => setTimeout(r, 1800));
 
-    setTimeout(() => setState("idle"), 4000);
+      const won = data.tier !== "nothing";
+      setState(won ? "won" : "lost");
+
+      const spinRecord: SpinRecord = {
+        id: data.spin_id,
+        timestamp: Math.floor(Date.now() / 1000),
+        wheel_type: "free",
+        tier: data.tier,
+        prize_description: data.prize_description,
+        prize_usd: data.prize_usd,
+        fulfilled: 0,
+      };
+      setResult(spinRecord);
+      onResult(spinRecord);
+
+      setTimeout(() => setState("idle"), 4000);
+    } catch {
+      alert("Failed to connect to server");
+      setState("idle");
+    }
   }, [publicKey, state, freeEligible, onResult]);
 
   const disabled = state !== "idle" || !publicKey || !freeEligible;
@@ -329,14 +346,35 @@ function PokeballSpin({
 export default function RewardsPage() {
   const { publicKey, connected } = useWallet();
   const [history, setHistory] = useState<SpinRecord[]>([]);
-  const [freeEligible, setFreeEligible] = useState(true); // TEMP: always eligible for testing
+  const [freeEligible, setFreeEligible] = useState(false);
   const [eligibility, setEligibility] = useState<{
     has_traded_today: boolean;
     has_used_free_spin: boolean;
-  } | null>({ has_traded_today: true, has_used_free_spin: false }); // TEMP: always show available
+  } | null>(null);
 
-  // TEMP: disabled server checks for animation testing
-  // useEffect(() => { ... }, [publicKey]);
+  useEffect(() => {
+    if (!publicKey) return;
+    const check = () => {
+      fetch(`${API_BASE}/spin-eligible?user=${publicKey.toBase58()}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setFreeEligible(data.free_spin_available);
+          setEligibility(data);
+        })
+        .catch(() => {});
+    };
+    check();
+    const id = setInterval(check, 30_000);
+    return () => clearInterval(id);
+  }, [publicKey]);
+
+  useEffect(() => {
+    if (!publicKey) return;
+    fetch(`${API_BASE}/spins?user=${publicKey.toBase58()}`)
+      .then((r) => r.json())
+      .then((data) => setHistory(data.spins || []))
+      .catch(() => {});
+  }, [publicKey]);
 
   const handleResult = (r: SpinRecord | null) => {
     if (r) {
