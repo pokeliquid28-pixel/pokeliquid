@@ -113,43 +113,75 @@ const pokeballStyles = `
   }
 
   @keyframes pokeball-click {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.15); }
-    100% { transform: scale(1); }
+    0%   { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,65,0); }
+    50%  { transform: scale(1.12); box-shadow: 0 0 40px rgba(0,255,65,0.6), 0 0 80px rgba(0,255,65,0.3); }
+    100% { transform: scale(1); box-shadow: 0 0 20px rgba(0,255,65,0.3); }
   }
 
-  .stars {
+  /* ── Sparkle particles on win ──────────────────────────── */
+  .sparkles {
     position: absolute;
-    width: 200px;
-    height: 200px;
+    width: 220px;
+    height: 220px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     pointer-events: none;
   }
 
-  .stars.active .star {
-    animation: star-burst 0.8s ease-out forwards;
+  .sparkles.active .sparkle {
+    animation: sparkle-fly 1s ease-out forwards;
   }
 
-  .star {
+  .sparkle {
     position: absolute;
-    width: 8px;
-    height: 8px;
-    background: #ffaa00;
-    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
     opacity: 0;
     top: 50%;
     left: 50%;
+    margin: -3px 0 0 -3px;
   }
 
-  .star:nth-child(1) { animation-delay: 0s; }
-  .star:nth-child(2) { animation-delay: 0.1s; }
-  .star:nth-child(3) { animation-delay: 0.05s; }
-  .star:nth-child(4) { animation-delay: 0.15s; }
-  .star:nth-child(5) { animation-delay: 0.08s; }
-  .star:nth-child(6) { animation-delay: 0.12s; }
+  /* Three colors like the games — gold, white, green */
+  .sparkle:nth-child(3n+1) { background: #ffcc00; box-shadow: 0 0 6px #ffcc00; }
+  .sparkle:nth-child(3n+2) { background: #ffffff; box-shadow: 0 0 6px #ffffff; }
+  .sparkle:nth-child(3n+3) { background: #00ff41; box-shadow: 0 0 6px #00ff41; }
 
-  @keyframes star-burst {
-    0%   { opacity: 1; transform: translate(0, 0) scale(0.5); }
-    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.5); }
+  /* Each sparkle flies in a different direction */
+  .sparkle:nth-child(1)  { --angle: 0deg;   --dist: 90px;  animation-delay: 0s; }
+  .sparkle:nth-child(2)  { --angle: 45deg;  --dist: 100px; animation-delay: 0.05s; }
+  .sparkle:nth-child(3)  { --angle: 90deg;  --dist: 85px;  animation-delay: 0.1s; }
+  .sparkle:nth-child(4)  { --angle: 135deg; --dist: 95px;  animation-delay: 0.03s; }
+  .sparkle:nth-child(5)  { --angle: 180deg; --dist: 90px;  animation-delay: 0.08s; }
+  .sparkle:nth-child(6)  { --angle: 225deg; --dist: 100px; animation-delay: 0.12s; }
+  .sparkle:nth-child(7)  { --angle: 270deg; --dist: 88px;  animation-delay: 0.02s; }
+  .sparkle:nth-child(8)  { --angle: 315deg; --dist: 95px;  animation-delay: 0.07s; }
+  .sparkle:nth-child(9)  { --angle: 22deg;  --dist: 80px;  animation-delay: 0.15s; }
+  .sparkle:nth-child(10) { --angle: 67deg;  --dist: 105px; animation-delay: 0.18s; }
+  .sparkle:nth-child(11) { --angle: 112deg; --dist: 75px;  animation-delay: 0.2s; }
+  .sparkle:nth-child(12) { --angle: 157deg; --dist: 110px; animation-delay: 0.22s; }
+
+  @keyframes sparkle-fly {
+    0% {
+      opacity: 1;
+      transform: translate(0, 0) scale(1);
+    }
+    60% {
+      opacity: 1;
+      transform: translate(
+        calc(cos(var(--angle)) * var(--dist)),
+        calc(sin(var(--angle)) * var(--dist))
+      ) scale(1.5);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(
+        calc(cos(var(--angle)) * var(--dist) * 1.2),
+        calc(sin(var(--angle)) * var(--dist) * 1.2)
+      ) scale(0);
+    }
   }
 
   .pokeball.lost {
@@ -164,10 +196,14 @@ const pokeballStyles = `
 
   .pokeball-glow {
     position: absolute;
-    width: 180px;
-    height: 180px;
+    width: 190px;
+    height: 190px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     border-radius: 50%;
     border: 2px solid rgba(0, 255, 65, 0.3);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.15), inset 0 0 20px rgba(0, 255, 65, 0.05);
     animation: glow-pulse 2s ease-in-out infinite;
   }
 
@@ -239,13 +275,10 @@ function PokeballSpin({
     <div className="pokeball-container">
       <div className={`pokeball-glow ${!freeEligible || state !== "idle" ? "hidden" : ""}`} />
 
-      <div className={`stars ${state === "won" ? "active" : ""}`}>
-        <div className="star" style={{ "--tx": "-60px", "--ty": "-70px" } as React.CSSProperties} />
-        <div className="star" style={{ "--tx": "65px", "--ty": "-55px" } as React.CSSProperties} />
-        <div className="star" style={{ "--tx": "-50px", "--ty": "60px" } as React.CSSProperties} />
-        <div className="star" style={{ "--tx": "70px", "--ty": "50px" } as React.CSSProperties} />
-        <div className="star" style={{ "--tx": "0px", "--ty": "-80px" } as React.CSSProperties} />
-        <div className="star" style={{ "--tx": "-75px", "--ty": "0px" } as React.CSSProperties} />
+      <div className={`sparkles ${state === "won" ? "active" : ""}`}>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="sparkle" />
+        ))}
       </div>
 
       <div className={pokeballClass} onClick={!disabled ? spin : undefined}>
