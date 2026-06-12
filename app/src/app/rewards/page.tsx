@@ -317,29 +317,8 @@ export default function RewardsPage() {
     has_used_free_spin: boolean;
   } | null>({ has_traded_today: true, has_used_free_spin: false }); // TEMP: always show available
 
-  useEffect(() => {
-    if (!publicKey) return;
-    const check = () => {
-      fetch(`${API_BASE}/spin-eligible?user=${publicKey.toBase58()}`)
-        .then((r) => r.json())
-        .then((data) => {
-          setFreeEligible(data.free_spin_available);
-          setEligibility(data);
-        })
-        .catch(() => {});
-    };
-    check();
-    const id = setInterval(check, 30_000);
-    return () => clearInterval(id);
-  }, [publicKey]);
-
-  useEffect(() => {
-    if (!publicKey) return;
-    fetch(`${API_BASE}/spins?user=${publicKey.toBase58()}`)
-      .then((r) => r.json())
-      .then((data) => setHistory(data.spins || []))
-      .catch(() => {});
-  }, [publicKey]);
+  // TEMP: disabled server checks for animation testing
+  // useEffect(() => { ... }, [publicKey]);
 
   const handleResult = (r: SpinRecord | null) => {
     if (r) {
