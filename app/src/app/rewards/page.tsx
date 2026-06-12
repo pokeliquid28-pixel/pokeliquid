@@ -315,7 +315,7 @@ export default function RewardsPage() {
   const [eligibility, setEligibility] = useState<{
     has_traded_today: boolean;
     has_used_free_spin: boolean;
-  } | null>(null);
+  } | null>({ has_traded_today: true, has_used_free_spin: false }); // TEMP: always show available
 
   useEffect(() => {
     if (!publicKey) return;
