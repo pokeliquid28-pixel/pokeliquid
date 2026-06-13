@@ -258,6 +258,19 @@ function PokeballSpin({
       setResult(spinRecord);
       onResult(spinRecord);
 
+      // Show streak bonus if triggered
+      if (data.streak_bonus) {
+        const sb = data.streak_bonus;
+        setTimeout(() => {
+          alert(
+            sb.streak_prize === "gacha"
+              ? "🎉 7-DAY STREAK BONUS! You won a $50 Elite Pokemon Gacha Pack!"
+              : "🎉 7-DAY STREAK BONUS! $10 USDC sent to your wallet!"
+          );
+          if (sb.streak_prize === "gacha") onWin(data.spin_id);
+        }, won ? 2000 : 1000);
+      }
+
       setTimeout(() => setState("idle"), 4000);
     } catch {
       alert("Failed to connect to server");
@@ -482,6 +495,8 @@ export default function RewardsPage() {
   const [eligibility, setEligibility] = useState<{
     has_traded_today: boolean;
     has_used_free_spin: boolean;
+    current_streak?: number;
+    next_streak_bonus?: number;
   } | null>(null);
 
   useEffect(() => {
@@ -557,6 +572,38 @@ export default function RewardsPage() {
             </div>
           )}
 
+          {/* ── 7-Day Streak Progress ── */}
+          {connected && eligibility && typeof eligibility.current_streak === "number" && (
+            <div className="border border-border bg-panel p-4 mb-6 max-w-lg mx-auto">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono text-secondary uppercase tracking-wider">7-Day Streak</span>
+                <span className="text-xs font-mono text-accent">
+                  {eligibility.current_streak % 7}/7
+                </span>
+              </div>
+              <div className="flex gap-1 mb-2">
+                {Array.from({ length: 7 }).map((_, i) => {
+                  const filled = i < (eligibility.current_streak! % 7 || (eligibility.current_streak! > 0 && eligibility.current_streak! % 7 === 0 ? 7 : 0));
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 h-2 rounded-full transition-all"
+                      style={{
+                        backgroundColor: filled ? "#00ff41" : "#1a1a1a",
+                        boxShadow: filled ? "0 0 6px rgba(0,255,65,0.3)" : "none",
+                      }}
+                    />
+                  );
+                })}
+              </div>
+              <div className="text-[10px] font-mono text-secondary text-center">
+                {eligibility.next_streak_bonus === 0 || (eligibility.current_streak! > 0 && eligibility.current_streak! % 7 === 0)
+                  ? "Streak bonus unlocked! 🎉"
+                  : `${eligibility.next_streak_bonus} more day${eligibility.next_streak_bonus === 1 ? "" : "s"} until bonus — 25% gacha / 75% $10 USDC`}
+              </div>
+            </div>
+          )}
+
           {!connected ? (
             <div className="text-center py-16 text-secondary text-sm">
               Connect your wallet to spin
@@ -590,6 +637,12 @@ export default function RewardsPage() {
               <div className="flex items-start gap-2">
                 <span className="text-accent">4.</span>
                 <span>Card delivered as pNFT — redeem for the physical card anytime</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-accent">5.</span>
+                <span>
+                  Spin 7 days in a row for a <span className="text-primary">streak bonus</span> — 25% chance at another gacha pack, otherwise $10 USDC
+                </span>
               </div>
             </div>
           </div>
