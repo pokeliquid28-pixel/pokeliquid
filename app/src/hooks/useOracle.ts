@@ -5,6 +5,7 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, Connection } from "@solana/web3.js";
 import { getReadonlyProgram } from "@/lib/program";
 import { ORACLE_ACCOUNT } from "@/lib/addresses";
+import { MARKETS } from "@/lib/markets";
 
 export type OracleReading = {
   price: number;
@@ -27,11 +28,13 @@ export type OracleData = {
 
 const PRICE_API = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
 
-// ── Shared oracle cache ─────────────────────────────────────────────────────
-// Multiple components call useOracle with the same address. Without caching,
-// each instance fires its own RPC poll, causing 429 rate limits on mainnet.
-// This module-level cache ensures each oracle address is fetched only once.
+// ── Build oracle→marketId lookup from MARKETS ────────────────────────────────
+const oracleToMarketId = new Map<string, string>();
+for (const m of MARKETS) {
+  oracleToMarketId.set(m.oracleAddress, m.priceApiMarket);
+}
 
+// ── Shared oracle cache ─────────────────────────────────────────────────────
 type CachedOracle = {
   price: number;
   lastUpdated: number;
@@ -42,53 +45,77 @@ type CachedOracle = {
 
 const oracleCache = new Map<string, CachedOracle>();
 const oracleSubscribers = new Map<string, Set<() => void>>();
-const oracleIntervals = new Map<string, ReturnType<typeof setInterval>>();
 
 function notifySubscribers(key: string) {
   oracleSubscribers.get(key)?.forEach((cb) => cb());
 }
 
-function startOraclePolling(key: string, connection: Connection) {
-  if (oracleIntervals.has(key)) return;
+function notifyAllSubscribers() {
+  oracleSubscribers.forEach((subs) => subs.forEach((cb) => cb()));
+}
 
-  const pubkey = new PublicKey(key);
+// ── Bulk price polling from keeper API (1 HTTP call for all markets) ────────
+let bulkPollInterval: ReturnType<typeof setInterval> | null = null;
+let bulkPollStarted = false;
 
-  const fetchOnce = async () => {
-    try {
-      const program = getReadonlyProgram(connection);
-      const oracle = await (program.account as any).oracleAccount.fetch(pubkey);
+async function fetchAllPrices() {
+  try {
+    const res = await fetch(`${PRICE_API}/prices/all`);
+    if (!res.ok) return;
+    const data: Record<string, { price: number; ewma: number; lastUpdateTime: number }> = await res.json();
+
+    for (const [marketId, info] of Object.entries(data)) {
+      // Find oracle address for this market ID
+      const market = MARKETS.find((m) => m.priceApiMarket === marketId);
+      if (!market) continue;
+      const key = market.oracleAddress;
       oracleCache.set(key, {
-        price: oracle.price.toNumber(),
-        lastUpdated: oracle.lastUpdated.toNumber(),
-        stalenessThreshold: oracle.stalenessThreshold.toNumber(),
+        price: info.price,
+        lastUpdated: info.lastUpdateTime,
+        stalenessThreshold: 1800,
         error: null,
         fetchedAt: Date.now(),
       });
-    } catch (e: any) {
-      const prev = oracleCache.get(key);
-      // Keep previous price if we had one — only set error
-      if (prev && prev.price > 0) {
-        oracleCache.set(key, { ...prev, error: e?.message ?? "Fetch failed", fetchedAt: Date.now() });
-      } else {
-        oracleCache.set(key, {
-          price: 0, lastUpdated: 0, stalenessThreshold: 1800,
-          error: e?.message ?? "Fetch failed", fetchedAt: Date.now(),
-        });
-      }
     }
-    notifySubscribers(key);
-  };
-
-  fetchOnce();
-  oracleIntervals.set(key, setInterval(fetchOnce, 30_000));
+    notifyAllSubscribers();
+  } catch {
+    // keep existing cache on error
+  }
 }
 
-function stopOraclePollingIfUnused(key: string) {
-  const subs = oracleSubscribers.get(key);
-  if (!subs || subs.size === 0) {
-    const interval = oracleIntervals.get(key);
-    if (interval) clearInterval(interval);
-    oracleIntervals.delete(key);
+function startBulkPolling() {
+  if (bulkPollStarted) return;
+  bulkPollStarted = true;
+  fetchAllPrices();
+  bulkPollInterval = setInterval(fetchAllPrices, 30_000);
+}
+
+// ── On-chain RPC fetch for a single oracle (used when trading) ──────────────
+// Only fetched on-demand, not on a timer. Call fetchOracleOnChain() explicitly.
+const rpcFetchInFlight = new Set<string>();
+
+async function fetchOracleOnChain(key: string, connection: Connection) {
+  if (rpcFetchInFlight.has(key)) return;
+  rpcFetchInFlight.add(key);
+  try {
+    const pubkey = new PublicKey(key);
+    const program = getReadonlyProgram(connection);
+    const oracle = await (program.account as any).oracleAccount.fetch(pubkey);
+    oracleCache.set(key, {
+      price: oracle.price.toNumber(),
+      lastUpdated: oracle.lastUpdated.toNumber(),
+      stalenessThreshold: oracle.stalenessThreshold.toNumber(),
+      error: null,
+      fetchedAt: Date.now(),
+    });
+    notifySubscribers(key);
+  } catch (e: any) {
+    const prev = oracleCache.get(key);
+    if (prev && prev.price > 0) {
+      oracleCache.set(key, { ...prev, error: e?.message ?? "Fetch failed", fetchedAt: Date.now() });
+    }
+  } finally {
+    rpcFetchInFlight.delete(key);
   }
 }
 
@@ -148,17 +175,20 @@ export function useOracle(
   const [, setTick] = useState(0);
   const rerender = () => setTick((t) => t + 1);
 
+  // Start bulk polling (one call for all markets via keeper API)
+  useEffect(() => {
+    startBulkPolling();
+  }, []);
+
   // Subscribe to oracle cache updates
   useEffect(() => {
     if (!oracleSubscribers.has(key)) oracleSubscribers.set(key, new Set());
     oracleSubscribers.get(key)!.add(rerender);
-    startOraclePolling(key, connection);
 
     return () => {
       oracleSubscribers.get(key)?.delete(rerender);
-      stopOraclePollingIfUnused(key);
     };
-  }, [connection, key]);
+  }, [key]);
 
   // Subscribe to history cache updates
   useEffect(() => {
@@ -188,4 +218,10 @@ export function useOracle(
   else if (secondsSinceUpdate > 5 * 60) health = "degraded";
 
   return { price, lastUpdated, stalenessThreshold, readings, isLoading, isStale, health, secondsSinceUpdate, error };
+}
+
+/** Fetch the latest on-chain oracle price via RPC (for trading accuracy). */
+export function useOracleRefresh() {
+  const { connection } = useConnection();
+  return (oracleAddress: string) => fetchOracleOnChain(oracleAddress, connection);
 }
