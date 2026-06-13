@@ -13,6 +13,8 @@ import {
   exportSecretKey,
   clearStoredKey,
   migrateFromLocalStorage,
+  confirmMigration,
+  recoverFromLocalStorage,
 } from "./secure-keystore";
 
 const EMAIL_KEY = "pokeliquid_wallet_email";
@@ -88,18 +90,45 @@ export class SessionWalletAdapter extends BaseSignerWalletAdapter {
     if (!this._publicKey) throw new Error("Wallet not connected");
 
     if (isSecureStorageAvailable()) {
-      // Sign using secure store — key is decrypted, used, then zeroed
-      await signWithStoredKey((secretKey) => {
-        const kp = Keypair.fromSecretKey(secretKey);
-        if (transaction instanceof Transaction) {
-          transaction.partialSign(kp);
+      try {
+        // Sign using secure store — key is decrypted, used, then zeroed
+        await signWithStoredKey((secretKey) => {
+          const kp = Keypair.fromSecretKey(secretKey);
+          if (transaction instanceof Transaction) {
+            transaction.partialSign(kp);
+          } else {
+            transaction.sign([kp]);
+          }
+        });
+        // IndexedDB sign worked — safe to remove localStorage backup
+        confirmMigration();
+      } catch (e) {
+        // IndexedDB failed — try recovering from localStorage backup
+        console.warn("[session-wallet] IndexedDB sign failed, attempting recovery:", e);
+        const recovered = await recoverFromLocalStorage();
+        if (recovered) {
+          // Retry with recovered key
+          await signWithStoredKey((secretKey) => {
+            const kp = Keypair.fromSecretKey(secretKey);
+            if (transaction instanceof Transaction) {
+              transaction.partialSign(kp);
+            } else {
+              transaction.sign([kp]);
+            }
+          });
         } else {
-          transaction.sign([kp]);
+          // Last resort: try legacy localStorage directly
+          const kp = loadLegacyKeypair();
+          if (!kp) throw new Error("No wallet key available — please re-import your key");
+          if (transaction instanceof Transaction) {
+            transaction.partialSign(kp);
+          } else {
+            transaction.sign([kp]);
+          }
         }
-        // kp goes out of scope, secretKey zeroed by signWithStoredKey
-      });
+      }
     } else {
-      // Fallback: legacy localStorage
+      // Fallback: legacy localStorage (IndexedDB unavailable)
       const kp = loadLegacyKeypair();
       if (!kp) throw new Error("No wallet key available");
       if (transaction instanceof Transaction) {

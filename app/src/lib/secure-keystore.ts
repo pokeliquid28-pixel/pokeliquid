@@ -225,44 +225,78 @@ export async function clearStoredKey(): Promise<void> {
 
 /**
  * Migrate from legacy localStorage to secure IndexedDB.
- * Write to IndexedDB first, verify read-back, then delete localStorage.
- * Returns true if migration happened, false if no legacy key found.
+ * Copies to IndexedDB but KEEPS localStorage until confirmMigration() is called
+ * (after a successful sign proves IndexedDB works).
  */
 export async function migrateFromLocalStorage(): Promise<boolean> {
   if (typeof window === "undefined") return false;
 
-  // Check if legacy key exists
   const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
   if (!raw) return false;
 
-  // Check if already migrated (key exists in IndexedDB)
-  if (await hasStoredKey()) {
-    // Already in IndexedDB — just clean up localStorage
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-    return true;
-  }
+  // Already in IndexedDB — don't delete localStorage yet, confirmMigration handles that
+  if (await hasStoredKey()) return true;
 
   try {
     const arr = JSON.parse(raw);
     const secretKey = new Uint8Array(arr);
 
-    // Write to IndexedDB
     await storeSecretKey(secretKey);
 
-    // Verify read-back works
+    // Verify read-back
     const pubkey = await loadPublicKeyBytes();
     if (!pubkey || pubkey.length !== 32) {
       throw new Error("Read-back verification failed");
     }
 
-    // Only now delete from localStorage
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
     zeroFill(secretKey);
-
-    console.log("[secure-keystore] Migrated wallet from localStorage to IndexedDB");
+    console.log("[secure-keystore] Copied wallet to IndexedDB (localStorage kept as backup)");
     return true;
   } catch (e) {
     console.error("[secure-keystore] Migration failed, keeping localStorage key:", e);
+    return false;
+  }
+}
+
+/**
+ * Called after a successful sign with IndexedDB key.
+ * Now safe to remove the plaintext localStorage backup.
+ */
+export function confirmMigration(): void {
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem(LEGACY_STORAGE_KEY)) {
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    console.log("[secure-keystore] Migration confirmed — localStorage key removed");
+  }
+}
+
+/**
+ * If IndexedDB decryption fails, try to recover from localStorage backup.
+ * Re-imports the key into IndexedDB with a fresh AES key.
+ */
+export async function recoverFromLocalStorage(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+  if (!raw) return false;
+
+  try {
+    const arr = JSON.parse(raw);
+    const secretKey = new Uint8Array(arr);
+
+    // Clear the broken IndexedDB data and re-create
+    const db = await getDB();
+    await idbDelete(db, AES_KEY_ID);
+    await idbDelete(db, WALLET_KEY_ID);
+
+    await storeSecretKey(secretKey);
+    const pubkey = await loadPublicKeyBytes();
+    if (!pubkey || pubkey.length !== 32) throw new Error("Recovery read-back failed");
+
+    zeroFill(secretKey);
+    console.log("[secure-keystore] Recovered wallet from localStorage backup");
+    return true;
+  } catch (e) {
+    console.error("[secure-keystore] Recovery from localStorage failed:", e);
     return false;
   }
 }
