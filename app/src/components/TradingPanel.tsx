@@ -289,14 +289,14 @@ export function TradingPanel({ oracle, protocol, margin, onRefresh, oracleAddres
         <input
           type="range"
           min="1"
-          max="10"
+          max="25"
           step="1"
           value={leverage}
           onChange={(e) => setLeverage(Number(e.target.value))}
           className="w-full"
         />
         <div className="flex justify-between text-[10px] md:text-xs text-secondary font-mono">
-          {[1, 2, 3, 5, 10].map((v) => (
+          {[1, 5, 10, 15, 20, 25].map((v) => (
             <span
               key={v}
               onClick={() => setLeverage(v)}
