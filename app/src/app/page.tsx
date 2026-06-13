@@ -252,20 +252,42 @@ export default function TradePage() {
           </div>
         </div>
 
-        {/* Grid */}
-        <div
-          className="max-w-[1200px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
-        >
-          {binderMarkets.map((m) => (
-            <BinderCard key={m.id} market={m} onTrade={handleOpenTrade} />
-          ))}
-        </div>
-
-        {binderMarkets.length === 0 && (
-          <div className="text-center py-12 font-mono text-sm" style={{ color: "#555" }}>
-            No markets match your search.
-          </div>
-        )}
+        {/* Grouped Grid */}
+        {(() => {
+          const groups: { type: "INDEX" | "SEALED" | "CARDS"; label: string }[] = [
+            { type: "INDEX", label: "INDEXES" },
+            { type: "SEALED", label: "SEALED PRODUCT" },
+            { type: "CARDS", label: "CARDS" },
+          ];
+          const hasAny = binderMarkets.length > 0;
+          return hasAny ? (
+            <div className="max-w-[1200px] mx-auto space-y-6">
+              {groups.map((g) => {
+                const items = binderMarkets.filter((m) => m.type === g.type);
+                if (items.length === 0) return null;
+                return (
+                  <div key={g.type}>
+                    <h3
+                      className="font-mono text-[11px] font-bold uppercase tracking-widest mb-3"
+                      style={{ color: "#555", borderBottom: "1px solid #1a1a1a", paddingBottom: 8 }}
+                    >
+                      {g.label}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                      {items.map((m) => (
+                        <BinderCard key={m.id} market={m} onTrade={handleOpenTrade} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 font-mono text-sm" style={{ color: "#555" }}>
+              No markets match your search.
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Positions bar (always visible below binder when connected) ── */}
