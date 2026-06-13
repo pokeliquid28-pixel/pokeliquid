@@ -281,8 +281,8 @@ export default function DocsPage() {
             <H2 id="overview">Overview</H2>
             <P>
               Pokeliquid is the first on-chain perpetual futures DEX for Pok&eacute;mon TCG products.
-              Built on Solana using the Anchor framework, it offers 22 markets letting traders go long or short
-              on sealed products and single cards with up to 10x leverage. Prices are sourced from TCGPlayer
+              Built on Solana using the Anchor framework, it offers 67+ markets letting traders go long or short
+              on sealed products and single cards with up to 25x leverage. Prices are sourced from TCGPlayer
               market data via an automated Playwright scraper with adaptive EWMA smoothing.
             </P>
             <P>Live on Solana Mainnet with real USDC.</P>
@@ -347,7 +347,7 @@ export default function DocsPage() {
 
             <H3>5. Open a Position</H3>
             <P>
-              Select a market, choose Long or Short, set your collateral amount and leverage (1-10x),
+              Select a market, choose Long or Short, set your collateral amount and leverage (1-25x),
               optionally set Stop Loss and Take Profit prices, then click to open your position.
             </P>
 
@@ -367,7 +367,7 @@ export default function DocsPage() {
               rows={[
                 ["direction", "Long | Short", "Trade direction"],
                 ["collateral", "u64", "USDC collateral amount (6 decimals, e.g. 10_000_000 = $10)"],
-                ["leverage", "u8", "Leverage multiplier (1\u201310)"],
+                ["leverage", "u8", "Leverage multiplier (1\u201325)"],
                 ["sl_price", "Option<u64>", "Optional stop-loss price (6 decimal scale)"],
                 ["tp_price", "Option<u64>", "Optional take-profit price (6 decimal scale)"],
               ]}
@@ -435,7 +435,7 @@ Short PnL = notional * (entry_price - exit_price) / entry_price`}</Code>
 
             <H3>Funding Rate</H3>
             <P>
-              Funding is settled hourly by the keeper via <code>settle_funding</code> (permissionless crank).
+              Funding is calculated per-second and settled by the keeper via <code>settle_funding</code> (permissionless crank). Funding accrues continuously based on elapsed seconds, not in discrete hourly increments.
               Only the <strong>majority side</strong> pays funding — the minority side pays nothing.
               The funding rate has two components:
             </P>
@@ -642,7 +642,7 @@ Each market has a configurable price floor to reject invalid data.`}</Code>
                 ["set_sl_tp", "User", "Set stop-loss / take-profit prices"],
                 ["execute_sl_tp", "Permissionless", "Execute triggered SL/TP orders"],
                 ["liquidate", "Permissionless", "Liquidate undercollateralized position"],
-                ["settle_funding", "Permissionless", "Settle hourly funding on all positions"],
+                ["settle_funding", "Permissionless", "Settle accrued funding on all positions (seconds-based)"],
                 ["check_and_pause", "Permissionless", "Pause protocol if oracle stale > 1hr"],
                 ["lp_deposit", "User", "Deposit USDC into LP pool for shares"],
                 ["lp_withdraw", "User", "Burn shares to withdraw USDC"],
@@ -766,6 +766,11 @@ Each market has a configurable price floor to reject invalid data.`}</Code>
             <FAQ q="Can I provide liquidity?">
               Yes. Go to the Pool page to deposit USDC. You receive LP shares and earn fees from trading (50%),
               funding (70%), and liquidations (44%) proportional to your share. No lockup period.
+              <br /><br />
+              <strong>Risk disclosure:</strong> LPs are the counterparty to all trades. If traders collectively profit,
+              LP deposits decrease. The pool has a utilization cap that prevents withdrawals from dropping below the
+              total user collateral, but directional risk remains. LP returns depend on trading fees exceeding
+              trader profits over time.
             </FAQ>
 
 

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const exists = await emailExists(email);
     if (exists) {
       const token = crypto.randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       await createResetToken(email, token, expiresAt);
       console.log("Reset token created for:", email);
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
               <div style="font-family: monospace; background: #0a0a0a; color: #ffffff; padding: 40px; max-width: 480px; margin: 0 auto;">
                 <h1 style="color: #00ff41; font-size: 24px; margin-bottom: 24px;">Pokeliquid</h1>
                 <p style="color: #ccc; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-                  Reset your password by clicking the button below. This link expires in 1 hour.
+                  Reset your password by clicking the button below. This link expires in 15 minutes.
                 </p>
                 <a href="${resetUrl}"
                    style="background: #00ff41; color: #000; padding: 12px 24px; text-decoration: none;
