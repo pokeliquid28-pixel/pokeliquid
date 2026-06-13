@@ -80,7 +80,7 @@ function startOraclePolling(key: string, connection: Connection) {
   };
 
   fetchOnce();
-  oracleIntervals.set(key, setInterval(fetchOnce, 10_000));
+  oracleIntervals.set(key, setInterval(fetchOnce, 30_000));
 }
 
 function stopOraclePollingIfUnused(key: string) {
