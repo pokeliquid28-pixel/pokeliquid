@@ -206,10 +206,12 @@ function PokeballSpin({
   onResult,
   freeEligible,
   onWin,
+  wheelType = "free",
 }: {
   onResult: (r: SpinRecord | null) => void;
   freeEligible: boolean;
   onWin: (spinId: number) => void;
+  wheelType?: string;
 }) {
   const { publicKey } = useWallet();
   const [state, setState] = useState<PokeballState>("idle");
@@ -230,7 +232,7 @@ function PokeballSpin({
       const res = await fetch(`${API_BASE}/spin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user: publicKey.toBase58(), wheel: "free" }),
+        body: JSON.stringify({ user: publicKey.toBase58(), wheel: wheelType }),
       });
       const data = await res.json();
 
@@ -249,7 +251,7 @@ function PokeballSpin({
       const spinRecord: SpinRecord = {
         id: data.spin_id,
         timestamp: Math.floor(Date.now() / 1000),
-        wheel_type: "free",
+        wheel_type: wheelType,
         tier: data.tier,
         prize_description: data.prize_description,
         prize_usd: data.prize_usd,
@@ -257,19 +259,6 @@ function PokeballSpin({
       };
       setResult(spinRecord);
       onResult(spinRecord);
-
-      // Show streak bonus if triggered
-      if (data.streak_bonus) {
-        const sb = data.streak_bonus;
-        setTimeout(() => {
-          alert(
-            sb.streak_prize === "gacha"
-              ? "🎉 7-DAY STREAK BONUS! You won a $50 Elite Pokemon Gacha Pack!"
-              : "🎉 7-DAY STREAK BONUS! $10 USDC sent to your wallet!"
-          );
-          if (sb.streak_prize === "gacha") onWin(data.spin_id);
-        }, won ? 2000 : 1000);
-      }
 
       setTimeout(() => setState("idle"), 4000);
     } catch {
@@ -492,11 +481,13 @@ export default function RewardsPage() {
   const [history, setHistory] = useState<SpinRecord[]>([]);
   const [freeEligible, setFreeEligible] = useState(false);
   const [wonSpinId, setWonSpinId] = useState<number | null>(null);
+  const [streakBonusAvailable, setStreakBonusAvailable] = useState(false);
   const [eligibility, setEligibility] = useState<{
     has_traded_today: boolean;
     has_used_free_spin: boolean;
     current_streak?: number;
     next_streak_bonus?: number;
+    streak_bonus_available?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -506,6 +497,7 @@ export default function RewardsPage() {
         .then((r) => r.json())
         .then((data) => {
           setFreeEligible(data.free_spin_available);
+          setStreakBonusAvailable(data.streak_bonus_available || false);
           setEligibility(data);
         })
         .catch(() => {});
@@ -526,7 +518,7 @@ export default function RewardsPage() {
   const handleResult = (r: SpinRecord | null) => {
     if (r) {
       setHistory((prev) => [r, ...prev]);
-      if (r.wheel_type === "free") setFreeEligible(false);
+      if (r.wheel_type === "free") { setFreeEligible(false); }
     }
   };
 
@@ -609,9 +601,30 @@ export default function RewardsPage() {
               Connect your wallet to spin
             </div>
           ) : (
-            <div className="flex flex-col items-center mb-10">
-              <PokeballSpin onResult={handleResult} freeEligible={freeEligible} onWin={(id) => setWonSpinId(id)} />
-            </div>
+            <>
+              <div className="flex flex-col items-center mb-10">
+                <PokeballSpin onResult={handleResult} freeEligible={freeEligible} onWin={(id) => setWonSpinId(id)} />
+              </div>
+
+              {/* ── Streak Bonus Spin ── */}
+              {streakBonusAvailable && (
+                <div className="flex flex-col items-center mb-10 border border-accent/30 bg-accent/5 rounded-lg p-6">
+                  <div className="text-xs font-mono text-accent font-bold tracking-widest mb-1">7-DAY STREAK BONUS</div>
+                  <div className="text-[10px] font-mono text-secondary mb-4">25% gacha pack / 75% $10 USDC</div>
+                  <PokeballSpin
+                    onResult={(r) => {
+                      if (r) {
+                        setHistory((prev) => [r, ...prev]);
+                        setStreakBonusAvailable(false);
+                      }
+                    }}
+                    freeEligible={true}
+                    onWin={(id) => setWonSpinId(id)}
+                    wheelType="streak"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <div className="border border-border bg-panel p-4 mb-6">
