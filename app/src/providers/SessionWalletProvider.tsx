@@ -76,14 +76,16 @@ export function SessionWalletProvider({ children }: { children: React.ReactNode 
     }
 
     // Otherwise fall back to session wallet if one exists
-    if (hasSessionWallet()) {
-      const sessionAdapter = wallets.find(
-        (w) => w.adapter.name === SessionWalletName
-      );
-      if (sessionAdapter) {
-        select(SessionWalletName);
+    hasSessionWallet().then((has) => {
+      if (has) {
+        const sessionAdapter = wallets.find(
+          (w) => w.adapter.name === SessionWalletName
+        );
+        if (sessionAdapter) {
+          select(SessionWalletName);
+        }
       }
-    }
+    });
   }, [connected, wallet, select, wallets]);
 
   // Track which wallet the user connects with

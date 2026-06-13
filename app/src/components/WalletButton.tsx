@@ -73,7 +73,7 @@ export function WalletButton() {
     clearLastWallet();
     setDropdownOpen(false);
     if (!isExternal) {
-      clearSessionWallet();
+      await clearSessionWallet();
       fetch("/api/logout", { method: "POST" }).catch(() => {});
     }
     try { await disconnect(); } catch {}

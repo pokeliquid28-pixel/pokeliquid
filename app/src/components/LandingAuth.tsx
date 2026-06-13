@@ -98,9 +98,9 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
       const secretKey: number[] = JSON.parse(data.privateKey);
-      setSessionFromPrivateKey(secretKey);
+      await setSessionFromPrivateKey(secretKey);
       setSavedEmail(email);
-      saveSessionKeypair(Keypair.fromSecretKey(new Uint8Array(secretKey)));
+      await saveSessionKeypair(Keypair.fromSecretKey(new Uint8Array(secretKey)));
       select(SessionWalletName);
       onPass?.();
     } catch (e: any) { setError(e?.message ?? "Login failed"); } finally { setLoading(false); }
@@ -117,7 +117,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
       const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, privateKey, publicKey: kp.publicKey.toBase58(), referrer }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");
-      saveSessionKeypair(kp); setSavedEmail(email);
+      await saveSessionKeypair(kp); setSavedEmail(email);
       try { await fetch("/api/create-session-wallet", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ publicKey: kp.publicKey.toBase58(), privateKey }) }); } catch {}
       select(SessionWalletName); onPass?.();
     } catch (e: any) { setError(e?.message ?? "Signup failed"); } finally { setLoading(false); }

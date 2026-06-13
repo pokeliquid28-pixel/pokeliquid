@@ -3,10 +3,20 @@ import {
   WalletName,
   WalletReadyState,
 } from "@solana/wallet-adapter-base";
-import { Keypair, Transaction, VersionedTransaction } from "@solana/web3.js";
+import { Keypair, PublicKey, Transaction, VersionedTransaction } from "@solana/web3.js";
+import {
+  isSecureStorageAvailable,
+  storeSecretKey,
+  hasStoredKey,
+  loadPublicKeyBytes,
+  signWithStoredKey,
+  exportSecretKey,
+  clearStoredKey,
+  migrateFromLocalStorage,
+} from "./secure-keystore";
 
-const STORAGE_KEY = "pokeliquid_session_wallet";
 const EMAIL_KEY = "pokeliquid_wallet_email";
+const LEGACY_STORAGE_KEY = "pokeliquid_session_wallet";
 
 export const SessionWalletName = "Pokeliquid Wallet" as WalletName<"Pokeliquid Wallet">;
 
@@ -16,7 +26,7 @@ export class SessionWalletAdapter extends BaseSignerWalletAdapter {
   icon = "/logo-64.png";
   supportedTransactionVersions = null;
 
-  private _keypair: Keypair | null = null;
+  private _publicKey: PublicKey | null = null;
   private _connecting = false;
 
   get readyState(): WalletReadyState {
@@ -25,7 +35,7 @@ export class SessionWalletAdapter extends BaseSignerWalletAdapter {
   }
 
   get publicKey() {
-    return this._keypair?.publicKey ?? null;
+    return this._publicKey;
   }
 
   get connecting() {
@@ -33,41 +43,72 @@ export class SessionWalletAdapter extends BaseSignerWalletAdapter {
   }
 
   async connect(): Promise<void> {
-    if (this._keypair) return;
+    if (this._publicKey) return;
     this._connecting = true;
 
     try {
-      // Try loading from localStorage — do NOT generate a new keypair on connect.
-      // New keypairs are only created explicitly via guest mode or signup.
-      const stored = loadSessionKeypair();
-      if (stored) {
-        this._keypair = stored;
-      } else {
-        this._connecting = false;
-        return; // No wallet — user must log in or choose guest mode
+      // Migrate legacy localStorage key to secure IndexedDB on first connect
+      if (isSecureStorageAvailable()) {
+        await migrateFromLocalStorage();
       }
 
-      this.emit("connect", this._keypair.publicKey);
+      // Try loading from secure store
+      const pubkeyBytes = await loadPublicKeyBytes();
+      if (pubkeyBytes) {
+        this._publicKey = new PublicKey(pubkeyBytes);
+      } else {
+        // Fallback: try legacy localStorage (if IndexedDB unavailable)
+        const kp = loadLegacyKeypair();
+        if (kp) {
+          this._publicKey = kp.publicKey;
+          // Try to migrate this key to secure store
+          if (isSecureStorageAvailable()) {
+            await storeSecretKey(kp.secretKey);
+          }
+        } else {
+          this._connecting = false;
+          return; // No wallet — user must log in or choose guest mode
+        }
+      }
+
+      this.emit("connect", this._publicKey);
     } finally {
       this._connecting = false;
     }
   }
 
   async disconnect(): Promise<void> {
-    this._keypair = null;
+    this._publicKey = null;
     this.emit("disconnect");
   }
 
   async signTransaction<T extends Transaction | VersionedTransaction>(
     transaction: T
   ): Promise<T> {
-    if (!this._keypair) throw new Error("Wallet not connected");
+    if (!this._publicKey) throw new Error("Wallet not connected");
 
-    if (transaction instanceof Transaction) {
-      transaction.partialSign(this._keypair);
+    if (isSecureStorageAvailable()) {
+      // Sign using secure store — key is decrypted, used, then zeroed
+      await signWithStoredKey((secretKey) => {
+        const kp = Keypair.fromSecretKey(secretKey);
+        if (transaction instanceof Transaction) {
+          transaction.partialSign(kp);
+        } else {
+          transaction.sign([kp]);
+        }
+        // kp goes out of scope, secretKey zeroed by signWithStoredKey
+      });
     } else {
-      transaction.sign([this._keypair]);
+      // Fallback: legacy localStorage
+      const kp = loadLegacyKeypair();
+      if (!kp) throw new Error("No wallet key available");
+      if (transaction instanceof Transaction) {
+        transaction.partialSign(kp);
+      } else {
+        transaction.sign([kp]);
+      }
     }
+
     return transaction;
   }
 
@@ -81,12 +122,12 @@ export class SessionWalletAdapter extends BaseSignerWalletAdapter {
   }
 }
 
-// ── localStorage helpers ────────────────────────────────────────────────────
+// ── Legacy localStorage helpers (kept for fallback + migration) ──────────────
 
-export function loadSessionKeypair(): Keypair | null {
+function loadLegacyKeypair(): Keypair | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return null;
     const arr = JSON.parse(raw);
     return Keypair.fromSecretKey(new Uint8Array(arr));
@@ -95,18 +136,43 @@ export function loadSessionKeypair(): Keypair | null {
   }
 }
 
-export function saveSessionKeypair(kp: Keypair) {
+// ── Public helpers (used by auth, export, etc.) ──────────────────────────────
+
+export async function saveSessionKeypair(kp: Keypair) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(Array.from(kp.secretKey))
-  );
+  if (isSecureStorageAvailable()) {
+    await storeSecretKey(kp.secretKey);
+  } else {
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(Array.from(kp.secretKey)));
+  }
 }
 
-export function getSessionPrivateKey(): number[] | null {
+export async function loadSessionKeypair(): Promise<Keypair | null> {
   if (typeof window === "undefined") return null;
+  if (isSecureStorageAvailable()) {
+    const sk = await exportSecretKey();
+    if (sk) {
+      const kp = Keypair.fromSecretKey(sk);
+      sk.fill(0);
+      return kp;
+    }
+  }
+  return loadLegacyKeypair();
+}
+
+export async function getSessionPrivateKey(): Promise<number[] | null> {
+  if (typeof window === "undefined") return null;
+  if (isSecureStorageAvailable()) {
+    const sk = await exportSecretKey();
+    if (sk) {
+      const arr = Array.from(sk);
+      sk.fill(0);
+      return arr;
+    }
+  }
+  // Fallback
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -114,9 +180,15 @@ export function getSessionPrivateKey(): number[] | null {
   }
 }
 
-export function setSessionFromPrivateKey(secretKey: number[]) {
+export async function setSessionFromPrivateKey(secretKey: number[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(secretKey));
+  const sk = new Uint8Array(secretKey);
+  if (isSecureStorageAvailable()) {
+    await storeSecretKey(sk);
+  } else {
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(secretKey));
+  }
+  sk.fill(0);
 }
 
 export function getSavedEmail(): string | null {
@@ -129,23 +201,29 @@ export function setSavedEmail(email: string) {
   localStorage.setItem(EMAIL_KEY, email);
 }
 
-export function hasSessionWallet(): boolean {
+export async function hasSessionWallet(): Promise<boolean> {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem(STORAGE_KEY) !== null;
+  if (isSecureStorageAvailable()) {
+    return await hasStoredKey();
+  }
+  return localStorage.getItem(LEGACY_STORAGE_KEY) !== null;
 }
 
-export function clearSessionWallet() {
+export async function clearSessionWallet() {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(STORAGE_KEY);
+  if (isSecureStorageAvailable()) {
+    await clearStoredKey();
+  }
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
   localStorage.removeItem(EMAIL_KEY);
-  localStorage.removeItem("walletName"); // wallet adapter's selected wallet
+  localStorage.removeItem("walletName");
   sessionStorage.removeItem("pokeliquid_session_id");
 }
 
-/** Create a new guest keypair, save to localStorage, and request funding. */
+/** Create a new guest keypair, save securely, and request funding. */
 export async function createGuestWallet(): Promise<void> {
   const kp = Keypair.generate();
-  saveSessionKeypair(kp);
+  await saveSessionKeypair(kp);
   try {
     await fetch("/api/create-session-wallet", {
       method: "POST",

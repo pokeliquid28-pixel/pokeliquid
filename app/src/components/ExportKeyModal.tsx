@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getSessionPrivateKey } from "@/lib/session-wallet";
 
 type Props = { onClose: () => void };
@@ -30,9 +30,15 @@ function toBase58(bytes: Uint8Array): string {
 export function ExportKeyModal({ onClose }: Props) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [keyDisplay, setKeyDisplay] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const secretKey = getSessionPrivateKey();
-  const keyDisplay = secretKey ? toBase58(new Uint8Array(secretKey)) : null;
+  useEffect(() => {
+    getSessionPrivateKey().then((sk) => {
+      if (sk) setKeyDisplay(toBase58(new Uint8Array(sk)));
+      setLoading(false);
+    });
+  }, []);
 
   function handleCopy() {
     if (!keyDisplay) return;
@@ -48,7 +54,6 @@ export function ExportKeyModal({ onClose }: Props) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#0a0a0a", border: "1px solid #1a1a1a", width: "100%", maxWidth: 420, padding: 24, fontFamily: "'JetBrains Mono', monospace" }}>
-        {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <span style={{ fontSize: 14, color: "#ccc", letterSpacing: "0.1em", textTransform: "uppercase" }}>
             Export Private Key
@@ -56,7 +61,6 @@ export function ExportKeyModal({ onClose }: Props) {
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#666", fontSize: 18, cursor: "pointer" }}>×</button>
         </div>
 
-        {/* Warning */}
         <div style={{
           fontSize: 11, padding: "10px 12px", marginBottom: 16,
           border: "1px solid #ff3333", color: "#ff3333", background: "rgba(255,51,51,.08)",
@@ -65,7 +69,9 @@ export function ExportKeyModal({ onClose }: Props) {
           Never share your private key with anyone. Anyone with this key has full control of your wallet and funds. Store it securely.
         </div>
 
-        {!keyDisplay ? (
+        {loading ? (
+          <div style={{ fontSize: 12, color: "#666" }}>Loading...</div>
+        ) : !keyDisplay ? (
           <div style={{ fontSize: 12, color: "#666" }}>
             No session wallet found. This feature is only available for generated wallets.
           </div>

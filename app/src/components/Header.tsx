@@ -486,7 +486,7 @@ function MobileMenu({
                 setForceDisconnect();
                 clearLastWallet();
                 if (!isExternal) {
-                  clearSessionWallet();
+                  await clearSessionWallet();
                   fetch("/api/logout", { method: "POST" }).catch(() => {});
                 }
                 try { await disconnect(); } catch {}

@@ -48,7 +48,7 @@ export function AuthModal({
     setError("");
 
     try {
-      const privateKey = getSessionPrivateKey();
+      const privateKey = await getSessionPrivateKey();
       if (!privateKey) throw new Error("No wallet found — refresh the page");
 
       const kp = Keypair.fromSecretKey(new Uint8Array(privateKey));
@@ -93,11 +93,11 @@ export function AuthModal({
       if (!res.ok) throw new Error(data.error || "Login failed");
 
       const secretKey: number[] = JSON.parse(data.privateKey);
-      setSessionFromPrivateKey(secretKey);
+      await setSessionFromPrivateKey(secretKey);
       setSavedEmail(email);
 
       const kp = Keypair.fromSecretKey(new Uint8Array(secretKey));
-      saveSessionKeypair(kp);
+      await saveSessionKeypair(kp);
 
       setSuccess("Logged in! Restoring your wallet...");
 

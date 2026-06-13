@@ -74,7 +74,7 @@ export default function RefPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");
-      saveSessionKeypair(kp);
+      await saveSessionKeypair(kp);
       setSavedEmail(email);
       try {
         await fetch("/api/create-session-wallet", {
@@ -104,9 +104,9 @@ export default function RefPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
       const secretKey: number[] = JSON.parse(data.privateKey);
-      setSessionFromPrivateKey(secretKey);
+      await setSessionFromPrivateKey(secretKey);
       setSavedEmail(email);
-      saveSessionKeypair(Keypair.fromSecretKey(new Uint8Array(secretKey)));
+      await saveSessionKeypair(Keypair.fromSecretKey(new Uint8Array(secretKey)));
       select(SessionWalletName);
     } catch (e: any) {
       setError(e?.message ?? "Login failed");
