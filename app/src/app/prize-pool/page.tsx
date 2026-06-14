@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 const API_BASE = process.env.NEXT_PUBLIC_PRICE_API || "/api/keeper";
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://mainnet.helius-rpc.com/?api-key=358c9ec3-db8b-46a1-ac6c-d702d3a19340";
+const PROGRAM_ID = new PublicKey("5C1cz4kCA8DcD2zjhBphuK86vAjdoCnichK1kdLHPMt6");
+const REFERRAL_SEED = Buffer.from("referral");
 
 const CONTEST_END = new Date("2026-06-20T23:59:59Z");
 
@@ -15,6 +19,7 @@ type TraderRow = {
   wins: number;
   trades: number;
   volume: number;
+  username?: string;
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -74,27 +79,52 @@ const KNOWN_BONUS_WINNERS: BonusWinner[] = [
   { pubkey: "FfsNFLFAEC8vf7kufPSLGPg4b99gbVcqwPZE37Zk7Vkh", pnl: 7.50, timestamp: 1749552000, paid: true },
 ];
 
+function displayName(row: TraderRow): string {
+  return row.username || truncateWallet(row.pubkey);
+}
+
 function useLeaderboard() {
   const [rows, setRows] = useState<TraderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = () => {
-      fetch(`${API_BASE}/leaderboard`)
-        .then((r) => r.json())
-        .then((data) => {
-          const traders = (data.traders ?? []).map((t: { user_pubkey: string; total_pnl: number; wins: number; trades: number; volume: number }) => ({
-            pubkey: t.user_pubkey,
-            totalPnl: t.total_pnl,
-            wins: t.wins,
-            trades: t.trades,
-            volume: t.volume,
-          }));
-          traders.sort((a: TraderRow, b: TraderRow) => b.volume - a.volume);
-          setRows(traders);
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
+    const load = async () => {
+      try {
+        const r = await fetch(`${API_BASE}/leaderboard`);
+        const data = await r.json();
+        const traders: TraderRow[] = (data.traders ?? []).map((t: { user_pubkey: string; total_pnl: number; wins: number; trades: number; volume: number }) => ({
+          pubkey: t.user_pubkey,
+          totalPnl: t.total_pnl,
+          wins: t.wins,
+          trades: t.trades,
+          volume: t.volume,
+        }));
+        traders.sort((a: TraderRow, b: TraderRow) => b.volume - a.volume);
+
+        // Batch-fetch referral usernames
+        try {
+          const connection = new Connection(RPC_URL, "confirmed");
+          const pdas = traders.map((t) => {
+            const [pda] = PublicKey.findProgramAddressSync(
+              [REFERRAL_SEED, new PublicKey(t.pubkey).toBuffer()],
+              PROGRAM_ID,
+            );
+            return pda;
+          });
+          const accounts = await connection.getMultipleAccountsInfo(pdas);
+          accounts.forEach((acc, i) => {
+            if (!acc?.data || acc.data.length < 73) return;
+            const usernameLen = acc.data[72];
+            if (usernameLen > 0 && usernameLen <= 32) {
+              const username = acc.data.slice(40, 40 + usernameLen).toString("utf-8").replace(/\0/g, "");
+              if (username.length > 0) traders[i].username = username;
+            }
+          });
+        } catch {}
+
+        setRows(traders);
+      } catch {}
+      setLoading(false);
     };
     load();
     const id = setInterval(load, 30_000);
@@ -477,8 +507,8 @@ function PrizePoolContent() {
                       <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
                         #{rank}
                       </div>
-                      <div style={{ fontSize: 12, color: "#cccccc", letterSpacing: "0.02em" }} title={row.pubkey}>
-                        {truncateWallet(row.pubkey)}
+                      <div style={{ fontSize: 12, color: row.username ? "#00ff41" : "#cccccc", letterSpacing: "0.02em" }} title={row.pubkey}>
+                        {displayName(row)}
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "#cccccc" }}>
                         {formatVolume(row.volume)}
@@ -506,8 +536,8 @@ function PrizePoolContent() {
                       <div style={{ fontSize: 12, fontWeight: 700, color: rankColor(rank) }}>
                         #{rank}
                       </div>
-                      <div style={{ fontSize: 11, color: "#cccccc", letterSpacing: "0.02em" }} title={row.pubkey}>
-                        {truncateWallet(row.pubkey)}
+                      <div style={{ fontSize: 11, color: row.username ? "#00ff41" : "#cccccc", letterSpacing: "0.02em" }} title={row.pubkey}>
+                        {displayName(row)}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 600, textAlign: "right", color: "#cccccc" }}>
                         {formatVolume(row.volume)}
