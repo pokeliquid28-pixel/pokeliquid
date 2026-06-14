@@ -356,7 +356,7 @@ export function LandingAuth({ onPass }: { onPass?: () => void } = {}) {
                 </div>
                 <div style={{ fontSize: 7, color: "#555", fontFamily: "monospace", marginBottom: 3, paddingLeft: 2 }}>LEVERAGE</div>
                 <div className="flex gap-1 mb-2">
-                  {["1x", "2x", "5x", "10x", "20x"].map((lev, i) => (
+                  {["1x", "5x", "10x", "15x", "25x"].map((lev, i) => (
                     <span key={lev} style={{ flex: 1, textAlign: "center", fontSize: 8, fontFamily: "monospace", fontWeight: 700, padding: "3px 0", borderRadius: 2, border: i === 1 ? "1px solid #00ff41" : "1px solid #333", color: i === 1 ? "#000" : "#666", background: i === 1 ? "#00ff41" : "transparent" }}>{lev}</span>
                   ))}
                 </div>
