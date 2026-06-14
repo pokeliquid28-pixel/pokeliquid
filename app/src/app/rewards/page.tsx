@@ -695,6 +695,45 @@ export default function RewardsPage() {
               </div>
             </div>
           )}
+          {/* ── $POKE Holder Raffle ── */}
+          <div className="border border-border bg-panel p-4 mt-6">
+            <h2 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-3">
+              $POKE HOLDER RAFFLE
+            </h2>
+            <div className="space-y-3 text-xs font-mono text-secondary">
+              <p>
+                Hold <span className="text-accent">$POKE</span> tokens for a chance to win a{" "}
+                <span className="text-primary">$50 Elite Gacha Pack</span> — a real graded Pokemon card delivered to your wallet.
+              </p>
+              <div className="bg-bg p-3 space-y-1.5" style={{ border: "1px solid #1a1a1a" }}>
+                <div className="flex justify-between">
+                  <span className="text-secondary">1 Ticket</span>
+                  <span className="text-accent font-bold">100,000 $POKE</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-secondary">Prize</span>
+                  <span className="text-primary font-bold">$50 Elite Pokemon Gacha Pack</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-secondary">Drawing</span>
+                  <span className="text-primary">On-chain verifiable (slot hash)</span>
+                </div>
+              </div>
+              <p className="text-[10px]" style={{ color: "#444" }}>
+                Winners are drawn using the Solana slot hash as a verifiable random seed. Results are recorded on-chain.
+                More tokens = more tickets = higher chance. Minimum 100K $POKE to enter.
+              </p>
+              <a
+                href="https://jup.ag/swap/SOL-6TPQEMKviAYz3h7gWwtTZJSACMtF2tbofNnPwSyLpump"
+                target="_blank"
+                rel="noopener"
+                className="inline-block px-4 py-2 text-[10px] font-mono font-bold border border-accent text-accent hover:bg-accent/10 transition-colors uppercase tracking-wider"
+              >
+                BUY $POKE ON JUPITER
+              </a>
+            </div>
+          </div>
+
         </div>
       </div>
 

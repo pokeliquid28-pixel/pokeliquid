@@ -10,7 +10,7 @@ pub const USDC_MINT_SEED: &[u8] = b"usdc_mint";
 pub const DEFAULT_FEE_BPS: u64 = 200;
 pub const DEFAULT_BASE_FUNDING_RATE: u64 = 30;
 pub const DEFAULT_SKEW_FACTOR: u64 = 1_000;
-pub const DEFAULT_PROFIT_CAP_BPS: u64 = 50_000;
+pub const DEFAULT_PROFIT_CAP_BPS: u64 = 30_000; // 300% max profit
 pub const DEFAULT_INSURANCE_FUND_BPS: u64 = 2_500; // 25% of trading fees → insurance
 pub const DEFAULT_MIN_POSITION_SIZE: u64 = 1_000_000;
 pub const DEFAULT_STALENESS_THRESHOLD: i64 = 1_800;
@@ -34,6 +34,12 @@ pub const REFERRAL_FEE_BPS: u64 = 1_000; // 10% of the fee amount (= 1000 bps of
 
 pub const DEFAULT_MAX_MARKET_OI: u64 = 100_000_000_000; // 100k USDC (6 decimals)
 
+pub const REFERRAL_TRACKER_SEED: &[u8] = b"ref_track";
+/// Auto-upgrade referral to 20% after 10 unique users AND $100 in fees
+pub const AUTO_UPGRADE_UNIQUE_REFS: u64 = 10;
+pub const AUTO_UPGRADE_FEES_THRESHOLD: u64 = 100_000_000; // $100 USDC (6 decimals)
+pub const AUTO_UPGRADE_FEE_SHARE_BPS: u64 = 2_000; // 20%
+
 pub const FUNDING_RATE_SCALE: u64 = 100_000;
 pub const LIQUIDATION_THRESHOLD_BPS: u64 = 500; // 5% = 500 bps
 pub const LIQUIDATOR_REWARD_BPS: u64 = 200; // 2% to liquidator
@@ -41,8 +47,12 @@ pub const LIQUIDATION_LP_BPS: u64 = 4_400; // 44% to LP
 pub const LIQUIDATION_INSURANCE_BPS: u64 = 4_400; // 44% to insurance
 // Remaining 10% stays in fee_vault (platform)
 
-// Oracle price bounds: max 50% deviation per update
-pub const MAX_ORACLE_DEVIATION_BPS: u64 = 5_000;
+// Oracle price bounds: max 20% deviation per update
+pub const MAX_ORACLE_DEVIATION_BPS: u64 = 2_000; // 20% max deviation per oracle update
+// Minimum seconds between oracle updates (prevents rapid multi-hop manipulation)
+pub const MIN_ORACLE_UPDATE_INTERVAL: i64 = 5;
+
+pub const RAFFLE_SEED: &[u8] = b"raffle";
 
 // Funding fee split (majority side pays, minority pays 0)
 pub const FUNDING_LP_BPS: u64 = 7_000; // 70% of funding → LP

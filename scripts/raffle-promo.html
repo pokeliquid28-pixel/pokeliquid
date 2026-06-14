@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px;
+    height: 630px;
+    background: #0a0a0a;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,65,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Green glow orb */
+  .glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,255,65,0.08) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 40px 60px;
+    text-align: center;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #0a0a0a;
+    background: #00ff41;
+    padding: 6px 20px;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 64px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  h1 span {
+    color: #00ff41;
+  }
+
+  .subtitle {
+    font-size: 20px;
+    color: #888;
+    font-weight: 400;
+    margin-bottom: 40px;
+  }
+
+  .ticket-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .ticket {
+    background: #111;
+    border: 1px solid #1a1a1a;
+    padding: 16px 28px;
+    text-align: center;
+  }
+
+  .ticket .label {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .ticket .value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #00ff41;
+  }
+
+  .ticket .value.white {
+    color: #fff;
+  }
+
+  .how {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.8;
+  }
+
+  .how strong {
+    color: #00ff41;
+  }
+
+  .logo {
+    position: absolute;
+    bottom: 28px;
+    left: 60px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #333;
+    letter-spacing: 2px;
+  }
+
+  .poke-token {
+    position: absolute;
+    bottom: 28px;
+    right: 60px;
+    font-size: 12px;
+    color: #444;
+  }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="content">
+    <div class="badge">$POKE HOLDER RAFFLE</div>
+    <h1>WIN A <span>GRADED</span></h1>
+    <h1>POKEMON CARD</h1>
+    <div class="subtitle">Hold $POKE. Get tickets. Win real cards.</div>
+
+    <div class="ticket-row">
+      <div class="ticket">
+        <div class="label">1 Ticket</div>
+        <div class="value">100K $POKE</div>
+      </div>
+      <div class="ticket">
+        <div class="label">Prize</div>
+        <div class="value">$50 Elite Pack</div>
+      </div>
+      <div class="ticket">
+        <div class="label">Delivered As</div>
+        <div class="value white">pNFT Card</div>
+      </div>
+    </div>
+
+    <div class="how">
+      <strong>1.</strong> Hold 100K+ $POKE &nbsp;→&nbsp;
+      <strong>2.</strong> Auto-entered at snapshot &nbsp;→&nbsp;
+      <strong>3.</strong> Winner drawn on-chain
+    </div>
+  </div>
+
+  <div class="logo">POKELIQUID.XYZ</div>
+  <div class="poke-token">6TPQ...pump</div>
+</body>
+</html>

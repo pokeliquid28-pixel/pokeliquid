@@ -20,7 +20,7 @@ security_txt! {
     contacts: "email:pokeliquid28@gmail.com",
     policy: "https://pokeliquid.xyz/terms",
     preferred_languages: "en",
-    source_code: "https://github.com/pokeliquid28-create/pokeliquid"
+    source_code: "https://github.com/pokeliquid28-pixel/pokeliquid"
 }
 
 // Mainnet program ID
@@ -71,8 +71,8 @@ pub mod pokeliquid {
     }
 
     /// Open a perpetual position with optional SL/TP.
-    pub fn open_position(
-        ctx: Context<OpenPosition>,
+    pub fn open_position<'a>(
+        ctx: Context<'a, OpenPosition<'a>>,
         direction: Direction,
         collateral: u64,
         leverage: u8,
@@ -167,6 +167,16 @@ pub mod pokeliquid {
         withdraw_insurance::handler(ctx, amount)
     }
 
+    /// Admin: set fee share bps for a referral account (0-3000 = 0-30%).
+    pub fn set_fee_share(ctx: Context<SetFeeShare>, referral_owner: Pubkey, fee_share_bps: u64) -> Result<()> {
+        set_fee_share::handler(ctx, referral_owner, fee_share_bps)
+    }
+
+    /// Migrate a referral account to the new larger size (permissionless).
+    pub fn migrate_referral(ctx: Context<MigrateReferral>) -> Result<()> {
+        migrate_referral::handler(ctx)
+    }
+
     /// Register a referral account with a username.
     pub fn register_referral(ctx: Context<RegisterReferral>, username: String) -> Result<()> {
         register_referral::handler(ctx, username)
@@ -175,6 +185,35 @@ pub mod pokeliquid {
     /// Claim accumulated referral fees.
     pub fn claim_referral(ctx: Context<ClaimReferral>) -> Result<()> {
         claim_referral::handler(ctx)
+    }
+
+    /// One-time: grow ProtocolState for new fields.
+    pub fn realloc_protocol(ctx: Context<ReallocProtocol>) -> Result<()> {
+        realloc_protocol::handler(ctx)
+    }
+
+    /// Accept a pending admin transfer (two-step).
+    pub fn accept_admin(ctx: Context<AcceptAdmin>) -> Result<()> {
+        accept_admin::handler(ctx)
+    }
+
+    /// Admin: force-close any position (for oracle pricing corrections).
+    pub fn admin_close_position(ctx: Context<AdminClosePosition>, user: Pubkey, position_index: u8) -> Result<()> {
+        admin_close_position::handler(ctx, user, position_index)
+    }
+
+    /// Admin: record a raffle winner on-chain (drawn off-chain using slot hash).
+    pub fn record_raffle(
+        ctx: Context<RecordRaffle>,
+        round: u32,
+        winner: Pubkey,
+        total_entries: u64,
+        total_holders: u32,
+        winner_tickets: u64,
+        slot_hash_seed: [u8; 32],
+        prize_description: [u8; 64],
+    ) -> Result<()> {
+        record_raffle::handler(ctx, round, winner, total_entries, total_holders, winner_tickets, slot_hash_seed, prize_description)
     }
 
     /// Devnet helper: mint 1000 USDC to the caller (no auth required).
