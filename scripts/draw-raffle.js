@@ -37,26 +37,50 @@ async function main() {
   const adminKp = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(keyPath, "utf8"))));
   console.log("Admin:", adminKp.publicKey.toBase58());
 
-  // 1. Snapshot all $POKE token accounts
+  // 1. Snapshot all $POKE token accounts via Helius DAS
   console.log("\nSnapshotting $POKE holders...");
-  const tokenAccounts = await conn.getParsedProgramAccounts(
-    new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
-    {
-      filters: [
-        { dataSize: 165 },
-        { memcmp: { offset: 0, bytes: POKE_MINT.toBase58() } },
-      ],
-    }
-  );
 
-  // 2. Calculate tickets per holder
+  // Use getTokenAccounts (Helius enhanced API) for complete holder list
+  let allHolderData = [];
+  let cursor = undefined;
+  while (true) {
+    const body = {
+      jsonrpc: "2.0", id: 1,
+      method: "getTokenAccounts",
+      params: { mint: POKE_MINT.toBase58(), limit: 1000 },
+    };
+    if (cursor) body.params.cursor = cursor;
+    const res = await fetch(RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    const items = data.result?.token_accounts || [];
+    allHolderData.push(...items);
+    if (items.length < 1000) break;
+    cursor = data.result?.cursor;
+    if (!cursor) break;
+  }
+
+  // 2. Calculate tickets per holder (exclude LPs, DEXes, program accounts)
+  const EXCLUDED = new Set([
+    "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", // Raydium AMM
+    "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8", // Raydium V4
+    "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK", // Raydium CLMM
+    "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",  // Orca Whirlpool
+    "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo",  // Meteora
+    "FLUXubRmkEi2q6K3Y9kBPg9248ggaZVsoSFhtJHSR1X4", // FluxBeam
+    PROGRAM_ID.toBase58(), // our own program
+  ]);
+
   const holders = [];
   let totalTickets = 0;
 
-  for (const acc of tokenAccounts) {
-    const parsed = acc.account.data.parsed;
-    const owner = parsed.info.owner;
-    const amount = parseInt(parsed.info.tokenAmount.amount);
+  for (const acc of allHolderData) {
+    const owner = acc.owner;
+    if (EXCLUDED.has(owner)) continue;
+    const amount = parseInt(acc.amount);
     const tickets = Math.floor(amount / TICKETS_PER_RAW);
     if (tickets >= 1) {
       holders.push({ owner, amount, tickets });
@@ -66,7 +90,7 @@ async function main() {
 
   holders.sort((a, b) => b.tickets - a.tickets);
 
-  console.log(`Total token accounts: ${tokenAccounts.length}`);
+  console.log(`Total token accounts: ${allHolderData.length}`);
   console.log(`Eligible holders (100k+): ${holders.length}`);
   console.log(`Total tickets: ${totalTickets}`);
   console.log(`\nTop 10 holders:`);
@@ -203,7 +227,62 @@ async function main() {
       body: JSON.stringify({ memo: genData.memo }),
     });
     const openData = await openRes.json();
-    console.log("Pack opened! NFT:", openData.nft_address || "pending");
+    const nftMint = openData.nft_address;
+    console.log("Pack opened! NFT:", nftMint || "pending");
+
+    // 7. Get card image via Helius DAS and send TG photo
+    if (nftMint) {
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const metaRes = await fetch(RPC_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getAsset", params: { id: nftMint } }),
+        });
+        const metaData = await metaRes.json();
+        const asset = metaData.result;
+        const cardName = asset?.content?.metadata?.name || "Pokemon Card";
+        const cardImage = asset?.content?.links?.image || asset?.content?.files?.[0]?.uri || "";
+        const attrs = asset?.content?.metadata?.attributes || [];
+        const insuredValue = attrs.find(a => a.trait_type === "Insured Value")?.value || "?";
+        const grade = attrs.find(a => a.trait_type === "The Grade")?.value || "?";
+        const gradingCo = attrs.find(a => a.trait_type === "Grading Company")?.value || "";
+
+        if (cardImage) {
+          console.log("Card:", cardName);
+          console.log("Grade:", grade, gradingCo);
+          console.log("Insured Value: $" + insuredValue);
+          console.log("Image:", cardImage);
+
+          // Send TG photo
+          const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+          const TG_CHAT = process.env.TELEGRAM_CHAT_ID;
+          if (TG_TOKEN && TG_CHAT) {
+            const caption = [
+              `🎰 <b>RAFFLE #${ROUND} WINNER!</b>`,
+              ``,
+              `<b>Winner:</b> ${winner.owner.slice(0, 8)}...${winner.owner.slice(-4)}`,
+              `<b>Held:</b> ${(winner.amount / 1e6).toLocaleString()} $POKE (${winner.tickets} tickets)`,
+              `<b>Card:</b> ${cardName}`,
+              `<b>Grade:</b> ${gradingCo} ${grade}`,
+              `<b>Insured Value:</b> $${insuredValue}`,
+              `<b>NFT:</b> ${nftMint}`,
+              `<b>Total entries:</b> ${totalTickets} tickets from ${holders.length} holders`,
+            ].join("\n");
+
+            const tgBody = JSON.stringify({ chat_id: TG_CHAT, photo: cardImage, caption, parse_mode: "HTML" });
+            const tgRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: tgBody,
+            });
+            console.log("TG photo sent:", tgRes.ok ? "YES" : "FAILED");
+          }
+        }
+      } catch (e) {
+        console.log("TG notification failed:", e.message);
+      }
+    }
   } catch (e) {
     console.error("Gacha fulfillment failed:", e.message);
     console.log("Winner will need manual fulfillment.");
