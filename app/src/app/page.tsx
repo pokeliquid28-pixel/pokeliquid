@@ -925,6 +925,32 @@ function OrderEntry({
 
   async function handleOpenPosition() {
     if (!publicKey || !anchorWallet || !canOpen) return;
+
+    // Validate SL/TP before sending to chain
+    const currentPrice = oracle.price / 1_000_000;
+    if (slInput) {
+      const sl = parseFloat(slInput);
+      if (side === "Long" && sl >= currentPrice) {
+        setTxStatus({ type: "error", msg: "Stop-loss for longs must be below the current price ($" + currentPrice.toFixed(2) + ")" });
+        return;
+      }
+      if (side === "Short" && sl <= currentPrice) {
+        setTxStatus({ type: "error", msg: "Stop-loss for shorts must be above the current price ($" + currentPrice.toFixed(2) + ")" });
+        return;
+      }
+    }
+    if (tpInput) {
+      const tp = parseFloat(tpInput);
+      if (side === "Long" && tp <= currentPrice) {
+        setTxStatus({ type: "error", msg: "Take-profit for longs must be above the current price ($" + currentPrice.toFixed(2) + ")" });
+        return;
+      }
+      if (side === "Short" && tp >= currentPrice) {
+        setTxStatus({ type: "error", msg: "Take-profit for shorts must be below the current price ($" + currentPrice.toFixed(2) + ")" });
+        return;
+      }
+    }
+
     setLoading(true);
     setTxStatus(null);
     try {
