@@ -220,6 +220,17 @@ export function useOracle(
   return { price, lastUpdated, stalenessThreshold, readings, isLoading, isStale, health, secondsSinceUpdate, error };
 }
 
+/** Get the 24h % change for a market from the cached history. */
+export function getMarketChange(oracleAddress: string, priceApiMarket: string): number {
+  const cached = oracleCache.get(oracleAddress);
+  const readings = historyCache.get(priceApiMarket);
+  if (!cached || !readings || readings.length < 2) return 0;
+  const currentPrice = cached.price / 1_000_000;
+  const oldest = readings[0].price / 1_000_000;
+  if (oldest <= 0) return 0;
+  return ((currentPrice - oldest) / oldest) * 100;
+}
+
 /** Fetch the latest on-chain oracle price via RPC (for trading accuracy). */
 export function useOracleRefresh() {
   const { connection } = useConnection();

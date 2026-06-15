@@ -16,6 +16,7 @@ import { useNotifications } from "@/providers/NotificationProvider";
 import { incrementTradeCount } from "@/components/SaveWalletSheet";
 import { getProgram } from "@/lib/program";
 import { MARKETS, Market, MarketType } from "@/lib/markets";
+import { getMarketChange } from "@/hooks/useOracle";
 import { LandingAuth } from "@/components/LandingAuth";
 import { BinderCard } from "@/components/BinderCard";
 import { SwapModal } from "@/components/SwapModal";
@@ -140,6 +141,7 @@ export default function TradePage() {
   const [tradeSheetOpen, setTradeSheetOpen] = useState(false);
   const [binderSearch, setBinderSearch] = useState("");
   const [binderFilter, setBinderFilter] = useState<"ALL" | MarketType>("ALL");
+  const [binderSort, setBinderSort] = useState<"default" | "gainers" | "losers">("default");
 
   // Fetch card info for selected market
   useEffect(() => {
@@ -185,15 +187,22 @@ export default function TradePage() {
     if (first > 0) change24h = ((last - first) / first) * 100;
   }
 
-  // Binder filtering
-  const binderMarkets = markets.filter((m) => {
-    const matchesSearch =
-      binderSearch === "" ||
-      m.name.toLowerCase().includes(binderSearch.toLowerCase()) ||
-      m.subtitle.toLowerCase().includes(binderSearch.toLowerCase());
-    const matchesFilter = binderFilter === "ALL" || m.type === binderFilter;
-    return matchesSearch && matchesFilter;
-  });
+  // Binder filtering + sorting
+  const binderMarkets = markets
+    .filter((m) => {
+      const matchesSearch =
+        binderSearch === "" ||
+        m.name.toLowerCase().includes(binderSearch.toLowerCase()) ||
+        m.subtitle.toLowerCase().includes(binderSearch.toLowerCase());
+      const matchesFilter = binderFilter === "ALL" || m.type === binderFilter;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      if (binderSort === "default") return 0;
+      const changeA = getMarketChange(a.oracleAddress, a.priceApiMarket);
+      const changeB = getMarketChange(b.oracleAddress, b.priceApiMarket);
+      return binderSort === "gainers" ? changeB - changeA : changeA - changeB;
+    });
 
   const handleOpenTrade = (m: Market) => {
     setSelectedMarket(m);
@@ -249,6 +258,27 @@ export default function TradePage() {
                 {chip.label}
               </button>
             ))}
+            <div style={{ width: 1, background: "#222", margin: "0 4px" }} />
+            {([
+              { label: "DEFAULT", value: "default" as const },
+              { label: "TOP GAINERS", value: "gainers" as const },
+              { label: "TOP LOSERS", value: "losers" as const },
+            ]).map((chip) => (
+              <button
+                key={chip.value}
+                onClick={() => setBinderSort(chip.value)}
+                className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 transition-colors"
+                style={{
+                  borderRadius: 6,
+                  border: binderSort === chip.value ? "1px solid #ffaa00" : "1px solid #222",
+                  background: binderSort === chip.value ? "rgba(255,170,0,0.08)" : "transparent",
+                  color: binderSort === chip.value ? "#ffaa00" : "#666",
+                  cursor: "pointer",
+                }}
+              >
+                {chip.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -260,9 +290,27 @@ export default function TradePage() {
             { type: "CARDS", label: "CARDS" },
           ];
           const hasAny = binderMarkets.length > 0;
+          const isSorted = binderSort !== "default";
           return hasAny ? (
             <div className="max-w-[1200px] mx-auto space-y-6">
-              {groups.map((g) => {
+              {isSorted ? (
+                /* Flat sorted list when sorting by gainers/losers */
+                <div>
+                  <h3
+                    className="font-mono text-[11px] font-bold uppercase tracking-widest mb-3"
+                    style={{ color: "#ffaa00", borderBottom: "1px solid #1a1a1a", paddingBottom: 8 }}
+                  >
+                    {binderSort === "gainers" ? "TOP GAINERS" : "TOP LOSERS"} (24H)
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                    {binderMarkets.map((m) => (
+                      <BinderCard key={m.id} market={m} onTrade={handleOpenTrade} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Grouped by type when default sort */
+                groups.map((g) => {
                 const items = binderMarkets.filter((m) => m.type === g.type);
                 if (items.length === 0) return null;
                 return (
@@ -280,7 +328,7 @@ export default function TradePage() {
                     </div>
                   </div>
                 );
-              })}
+              }))}
             </div>
           ) : (
             <div className="text-center py-12 font-mono text-sm" style={{ color: "#555" }}>
