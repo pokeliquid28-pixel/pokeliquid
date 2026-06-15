@@ -124,7 +124,7 @@ export function SendModal({ onClose }: Props) {
           border: "1px solid #333", color: "#999", background: "rgba(255,255,255,.02)",
           lineHeight: 1.6,
         }}>
-          This sends tokens from your <strong style={{ color: "#ccc" }}>wallet balance</strong>. To withdraw funds from an open trading position, close the position first on the Trade page. If you connected via Phantom or Solflare, withdrawn collateral will appear directly in your connected wallet.
+          Looking to withdraw from the protocol? Your deposited collateral is managed on the <strong style={{ color: "#00ff41" }}>Trade</strong> page — use the Deposit/Withdraw panel there. This screen only sends tokens already in your wallet.
         </div>
 
         {/* Token selector */}
