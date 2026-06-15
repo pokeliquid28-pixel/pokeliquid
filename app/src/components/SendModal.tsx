@@ -118,6 +118,15 @@ export function SendModal({ onClose }: Props) {
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#666", fontSize: 18, cursor: "pointer" }}>×</button>
         </div>
 
+        {/* Info notice */}
+        <div style={{
+          fontSize: 10, padding: "10px 12px", marginBottom: 16,
+          border: "1px solid #333", color: "#999", background: "rgba(255,255,255,.02)",
+          lineHeight: 1.6,
+        }}>
+          This sends tokens from your <strong style={{ color: "#ccc" }}>wallet balance</strong>. To withdraw funds from an open trading position, close the position first on the Trade page. If you connected via Phantom or Solflare, withdrawn collateral will appear directly in your connected wallet.
+        </div>
+
         {/* Token selector */}
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
           {(["SOL", "USDC"] as Token[]).map((t) => (

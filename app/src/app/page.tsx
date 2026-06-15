@@ -241,12 +241,12 @@ export default function TradePage() {
               outline: "none",
             }}
           />
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
             {FILTER_CHIPS.map((chip) => (
               <button
                 key={chip.value}
                 onClick={() => setBinderFilter(chip.value)}
-                className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 transition-colors"
+                className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 transition-colors whitespace-nowrap flex-shrink-0"
                 style={{
                   borderRadius: 6,
                   border: binderFilter === chip.value ? "1px solid #00ff41" : "1px solid #222",
@@ -258,7 +258,7 @@ export default function TradePage() {
                 {chip.label}
               </button>
             ))}
-            <div style={{ width: 1, background: "#222", margin: "0 4px" }} />
+            <div className="flex-shrink-0" style={{ width: 1, background: "#222", margin: "0 4px" }} />
             {([
               { label: "DEFAULT", value: "default" as const },
               { label: "TOP GAINERS", value: "gainers" as const },
@@ -267,7 +267,7 @@ export default function TradePage() {
               <button
                 key={chip.value}
                 onClick={() => setBinderSort(chip.value)}
-                className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 transition-colors"
+                className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 transition-colors whitespace-nowrap flex-shrink-0"
                 style={{
                   borderRadius: 6,
                   border: binderSort === chip.value ? "1px solid #ffaa00" : "1px solid #222",
