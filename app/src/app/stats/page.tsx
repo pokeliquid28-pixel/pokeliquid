@@ -509,7 +509,6 @@ function StatsContent() {
                 mono
               />
               <StatRow label="Max Leverage" value="25x" mono />
-              <StatRow label="Max Collateral" value="$350 / market / direction" mono />
               <StatRow label="Profit Cap" value={bpsToPercent(protocol.profitCapBps)} mono />
             </div>
             <div className="space-y-0">

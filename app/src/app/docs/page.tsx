@@ -417,7 +417,6 @@ Short PnL = notional * (entry_price - exit_price) / entry_price`}</Code>
                 ["Open Fee", "2% (200 bps)", "Deducted from collateral when opening"],
                 ["Close Fee", "2% (200 bps)", "Deducted from settlement when closing"],
                 ["Profit Cap", "500% (50,000 bps)", "Max profit per position"],
-                ["Max Collateral", "$350 per market per direction", "Per-account cap on open positions"],
                 ["Min Position Size", "$1.00 (1,000,000 raw)", "Minimum collateral"],
               ]}
             />
