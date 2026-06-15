@@ -70,19 +70,24 @@ function PoolContent() {
 
   const [feeVaultBalance, setFeeVaultBalance] = useState<number | null>(null);
   const [insuranceBalance, setInsuranceBalance] = useState<number | null>(null);
+  const [userCollateral, setUserCollateral] = useState<number | null>(null);
   const [blendedApr, setBlendedApr] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const fetchVaultBalances = async () => {
       try {
-        const [feeAcc, insAcc] = await Promise.all([
+        const [feeAcc, insAcc, protocolAcc] = await Promise.all([
           connection.getTokenAccountBalance(FEE_VAULT),
           connection.getTokenAccountBalance(INSURANCE_FUND),
+          connection.getAccountInfo(PROTOCOL_STATE),
         ]);
         if (cancelled) return;
         setFeeVaultBalance(Number(feeAcc.value.amount));
         setInsuranceBalance(Number(insAcc.value.amount));
+        if (protocolAcc?.data) {
+          setUserCollateral(Number(protocolAcc.data.readBigUInt64LE(302)));
+        }
       } catch {}
     };
     fetchVaultBalances();
@@ -433,7 +438,7 @@ function PoolContent() {
 
           {/* Protocol Vaults */}
           <Section title="Protocol Vaults">
-            <div className="grid grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
               <div className="bg-bg border border-border p-3 md:p-4">
                 <div className="text-[10px] md:text-xs text-secondary mb-1">LP Vault</div>
                 <div className="text-primary font-mono font-semibold text-sm md:text-base">
@@ -453,6 +458,14 @@ function PoolContent() {
                 </div>
               </div>
             </div>
+            {feeVaultBalance !== null && userCollateral !== null && !pool.isLoading && (
+              <div className="space-y-0 mt-1">
+                <div className="text-[10px] text-secondary/50 uppercase tracking-wider mb-1">Fee Vault Breakdown</div>
+                <StatRow label="Deposited Collateral" value={`$${rawToUsdc(userCollateral).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
+                <StatRow label="Unclaimed LP Fees" value={`$${rawToUsdc(Math.max(0, pool.accumulatedFees - pool.totalFeesClaimed)).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
+                <StatRow label="Protocol Revenue" value={`$${Math.max(0, rawToUsdc(feeVaultBalance) - rawToUsdc(userCollateral) - rawToUsdc(Math.max(0, pool.accumulatedFees - pool.totalFeesClaimed))).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} mono />
+              </div>
+            )}
           </Section>
         </div>
 
