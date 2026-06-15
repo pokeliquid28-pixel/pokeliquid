@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { RiskDisclaimer } from "@/components/RiskDisclaimer";
 import { Footer } from "@/components/Footer";
 import { SpinEligibilityBanner } from "@/components/SpinNotification";
+import { BgMusic } from "@/components/BgMusic";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -52,6 +53,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <SpinEligibilityBanner />
+          <BgMusic />
           <SaveWalletSheet />
         </AppProviders>
       </body>
