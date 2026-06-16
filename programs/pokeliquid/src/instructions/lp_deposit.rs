@@ -59,6 +59,11 @@ pub fn handler(ctx: Context<LpDeposit>, amount: u64) -> Result<()> {
 
     let pool = &ctx.accounts.liquidity_pool;
 
+    // Minimum first deposit to prevent share inflation attack
+    if pool.total_shares == 0 {
+        require!(amount >= 10_000_000, ErrorCode::MinFirstDeposit); // 10 USDC minimum
+    }
+
     // Calculate shares
     let shares = if pool.total_shares == 0 {
         amount
@@ -72,17 +77,17 @@ pub fn handler(ctx: Context<LpDeposit>, amount: u64) -> Result<()> {
 
     require!(shares > 0, ErrorCode::MathOverflow);
 
-    // Snapshot existing unclaimed fees before share changes
+    // Snapshot existing unclaimed fees before share changes (MasterChef-style)
     let lp = &ctx.accounts.lp_position;
-    let old_claimable = if lp.shares > 0 && pool.total_shares > 0 {
-        let old_entitled = (lp.shares as u128)
-            .checked_mul(pool.accumulated_fees as u128)
+    let old_pending = if lp.shares > 0 && pool.acc_fee_per_share > 0 {
+        (lp.shares as u128)
+            .checked_mul(pool.acc_fee_per_share)
             .ok_or(ErrorCode::MathOverflow)?
-            .checked_div(pool.total_shares as u128)
-            .ok_or(ErrorCode::MathOverflow)? as u64;
-        old_entitled.saturating_sub(lp.fees_claimed)
+            .checked_div(crate::state::FEE_PER_SHARE_PRECISION)
+            .ok_or(ErrorCode::MathOverflow)?
+            .saturating_sub(lp.reward_debt)
     } else {
-        0u64
+        0u128
     };
 
     // Transfer USDC from user to lp_vault
@@ -113,14 +118,14 @@ pub fn handler(ctx: Context<LpDeposit>, amount: u64) -> Result<()> {
     pool.total_usdc = pool.total_usdc.checked_add(amount).ok_or(ErrorCode::MathOverflow)?;
     pool.total_shares = pool.total_shares.checked_add(shares).ok_or(ErrorCode::MathOverflow)?;
 
-    // Set fees_claimed so new shares can't claim historical fees
-    // entitled_now - fees_claimed = old_claimable (preserve existing unclaimed)
-    let entitled_now = (lp.shares as u128)
-        .checked_mul(pool.accumulated_fees as u128)
+    // MasterChef: set reward_debt so new shares can't claim historical fees,
+    // but preserve any pending (unclaimed) fees from before this deposit.
+    let new_total_debt = (lp.shares as u128)
+        .checked_mul(pool.acc_fee_per_share)
         .ok_or(ErrorCode::MathOverflow)?
-        .checked_div(pool.total_shares as u128)
-        .ok_or(ErrorCode::MathOverflow)? as u64;
-    lp.fees_claimed = entitled_now.saturating_sub(old_claimable);
+        .checked_div(crate::state::FEE_PER_SHARE_PRECISION)
+        .ok_or(ErrorCode::MathOverflow)?;
+    lp.reward_debt = new_total_debt.saturating_sub(old_pending);
 
     emit!(LpDeposited {
         user: ctx.accounts.user.key(),

@@ -13,10 +13,11 @@ pub struct WithdrawCollateral<'info> {
     pub user: Signer<'info>,
 
     #[account(
+        mut,
         seeds = [PROTOCOL_SEED],
         bump = protocol_state.bump,
     )]
-    pub protocol_state: Account<'info, ProtocolState>,
+    pub protocol_state: Box<Account<'info, ProtocolState>>,
 
     #[account(
         mut,
@@ -85,6 +86,13 @@ pub fn handler(ctx: Context<WithdrawCollateral>, amount: u64) -> Result<()> {
         .collateral
         .checked_sub(amount)
         .ok_or(ErrorCode::MathOverflow)?;
+
+    // Track user funds in fee_vault
+    ctx.accounts.protocol_state.total_user_collateral = ctx
+        .accounts
+        .protocol_state
+        .total_user_collateral
+        .saturating_sub(amount);
 
     msg!("Withdrew {} USDC. Remaining collateral: {}", amount, margin.collateral);
     Ok(())

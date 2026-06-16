@@ -134,6 +134,7 @@ pub enum CloseReason {
     StopLoss,
     TakeProfit,
     Liquidation,
+    AdminForced,
 }
 
 // ─── Direction ────────────────────────────────────────────────────────────────
@@ -243,6 +244,28 @@ pub struct ProtocolParams {
     pub admin: Option<Pubkey>,
 }
 
+// ─── Timelock ────────────────────────────────────────────────────────────────
+
+#[account]
+pub struct Timelock {
+    /// Pending parameter change
+    pub pending_params: Option<ProtocolParams>,
+    pub params_execute_after: i64,
+    /// Pending fee vault withdrawal
+    pub pending_fee_withdrawal: u64,
+    pub fee_execute_after: i64,
+    /// Pending insurance withdrawal
+    pub pending_insurance_withdrawal: u64,
+    pub insurance_execute_after: i64,
+    pub bump: u8,
+}
+
+impl Timelock {
+    // Generous size to accommodate serialized ProtocolParams (all Option fields)
+    // 8 disc + 1 option tag + ~200 params + 8 timestamp + 8 fee + 8 timestamp + 8 ins + 8 timestamp + 1 bump + padding
+    pub const SPACE: usize = 512;
+}
+
 // ─── Raffle ──────────────────────────────────────────────────────────────────
 
 #[account]
@@ -256,6 +279,53 @@ pub struct RaffleResult {
     pub prize_description: [u8; 64],
     pub timestamp: i64,
     pub bump: u8,
+}
+
+// ─── Payout Queue (FIFO) ─────────────────────────────────────────────────────
+
+pub const PAYOUT_QUEUE_SIZE: usize = 16;
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Copy)]
+pub struct PayoutEntry {
+    pub user: Pubkey,       // 32 — wallet to send USDC to
+    pub user_ata: Pubkey,   // 32 — user's USDC ATA
+    pub amount: u64,        // 8  — USDC owed (6 decimals)
+    pub timestamp: i64,     // 8  — when the IOU was created
+}
+// 80 bytes per entry
+
+#[account]
+pub struct PayoutQueue {
+    pub head: u16,
+    pub tail: u16,
+    pub count: u16,
+    pub bump: u8,
+    pub entries: [PayoutEntry; PAYOUT_QUEUE_SIZE],
+}
+
+impl PayoutQueue {
+    // 8 disc + 2+2+2+1 + 64*80 = 8 + 7 + 5120 = 5135
+    pub const SPACE: usize = 8 + 7 + PAYOUT_QUEUE_SIZE * 80;
+
+    pub fn push(&mut self, entry: PayoutEntry) -> Result<()> {
+        require!((self.count as usize) < PAYOUT_QUEUE_SIZE, crate::error::ErrorCode::PayoutQueueFull);
+        self.entries[self.tail as usize] = entry;
+        self.tail = ((self.tail + 1) % PAYOUT_QUEUE_SIZE as u16) as u16;
+        self.count += 1;
+        Ok(())
+    }
+
+    pub fn peek(&self) -> Option<&PayoutEntry> {
+        if self.count == 0 { return None; }
+        Some(&self.entries[self.head as usize])
+    }
+
+    pub fn pop(&mut self) {
+        if self.count == 0 { return; }
+        self.entries[self.head as usize] = PayoutEntry::default();
+        self.head = ((self.head + 1) % PAYOUT_QUEUE_SIZE as u16) as u16;
+        self.count -= 1;
+    }
 }
 
 impl RaffleResult {

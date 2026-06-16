@@ -53,6 +53,9 @@ pub const MAX_ORACLE_DEVIATION_BPS: u64 = 2_000; // 20% max deviation per oracle
 pub const MIN_ORACLE_UPDATE_INTERVAL: i64 = 5;
 
 pub const RAFFLE_SEED: &[u8] = b"raffle";
+pub const PAYOUT_QUEUE_SEED: &[u8] = b"payout_queue";
+pub const TIMELOCK_SEED: &[u8] = b"timelock";
+pub const TIMELOCK_DELAY: i64 = 86_400; // 24 hours
 
 // Funding fee split (majority side pays, minority pays 0)
 pub const FUNDING_LP_BPS: u64 = 7_000; // 70% of funding → LP

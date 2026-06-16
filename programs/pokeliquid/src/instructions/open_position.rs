@@ -1,11 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
+use anchor_lang::solana_program::{program::invoke_signed, system_instruction};
+
 use crate::{
     constants::*,
     error::ErrorCode,
     events::{PositionOpened, ReferralFeeCredited},
-    state::{Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, Position, ProtocolState, ReferralAccount},
+    state::{Direction, LiquidityPool, MarginAccount, MarketState, OracleAccount, Position, ProtocolState, ReferralAccount, ReferralTracker},
 };
 
 #[derive(Accounts)]
@@ -32,6 +34,8 @@ pub struct OpenPosition<'info> {
 
     #[account(
         mut,
+        seeds = [MARKET_SEED, market_state.market_id_trimmed()],
+        bump = market_state.bump,
         constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
     )]
     pub market_state: Account<'info, MarketState>,
@@ -65,8 +69,8 @@ pub struct OpenPosition<'info> {
     // If provided, 10% of the fee goes to referrer.
 }
 
-pub fn handler(
-    ctx: Context<OpenPosition>,
+pub fn handler<'a>(
+    ctx: Context<'a, OpenPosition<'a>>,
     direction: Direction,
     collateral: u64,
     leverage: u8,
@@ -114,26 +118,22 @@ pub fn handler(
         }
     }
 
-    // Per-account per-market per-direction collateral cap ($350 USDC = 350_000_000)
-    let market_collateral_cap: u64 = 350_000_000;
-    let oracle_key = oracle.key();
-    let existing_market_collateral: u64 = ctx.accounts.margin_account.positions.iter()
-        .filter_map(|p| p.as_ref())
-        .filter(|p| p.oracle == oracle_key && p.direction == direction)
-        .map(|p| p.collateral)
-        .sum();
+    // Post-fee collateral for notional calculation
     let post_fee_collateral = collateral
         .checked_sub(
             collateral.checked_mul(protocol.fee_bps).ok_or(ErrorCode::MathOverflow)?
                 .checked_div(10_000).ok_or(ErrorCode::MathOverflow)?
         ).ok_or(ErrorCode::MathOverflow)?;
-    require!(
-        existing_market_collateral.checked_add(post_fee_collateral).ok_or(ErrorCode::MathOverflow)? <= market_collateral_cap,
-        ErrorCode::ExceedsMaxExposure
-    );
 
-    // Notional = collateral * leverage
+    // Notional = post-fee collateral * leverage (prevents slight over-leverage)
+    let fee_amount = collateral
+        .checked_mul(protocol.fee_bps)
+        .ok_or(ErrorCode::MathOverflow)?
+        .checked_div(10_000)
+        .ok_or(ErrorCode::MathOverflow)?;
     let notional = collateral
+        .checked_sub(fee_amount)
+        .ok_or(ErrorCode::MathOverflow)?
         .checked_mul(leverage as u64)
         .ok_or(ErrorCode::MathOverflow)?;
 
@@ -195,22 +195,98 @@ pub fn handler(
         .ok_or(ErrorCode::MathOverflow)?;
 
     // ── Referral fee ──────────────────────────────────────────────────────
-    // If a valid ReferralAccount is passed in remaining_accounts, credit
-    // 10% of fee_amount to the referrer (5% from platform + 5% from insurance).
-    // The USDC stays in fee_vault — referrer claims later via claim_referral.
+    // remaining_accounts layout (all optional):
+    //   [0] ReferralAccount (writable)
+    //   [1] ReferralTracker PDA (writable, may not exist yet)
+    //   [2] SystemProgram (for creating tracker if needed)
+    //
+    // Rate: admin-set fee_share_bps > 0 → use it
+    //       else auto-upgrade if unique_referrals >= 10 AND total_fees >= $100 → 20%
+    //       else default REFERRAL_FEE_BPS (10%)
+    // Deducted from insurance first, overflow from platform. LP untouched.
     let mut referral_portion: u64 = 0;
     if let Some(referral_info) = ctx.remaining_accounts.first() {
         if referral_info.is_writable && referral_info.owner == ctx.program_id {
-            let mut data = &referral_info.try_borrow_data()?[..];
-            if let Ok(mut referral) = ReferralAccount::try_deserialize(&mut data) {
+            // Deserialize referral — handle old accounts (114 bytes) missing new fields
+            let referral_opt = {
+                let data = referral_info.try_borrow_data()?;
+                let mut slice = &data[..];
+                ReferralAccount::try_deserialize(&mut slice).ok()
+            };
+            if let Some(mut referral) = referral_opt {
                 // Verify PDA and that referrer is not the trader
                 let (expected_pda, _) = Pubkey::find_program_address(
                     &[REFERRAL_SEED, referral.owner.as_ref()],
                     ctx.program_id,
                 );
                 if referral_info.key() == expected_pda && referral.owner != ctx.accounts.user.key() {
+                    // ── Unique user tracking via ReferralTracker PDA ──
+                    let mut is_new_user = false;
+                    if ctx.remaining_accounts.len() >= 3 {
+                        let tracker_info = &ctx.remaining_accounts[1];
+                        let system_info = &ctx.remaining_accounts[2];
+                        let trader_key = ctx.accounts.user.key();
+                        let referrer_key = referral.owner;
+
+                        let (expected_tracker, tracker_bump) = Pubkey::find_program_address(
+                            &[REFERRAL_TRACKER_SEED, referrer_key.as_ref(), trader_key.as_ref()],
+                            ctx.program_id,
+                        );
+
+                        if tracker_info.key() == expected_tracker && tracker_info.data_is_empty()
+                            && system_info.key() == anchor_lang::system_program::ID {
+                            // First time this trader uses this referral — create tracker
+                            let tracker_space = ReferralTracker::SPACE;
+                            let rent = anchor_lang::prelude::Rent::get()?;
+                            let lamports = rent.minimum_balance(tracker_space);
+                            let signer_seeds: &[&[u8]] = &[
+                                REFERRAL_TRACKER_SEED,
+                                referrer_key.as_ref(),
+                                trader_key.as_ref(),
+                                &[tracker_bump],
+                            ];
+
+                            invoke_signed(
+                                &system_instruction::create_account(
+                                    &trader_key,
+                                    &expected_tracker,
+                                    lamports,
+                                    tracker_space as u64,
+                                    ctx.program_id,
+                                ),
+                                &[
+                                    ctx.accounts.user.to_account_info(),
+                                    tracker_info.clone(),
+                                    system_info.clone(),
+                                ],
+                                &[signer_seeds],
+                            )?;
+
+                            // Write discriminator + bump
+                            let mut tracker_data = tracker_info.try_borrow_mut_data()?;
+                            let disc = ReferralTracker::DISCRIMINATOR;
+                            tracker_data[..8].copy_from_slice(&disc);
+                            tracker_data[8] = tracker_bump;
+
+                            is_new_user = true;
+                        }
+                    }
+
+                    // Determine effective fee share
+                    let effective_bps = if referral.fee_share_bps > 0 {
+                        // Admin override
+                        referral.fee_share_bps
+                    } else if referral.unique_referrals >= AUTO_UPGRADE_UNIQUE_REFS
+                        && referral.total_fees_generated >= AUTO_UPGRADE_FEES_THRESHOLD
+                    {
+                        // Auto-upgrade: 10 unique users + $100 fees → 20%
+                        AUTO_UPGRADE_FEE_SHARE_BPS
+                    } else {
+                        REFERRAL_FEE_BPS
+                    };
+
                     referral_portion = fee_amount
-                        .checked_mul(REFERRAL_FEE_BPS)
+                        .checked_mul(effective_bps)
                         .ok_or(ErrorCode::MathOverflow)?
                         .checked_div(10_000)
                         .ok_or(ErrorCode::MathOverflow)?;
@@ -224,16 +300,30 @@ pub fn handler(
                             .total_earned
                             .checked_add(referral_portion)
                             .ok_or(ErrorCode::MathOverflow)?;
-                        referral.total_referrals = referral
-                            .total_referrals
+                    }
+
+                    // Always update counters
+                    referral.total_referrals = referral
+                        .total_referrals
+                        .checked_add(1)
+                        .ok_or(ErrorCode::MathOverflow)?;
+                    referral.total_fees_generated = referral
+                        .total_fees_generated
+                        .checked_add(fee_amount)
+                        .ok_or(ErrorCode::MathOverflow)?;
+                    if is_new_user {
+                        referral.unique_referrals = referral
+                            .unique_referrals
                             .checked_add(1)
                             .ok_or(ErrorCode::MathOverflow)?;
+                    }
 
-                        // Write back to account
-                        let mut ref_data = referral_info.try_borrow_mut_data()?;
-                        let mut writer = &mut ref_data[..];
-                        referral.try_serialize(&mut writer)?;
+                    // Write back to account
+                    let mut ref_data = referral_info.try_borrow_mut_data()?;
+                    let mut writer = &mut ref_data[..];
+                    referral.try_serialize(&mut writer)?;
 
+                    if referral_portion > 0 {
                         emit!(ReferralFeeCredited {
                             referrer: referral.owner,
                             trader: ctx.accounts.user.key(),
@@ -245,11 +335,11 @@ pub fn handler(
         }
     }
 
-    // Deduct referral portion: half from insurance, half from platform
+    // Deduct referral portion: take from insurance first, overflow from platform
     if referral_portion > 0 {
-        let from_insurance = referral_portion / 2;
+        let from_insurance = referral_portion.min(insurance_portion);
         insurance_portion = insurance_portion.saturating_sub(from_insurance);
-        // The other half reduces platform's implicit share (stays in fee_vault anyway)
+        // Remainder implicitly reduces platform's share (stays in fee_vault anyway)
     }
 
     let seeds = &[PROTOCOL_SEED, &[protocol.bump]];
@@ -316,6 +406,23 @@ pub fn handler(
         sl_price,
         tp_price,
     });
+
+    // Fee is no longer user funds — decrement counter
+    ctx.accounts.protocol_state.total_user_collateral = ctx
+        .accounts
+        .protocol_state
+        .total_user_collateral
+        .saturating_sub(fee_amount);
+
+    // Track referral pending fees at protocol level
+    if referral_portion > 0 {
+        ctx.accounts.protocol_state.total_referral_pending = ctx
+            .accounts
+            .protocol_state
+            .total_referral_pending
+            .checked_add(referral_portion)
+            .ok_or(ErrorCode::MathOverflow)?;
+    }
 
     // Update global exposure
     let protocol = &mut ctx.accounts.protocol_state;

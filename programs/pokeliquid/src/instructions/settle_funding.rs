@@ -24,11 +24,17 @@ pub struct SettleFunding<'info> {
 
     #[account(
         mut,
+        seeds = [MARKET_SEED, market_state.market_id_trimmed()],
+        bump = market_state.bump,
         constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
     )]
     pub market_state: Box<Account<'info, MarketState>>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [MARGIN_SEED, margin_account.owner.as_ref()],
+        bump = margin_account.bump,
+    )]
     pub margin_account: Box<Account<'info, MarginAccount>>,
 
     #[account(
@@ -63,7 +69,6 @@ enum FundingAction {
     Settle {
         slot: usize,
         funding_owed: u64,
-        hours: u64,
         new_timestamp: i64,
     },
     LiquidateViaFunding {
@@ -76,9 +81,20 @@ enum FundingAction {
 }
 
 pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
+    require!(!ctx.accounts.protocol_state.is_paused, ErrorCode::ProtocolPaused);
+
     let now = Clock::get()?.unix_timestamp;
-    let oracle_price = ctx.accounts.oracle.price;
-    let oracle_key = ctx.accounts.oracle.key();
+
+    // Oracle freshness check — prevent funding drain on stale prices
+    let oracle = &ctx.accounts.oracle;
+    require!(
+        oracle.last_updated > 0
+            && now.saturating_sub(oracle.last_updated) <= oracle.staleness_threshold,
+        ErrorCode::PriceStale
+    );
+
+    let oracle_price = oracle.price;
+    let oracle_key = oracle.key();
 
     // Snapshot values we need (avoids holding immutable borrow)
     let market_long = ctx.accounts.market_state.long_open_interest;
@@ -127,8 +143,9 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
             continue;
         }
 
-        let hours_since = ((now.saturating_sub(position.last_funding_timestamp)) / 3600).max(0) as u64;
-        if hours_since < 1 {
+        let seconds_since = now.saturating_sub(position.last_funding_timestamp).max(0) as u64;
+        if seconds_since < 60 {
+            // Minimum 60 seconds between settlements to avoid spam
             actions.push(FundingAction::Skip);
             continue;
         }
@@ -146,14 +163,14 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
 
         let hourly_rate = base_rate.checked_add(skew_rate).ok_or(ErrorCode::MathOverflow)?;
 
-        let funding_owed = position
-            .notional
-            .checked_mul(hourly_rate)
+        // Proportional seconds-based funding
+        let funding_owed = (position.notional as u128)
+            .checked_mul(hourly_rate as u128)
             .ok_or(ErrorCode::MathOverflow)?
-            .checked_mul(hours_since)
+            .checked_mul(seconds_since as u128)
             .ok_or(ErrorCode::MathOverflow)?
-            .checked_div(FUNDING_RATE_SCALE)
-            .unwrap_or(0);
+            .checked_div(3600u128 * FUNDING_RATE_SCALE as u128)
+            .unwrap_or(0) as u64;
 
         if funding_owed == 0 {
             actions.push(FundingAction::Skip);
@@ -172,8 +189,7 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
             actions.push(FundingAction::Settle {
                 slot: i,
                 funding_owed,
-                hours: hours_since,
-                new_timestamp: position.last_funding_timestamp + (hours_since as i64 * 3600),
+                new_timestamp: now,
             });
         }
     }
@@ -189,7 +205,6 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
             FundingAction::Settle {
                 slot,
                 funding_owed,
-                hours,
                 new_timestamp,
             } => {
                 let pos = ctx.accounts.margin_account.positions[slot]
@@ -202,6 +217,13 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
                 pos.last_funding_timestamp = new_timestamp;
 
                 let new_collateral = pos.collateral;
+
+                // Funding reduces user claim
+                ctx.accounts.protocol_state.total_user_collateral = ctx
+                    .accounts
+                    .protocol_state
+                    .total_user_collateral
+                    .saturating_sub(funding_owed);
 
                 // Funding fee split: 30% LP, 20% insurance, rest platform
                 let funding_lp_portion = funding_owed
@@ -224,6 +246,20 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
                         .accumulated_fees
                         .checked_add(funding_lp_portion)
                         .ok_or(ErrorCode::MathOverflow)?;
+                    if ctx.accounts.liquidity_pool.total_shares > 0 {
+                        ctx.accounts.liquidity_pool.acc_fee_per_share = ctx
+                            .accounts
+                            .liquidity_pool
+                            .acc_fee_per_share
+                            .checked_add(
+                                (funding_lp_portion as u128)
+                                    .checked_mul(crate::state::FEE_PER_SHARE_PRECISION)
+                                    .ok_or(ErrorCode::MathOverflow)?
+                                    .checked_div(ctx.accounts.liquidity_pool.total_shares as u128)
+                                    .ok_or(ErrorCode::MathOverflow)?,
+                            )
+                            .ok_or(ErrorCode::MathOverflow)?;
+                    }
                 }
 
                 // Transfer insurance portion from fee_vault → insurance_fund
@@ -244,15 +280,14 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
                     user,
                     position_index: slot as u8,
                     funding_owed,
-                    hours_settled: hours,
+                    hours_settled: 0, // deprecated field, now seconds-based
                     new_collateral,
                     timestamp: now,
                 });
 
                 msg!(
-                    "Funding settled: slot={} hours={} funding={} new_collateral={}",
+                    "Funding settled: slot={} funding={} new_collateral={}",
                     slot,
-                    hours,
                     funding_owed,
                     new_collateral
                 );
@@ -267,6 +302,13 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
             } => {
                 // Clear position
                 ctx.accounts.margin_account.positions[slot] = None;
+
+                // Liquidated collateral is no longer user funds
+                ctx.accounts.protocol_state.total_user_collateral = ctx
+                    .accounts
+                    .protocol_state
+                    .total_user_collateral
+                    .saturating_sub(collateral_lost);
 
                 // Distribute collateral: 44% LP, 44% insurance, 12% platform (no liquidator reward)
                 let lp_portion = collateral_lost
@@ -288,6 +330,20 @@ pub fn handler(ctx: Context<SettleFunding>) -> Result<()> {
                         .accumulated_fees
                         .checked_add(lp_portion)
                         .ok_or(ErrorCode::MathOverflow)?;
+                    if ctx.accounts.liquidity_pool.total_shares > 0 {
+                        ctx.accounts.liquidity_pool.acc_fee_per_share = ctx
+                            .accounts
+                            .liquidity_pool
+                            .acc_fee_per_share
+                            .checked_add(
+                                (lp_portion as u128)
+                                    .checked_mul(crate::state::FEE_PER_SHARE_PRECISION)
+                                    .ok_or(ErrorCode::MathOverflow)?
+                                    .checked_div(ctx.accounts.liquidity_pool.total_shares as u128)
+                                    .ok_or(ErrorCode::MathOverflow)?,
+                            )
+                            .ok_or(ErrorCode::MathOverflow)?;
+                    }
                 }
 
                 if insurance_portion > 0 {

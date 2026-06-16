@@ -37,6 +37,8 @@ pub struct Liquidate<'info> {
 
     #[account(
         mut,
+        seeds = [MARKET_SEED, market_state.market_id_trimmed()],
+        bump = market_state.bump,
         constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
     )]
     pub market_state: Box<Account<'info, MarketState>>,
@@ -75,6 +77,8 @@ pub struct Liquidate<'info> {
 }
 
 pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Result<()> {
+    require!(!ctx.accounts.protocol_state.is_paused, ErrorCode::ProtocolPaused);
+
     let idx = position_index as usize;
     require!(idx < MAX_POSITIONS, ErrorCode::InvalidPositionIndex);
 
@@ -186,6 +190,13 @@ pub fn handler(ctx: Context<Liquidate>, _user: Pubkey, position_index: u8) -> Re
         );
         token::transfer(cpi_ctx, insurance_portion)?;
     }
+
+    // Liquidated collateral is no longer user funds
+    ctx.accounts.protocol_state.total_user_collateral = ctx
+        .accounts
+        .protocol_state
+        .total_user_collateral
+        .saturating_sub(collateral);
 
     // ── Clear position ────────────────────────────────────────────────────────
     let direction = position.direction.clone();

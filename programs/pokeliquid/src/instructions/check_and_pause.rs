@@ -22,6 +22,8 @@ pub struct CheckAndPause<'info> {
 
     /// Proves the oracle belongs to a real market (Anchor owner+discriminator check)
     #[account(
+        seeds = [MARKET_SEED, market_state.market_id_trimmed()],
+        bump = market_state.bump,
         constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
     )]
     pub market_state: Account<'info, MarketState>,

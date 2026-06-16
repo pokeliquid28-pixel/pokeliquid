@@ -152,7 +152,7 @@ pub mod pokeliquid {
         update_market_oracle::handler(ctx, market_id, price)
     }
 
-    /// Admin: update protocol parameters.
+    /// Admin: update protocol parameters (direct, no timelock — kept for pause/unpause emergencies).
     pub fn update_params(ctx: Context<UpdateProtocolParams>, params: ProtocolParams) -> Result<()> {
         update_params::handler(ctx, params)
     }
@@ -160,6 +160,31 @@ pub mod pokeliquid {
     /// Admin: withdraw USDC from the fee vault.
     pub fn withdraw_fees(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
         withdraw_fees::handler(ctx, amount)
+    }
+
+    /// Admin: initialize the timelock (one-time).
+    pub fn init_timelock(ctx: Context<InitTimelock>) -> Result<()> {
+        init_timelock::handler(ctx)
+    }
+
+    /// Admin: propose a timelocked parameter change (24h delay).
+    pub fn propose_params(ctx: Context<ProposeParams>, params: ProtocolParams) -> Result<()> {
+        propose_params::handler(ctx, params)
+    }
+
+    /// Permissionless: execute a pending param change after timelock expires.
+    pub fn execute_params(ctx: Context<ExecuteParams>) -> Result<()> {
+        execute_params::handler(ctx)
+    }
+
+    /// Admin: cancel all pending timelocked actions.
+    pub fn cancel_timelock(ctx: Context<CancelTimelock>) -> Result<()> {
+        cancel_timelock::handler(ctx)
+    }
+
+    /// Admin: propose a timelocked withdrawal (24h delay). vault_type: 0=fees, 1=insurance.
+    pub fn propose_withdrawal(ctx: Context<ProposeWithdrawal>, vault_type: u8, amount: u64) -> Result<()> {
+        propose_withdrawal::handler(ctx, vault_type, amount)
     }
 
     /// Admin: withdraw USDC from the insurance fund.
@@ -214,6 +239,16 @@ pub mod pokeliquid {
         prize_description: [u8; 64],
     ) -> Result<()> {
         record_raffle::handler(ctx, round, winner, total_entries, total_holders, winner_tickets, slot_hash_seed, prize_description)
+    }
+
+    /// Admin: initialize the payout queue (one-time).
+    pub fn init_payout_queue(ctx: Context<InitPayoutQueue>) -> Result<()> {
+        init_payout_queue::handler(ctx)
+    }
+
+    /// Permissionless: process the next pending payout from the queue.
+    pub fn process_payouts(ctx: Context<ProcessPayouts>) -> Result<()> {
+        process_payouts::handler(ctx)
     }
 
     /// Devnet helper: mint 1000 USDC to the caller (no auth required).

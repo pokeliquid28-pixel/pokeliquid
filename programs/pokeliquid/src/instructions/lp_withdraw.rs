@@ -68,14 +68,27 @@ pub fn handler(ctx: Context<LpWithdraw>, shares: u64) -> Result<()> {
     require!(lp.shares >= shares, ErrorCode::InsufficientShares);
     require!(pool.total_shares > 0, ErrorCode::MathOverflow);
 
-    // ── Auto-claim unclaimed fees before burning shares ──────────────────
-    let total_entitled = (lp.shares as u128)
-        .checked_mul(pool.accumulated_fees as u128)
-        .ok_or(ErrorCode::MathOverflow)?
-        .checked_div(pool.total_shares as u128)
-        .ok_or(ErrorCode::MathOverflow)? as u64;
-
-    let claimable = total_entitled.saturating_sub(lp.fees_claimed);
+    // ── Auto-claim unclaimed fees before burning shares (MasterChef) ────
+    let claimable = if pool.acc_fee_per_share > 0 {
+        let entitled = (lp.shares as u128)
+            .checked_mul(pool.acc_fee_per_share)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(crate::state::FEE_PER_SHARE_PRECISION)
+            .ok_or(ErrorCode::MathOverflow)?;
+        entitled.saturating_sub(lp.reward_debt) as u64
+    } else {
+        // Legacy: proportional share of unclaimed
+        let total_unclaimed = pool.accumulated_fees.saturating_sub(pool.total_fees_claimed);
+        if total_unclaimed == 0 || pool.total_shares == 0 {
+            0u64
+        } else {
+            (lp.shares as u128)
+                .checked_mul(total_unclaimed as u128)
+                .ok_or(ErrorCode::MathOverflow)?
+                .checked_div(pool.total_shares as u128)
+                .ok_or(ErrorCode::MathOverflow)? as u64
+        }
+    };
 
     let protocol_bump = ctx.accounts.protocol_state.bump;
     let seeds = &[PROTOCOL_SEED, &[protocol_bump]];
@@ -128,6 +141,15 @@ pub fn handler(ctx: Context<LpWithdraw>, shares: u64) -> Result<()> {
         ErrorCode::InsufficientPoolBalance
     );
 
+    // LP utilization cap: pool must retain enough to cover total user collateral
+    // (collateral locked in positions + free collateral in margin accounts)
+    let remaining_pool = pool.total_usdc.saturating_sub(usdc_out);
+    let user_collateral = ctx.accounts.protocol_state.total_user_collateral;
+    require!(
+        remaining_pool >= user_collateral,
+        ErrorCode::InsufficientPoolBalance
+    );
+
     let cpi_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.key(),
         Transfer {
@@ -143,17 +165,16 @@ pub fn handler(ctx: Context<LpWithdraw>, shares: u64) -> Result<()> {
     let lp = &mut ctx.accounts.lp_position;
     lp.shares = lp.shares.checked_sub(shares).ok_or(ErrorCode::MathOverflow)?;
 
-    // Adjust fees_claimed proportionally so remaining shares keep correct entitlement
+    // Reset reward_debt for remaining shares
     if lp.shares == 0 {
         lp.fees_claimed = 0;
+        lp.reward_debt = 0;
     } else {
-        // Scale fees_claimed down by the fraction of shares remaining
-        let old_shares = shares.checked_add(lp.shares).ok_or(ErrorCode::MathOverflow)?;
-        lp.fees_claimed = (lp.fees_claimed as u128)
-            .checked_mul(lp.shares as u128)
+        lp.reward_debt = (lp.shares as u128)
+            .checked_mul(ctx.accounts.liquidity_pool.acc_fee_per_share)
             .ok_or(ErrorCode::MathOverflow)?
-            .checked_div(old_shares as u128)
-            .ok_or(ErrorCode::MathOverflow)? as u64;
+            .checked_div(crate::state::FEE_PER_SHARE_PRECISION)
+            .ok_or(ErrorCode::MathOverflow)?;
     }
 
     // Update pool

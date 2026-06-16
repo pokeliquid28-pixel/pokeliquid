@@ -43,6 +43,14 @@ pub fn handler(ctx: Context<WithdrawInsurance>, amount: u64) -> Result<()> {
         ErrorCode::InsufficientVaultBalance
     );
 
+    // Reserve 10% of total OI as insurance buffer
+    let total_oi = ctx.accounts.protocol_state.total_long_exposure
+        .checked_add(ctx.accounts.protocol_state.total_short_exposure)
+        .ok_or(ErrorCode::MathOverflow)?;
+    let min_reserve = total_oi / 10; // 10% of OI
+    let remaining = ctx.accounts.insurance_fund.amount.saturating_sub(amount);
+    require!(remaining >= min_reserve, ErrorCode::InsuranceReserveViolation);
+
     msg!(
         "WARNING: Admin withdrawing {} USDC from insurance fund. Balance before: {}",
         amount,

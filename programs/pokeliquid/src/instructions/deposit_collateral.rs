@@ -13,10 +13,11 @@ pub struct DepositCollateral<'info> {
     pub user: Signer<'info>,
 
     #[account(
+        mut,
         seeds = [PROTOCOL_SEED],
         bump = protocol_state.bump,
     )]
-    pub protocol_state: Account<'info, ProtocolState>,
+    pub protocol_state: Box<Account<'info, ProtocolState>>,
 
     #[account(
         init_if_needed,
@@ -71,6 +72,14 @@ pub fn handler(ctx: Context<DepositCollateral>, amount: u64) -> Result<()> {
     }
     margin.collateral = margin
         .collateral
+        .checked_add(amount)
+        .ok_or(ErrorCode::MathOverflow)?;
+
+    // Track user funds in fee_vault
+    ctx.accounts.protocol_state.total_user_collateral = ctx
+        .accounts
+        .protocol_state
+        .total_user_collateral
         .checked_add(amount)
         .ok_or(ErrorCode::MathOverflow)?;
 

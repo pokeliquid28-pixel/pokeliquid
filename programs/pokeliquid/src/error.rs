@@ -12,7 +12,7 @@ pub enum ErrorCode {
     InvalidPositionIndex,
     #[msg("Leverage must be at least 1")]
     BelowMinLeverage,
-    #[msg("Leverage cannot exceed 10")]
+    #[msg("Leverage cannot exceed 25")]
     AboveMaxLeverage,
     #[msg("Position size below minimum")]
     BelowMinPositionSize,
@@ -58,4 +58,16 @@ pub enum ErrorCode {
     UsernameEmpty,
     #[msg("No referral fees to claim")]
     NoReferralFees,
+    #[msg("Fee share must be 0-3000 bps (0-30%)")]
+    InvalidFeeShare,
+    #[msg("Oracle updates too frequent")]
+    OracleUpdateTooFrequent,
+    #[msg("Insurance withdrawal exceeds safe reserve")]
+    InsuranceReserveViolation,
+    #[msg("First LP deposit must be at least 10 USDC")]
+    MinFirstDeposit,
+    #[msg("Payout queue is full")]
+    PayoutQueueFull,
+    #[msg("Parameter value out of allowed range")]
+    InvalidParam,
 }

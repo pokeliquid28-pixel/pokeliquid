@@ -33,7 +33,16 @@ pub struct UpdateOracle<'info> {
 pub fn handler(ctx: Context<UpdateOracle>, price: u64) -> Result<()> {
     require!(price > 0, ErrorCode::InvalidOraclePrice);
 
+    let now = Clock::get()?.unix_timestamp;
     let old_price = ctx.accounts.oracle.price;
+
+    // Minimum time between updates
+    if ctx.accounts.oracle.last_updated > 0 {
+        require!(
+            now.saturating_sub(ctx.accounts.oracle.last_updated) >= MIN_ORACLE_UPDATE_INTERVAL,
+            ErrorCode::OracleUpdateTooFrequent
+        );
+    }
 
     // Max deviation check (skip on first update when old_price is 0)
     if old_price > 0 {
@@ -45,8 +54,6 @@ pub fn handler(ctx: Context<UpdateOracle>, price: u64) -> Result<()> {
             .ok_or(ErrorCode::MathOverflow)?;
         require!(diff <= max_change, ErrorCode::OraclePriceDeviation);
     }
-
-    let now = Clock::get()?.unix_timestamp;
 
     let oracle = &mut ctx.accounts.oracle;
     oracle.price = price;

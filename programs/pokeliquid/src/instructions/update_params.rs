@@ -18,7 +18,10 @@ pub struct UpdateProtocolParams<'info> {
     )]
     pub protocol_state: Account<'info, ProtocolState>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = oracle.key() == protocol_state.oracle @ ErrorCode::MarketOracleMismatch,
+    )]
     pub oracle: Account<'info, OracleAccount>,
 
     #[account(
@@ -33,15 +36,19 @@ pub fn handler(ctx: Context<UpdateProtocolParams>, params: ProtocolParams) -> Re
     let state = &mut ctx.accounts.protocol_state;
 
     if let Some(v) = params.fee_bps {
+        require!(v <= 500, ErrorCode::InvalidParam); // max 5%
         state.fee_bps = v;
     }
     if let Some(v) = params.base_funding_rate_per_hour {
+        require!(v <= 10_000, ErrorCode::InvalidParam); // max 10% per hour
         state.base_funding_rate_per_hour = v;
     }
     if let Some(v) = params.skew_factor {
+        require!(v <= 100_000, ErrorCode::InvalidParam);
         state.skew_factor = v;
     }
     if let Some(v) = params.profit_cap_bps {
+        require!(v >= 5_000 && v <= 100_000, ErrorCode::InvalidParam); // 50%-1000%
         state.profit_cap_bps = v;
     }
     if let Some(v) = params.max_long_exposure {
@@ -67,12 +74,17 @@ pub fn handler(ctx: Context<UpdateProtocolParams>, params: ProtocolParams) -> Re
         state.auto_pause_threshold = v;
     }
     if let Some(v) = params.insurance_fund_bps {
+        require!(v <= 5_000, ErrorCode::InvalidParam); // max 50%
         state.insurance_fund_bps = v;
     }
     if let Some(v) = params.lp_fee_bps {
+        require!(v <= 8_000, ErrorCode::InvalidParam); // max 80%
         ctx.accounts.liquidity_pool.lp_fee_bps = v;
     }
-
+    if let Some(v) = params.admin {
+        msg!("Pending admin transfer to {}", v);
+        state.pending_admin = Some(v);
+    }
     msg!("Protocol params updated");
     Ok(())
 }

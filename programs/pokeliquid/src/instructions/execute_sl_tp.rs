@@ -40,6 +40,8 @@ pub struct ExecuteSlTp<'info> {
 
     #[account(
         mut,
+        seeds = [MARKET_SEED, market_state.market_id_trimmed()],
+        bump = market_state.bump,
         constraint = market_state.oracle == oracle.key() @ ErrorCode::MarketOracleMismatch,
     )]
     pub market_state: Box<Account<'info, MarketState>>,
@@ -116,11 +118,10 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
     // ── Check SL/TP trigger conditions ─────────────────────────────────────
     let close_reason = determine_trigger(&position.direction, current_price, position.sl_price, position.tp_price)?;
 
-    // ── Funding (per-market OI) ────────────────────────────────────────────
+    // ── Funding (per-market OI, seconds-based) ─────────────────────────────
     let protocol = &ctx.accounts.protocol_state;
     let market = &ctx.accounts.market_state;
-    // Use last_funding_timestamp to avoid double-charging already-settled hours
-    let hours_open = ((now.saturating_sub(position.last_funding_timestamp)) / 3600).max(0) as u64;
+    let seconds_elapsed = now.saturating_sub(position.last_funding_timestamp).max(0) as u64;
 
     let on_majority_side = match position.direction {
         Direction::Long => market.long_open_interest >= market.short_open_interest,
@@ -128,7 +129,7 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
     };
 
     // Minority side pays 0 funding
-    let funding_owed = if !on_majority_side || hours_open == 0 {
+    let funding_owed = if !on_majority_side || seconds_elapsed == 0 {
         0u64
     } else {
         let total_exposure = market
@@ -154,14 +155,13 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
             .checked_add(skew_rate)
             .ok_or(ErrorCode::MathOverflow)?;
 
-        position
-            .notional
-            .checked_mul(hourly_rate)
+        (position.notional as u128)
+            .checked_mul(hourly_rate as u128)
             .ok_or(ErrorCode::MathOverflow)?
-            .checked_mul(hours_open)
+            .checked_mul(seconds_elapsed as u128)
             .ok_or(ErrorCode::MathOverflow)?
-            .checked_div(FUNDING_RATE_SCALE)
-            .unwrap_or(0)
+            .checked_div(3600u128 * FUNDING_RATE_SCALE as u128)
+            .unwrap_or(0) as u64
     };
 
     // ── Raw PnL ────────────────────────────────────────────────────────────
@@ -230,6 +230,20 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
             .accumulated_fees
             .checked_add(total_lp)
             .ok_or(ErrorCode::MathOverflow)?;
+        if ctx.accounts.liquidity_pool.total_shares > 0 {
+            ctx.accounts.liquidity_pool.acc_fee_per_share = ctx
+                .accounts
+                .liquidity_pool
+                .acc_fee_per_share
+                .checked_add(
+                    (total_lp as u128)
+                        .checked_mul(crate::state::FEE_PER_SHARE_PRECISION)
+                        .ok_or(ErrorCode::MathOverflow)?
+                        .checked_div(ctx.accounts.liquidity_pool.total_shares as u128)
+                        .ok_or(ErrorCode::MathOverflow)?,
+                )
+                .ok_or(ErrorCode::MathOverflow)?;
+        }
     }
 
     // ── Settlement ─────────────────────────────────────────────────────────
@@ -278,24 +292,31 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
     }
 
     // ── PnL USDC movement between LP vault and fee vault ───────────────────
+    let mut pnl_shortfall: u64 = 0;
     if capped_pnl > 0 {
-        // Trader won: LP pays the profit — transfer from lp_vault → fee_vault
         let pnl_amount = capped_pnl as u64;
-        let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.key(),
-            Transfer {
-                from: ctx.accounts.lp_vault.to_account_info(),
-                to: ctx.accounts.fee_vault.to_account_info(),
-                authority: ctx.accounts.protocol_state.to_account_info(),
-            },
-            signer,
-        );
-        token::transfer(cpi_ctx, pnl_amount)?;
-        ctx.accounts.liquidity_pool.total_usdc = ctx
-            .accounts
-            .liquidity_pool
-            .total_usdc
-            .saturating_sub(pnl_amount);
+        let lp_available = ctx.accounts.lp_vault.amount;
+        let transfer_amount = pnl_amount.min(lp_available);
+        if transfer_amount > 0 {
+            let cpi_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.key(),
+                Transfer {
+                    from: ctx.accounts.lp_vault.to_account_info(),
+                    to: ctx.accounts.fee_vault.to_account_info(),
+                    authority: ctx.accounts.protocol_state.to_account_info(),
+                },
+                signer,
+            );
+            token::transfer(cpi_ctx, transfer_amount)?;
+            ctx.accounts.liquidity_pool.total_usdc = ctx
+                .accounts
+                .liquidity_pool
+                .total_usdc
+                .saturating_sub(transfer_amount);
+        }
+        if transfer_amount < pnl_amount {
+            pnl_shortfall = pnl_amount - transfer_amount;
+        }
     } else if capped_pnl < 0 {
         // Trader lost: LP captures the loss — transfer from fee_vault → lp_vault
         let loss_amount = (-capped_pnl) as u64;
@@ -317,13 +338,35 @@ pub fn handler(ctx: Context<ExecuteSlTp>, _user: Pubkey, position_index: u8) -> 
             .ok_or(ErrorCode::MathOverflow)?;
     }
 
+    // Reduce settlement by any LP shortfall
+    let actual_settlement = settlement.saturating_sub(pnl_shortfall);
+
+    if pnl_shortfall > 0 {
+        msg!("PAYOUT_SHORTFALL user={} amount={}", ctx.accounts.margin_account.owner, pnl_shortfall);
+    }
+
     // Transfer settlement to margin account's free collateral
-    // (user withdraws later — no user_token_account needed)
     let margin = &mut ctx.accounts.margin_account;
     margin.collateral = margin
         .collateral
-        .checked_add(settlement)
+        .checked_add(actual_settlement)
         .ok_or(ErrorCode::MathOverflow)?;
+
+    // Update user collateral counter
+    if actual_settlement >= position.collateral {
+        ctx.accounts.protocol_state.total_user_collateral = ctx
+            .accounts
+            .protocol_state
+            .total_user_collateral
+            .checked_add(actual_settlement - position.collateral)
+            .ok_or(ErrorCode::MathOverflow)?;
+    } else {
+        ctx.accounts.protocol_state.total_user_collateral = ctx
+            .accounts
+            .protocol_state
+            .total_user_collateral
+            .saturating_sub(position.collateral - actual_settlement);
+    }
 
     // ── Clear position ─────────────────────────────────────────────────────
     let direction = position.direction.clone();

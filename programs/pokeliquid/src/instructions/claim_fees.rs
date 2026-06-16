@@ -59,14 +59,31 @@ pub fn handler(ctx: Context<ClaimFees>) -> Result<()> {
     require!(pool.total_shares > 0, ErrorCode::NoFeesToClaim);
     require!(lp.shares > 0, ErrorCode::NoFeesToClaim);
 
-    // User's proportional share of accumulated fees
-    let total_entitled = (lp.shares as u128)
-        .checked_mul(pool.accumulated_fees as u128)
-        .ok_or(ErrorCode::MathOverflow)?
-        .checked_div(pool.total_shares as u128)
-        .ok_or(ErrorCode::MathOverflow)? as u64;
+    // MasterChef-style: claimable = shares * acc_fee_per_share / PRECISION - reward_debt
+    // Migration: if acc_fee_per_share == 0 but accumulated_fees > 0, this is a pre-upgrade
+    // account. Fall back to legacy calculation but cap at (accumulated_fees - total_fees_claimed)
+    // proportional share to avoid over-claiming.
+    let claimable = if pool.acc_fee_per_share > 0 {
+        let entitled = (lp.shares as u128)
+            .checked_mul(pool.acc_fee_per_share)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(crate::state::FEE_PER_SHARE_PRECISION)
+            .ok_or(ErrorCode::MathOverflow)?;
+        entitled.saturating_sub(lp.reward_debt) as u64
+    } else {
+        // Legacy path: proportional share of unclaimed fees only
+        let total_unclaimed = pool.accumulated_fees.saturating_sub(pool.total_fees_claimed);
+        if total_unclaimed == 0 {
+            0u64
+        } else {
+            (lp.shares as u128)
+                .checked_mul(total_unclaimed as u128)
+                .ok_or(ErrorCode::MathOverflow)?
+                .checked_div(pool.total_shares as u128)
+                .ok_or(ErrorCode::MathOverflow)? as u64
+        }
+    };
 
-    let claimable = total_entitled.saturating_sub(lp.fees_claimed);
     require!(claimable > 0, ErrorCode::NoFeesToClaim);
 
     // Cap at available vault balance
@@ -88,9 +105,16 @@ pub fn handler(ctx: Context<ClaimFees>) -> Result<()> {
     );
     token::transfer(cpi_ctx, actual_claim)?;
 
-    // Update LP position
+    // Update LP position: set reward_debt to current entitlement
     let lp = &mut ctx.accounts.lp_position;
     lp.fees_claimed = lp.fees_claimed.checked_add(actual_claim).ok_or(ErrorCode::MathOverflow)?;
+    if pool.acc_fee_per_share > 0 {
+        lp.reward_debt = (lp.shares as u128)
+            .checked_mul(pool.acc_fee_per_share)
+            .ok_or(ErrorCode::MathOverflow)?
+            .checked_div(crate::state::FEE_PER_SHARE_PRECISION)
+            .ok_or(ErrorCode::MathOverflow)?;
+    }
 
     // Track total claimed across all LPs for fee reservation
     let pool = &mut ctx.accounts.liquidity_pool;

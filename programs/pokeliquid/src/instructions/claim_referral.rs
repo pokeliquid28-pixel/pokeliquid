@@ -14,6 +14,7 @@ pub struct ClaimReferral<'info> {
     pub user: Signer<'info>,
 
     #[account(
+        mut,
         seeds = [PROTOCOL_SEED],
         bump = protocol_state.bump,
     )]
@@ -70,6 +71,13 @@ pub fn handler(ctx: Context<ClaimReferral>) -> Result<()> {
     // Update referral account
     let referral = &mut ctx.accounts.referral_account;
     referral.pending_fees = 0;
+
+    // Decrement protocol-level referral reserve
+    ctx.accounts.protocol_state.total_referral_pending = ctx
+        .accounts
+        .protocol_state
+        .total_referral_pending
+        .saturating_sub(amount);
 
     emit!(ReferralClaimed {
         user: ctx.accounts.user.key(),

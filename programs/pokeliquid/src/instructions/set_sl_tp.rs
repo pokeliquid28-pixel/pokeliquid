@@ -41,19 +41,19 @@ pub fn handler(
     require!(margin.positions[idx].is_some(), ErrorCode::NoOpenPosition);
 
     let position = margin.positions[idx].as_ref().unwrap();
-    let entry = position.entry_price;
+    let current_price = ctx.accounts.oracle.price;
     let direction = position.direction.clone();
 
-    // Validate SL price
+    // Validate SL price — allow between entry and current price (enables trailing stops)
     if let Some(sl) = sl_price {
         match direction {
             Direction::Long => {
-                // SL must be below entry for long
-                require!(sl < entry, ErrorCode::InvalidStopLoss);
+                // SL must be below current price for long
+                require!(sl < current_price, ErrorCode::InvalidStopLoss);
             }
             Direction::Short => {
-                // SL must be above entry for short
-                require!(sl > entry, ErrorCode::InvalidStopLoss);
+                // SL must be above current price for short
+                require!(sl > current_price, ErrorCode::InvalidStopLoss);
             }
         }
     }
@@ -62,12 +62,12 @@ pub fn handler(
     if let Some(tp) = tp_price {
         match direction {
             Direction::Long => {
-                // TP must be above entry for long
-                require!(tp > entry, ErrorCode::InvalidTakeProfit);
+                // TP must be above current price for long
+                require!(tp > current_price, ErrorCode::InvalidTakeProfit);
             }
             Direction::Short => {
-                // TP must be below entry for short
-                require!(tp < entry, ErrorCode::InvalidTakeProfit);
+                // TP must be below current price for short
+                require!(tp < current_price, ErrorCode::InvalidTakeProfit);
             }
         }
     }
