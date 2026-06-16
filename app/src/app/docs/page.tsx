@@ -393,6 +393,15 @@ Short PnL = notional * (entry_price - exit_price) / entry_price`}</Code>
             <P>
               A 2% close fee is deducted. Profit is capped at the profit cap (500%, or 50,000 bps).
               The settlement amount (collateral + PnL - fees) is transferred from/to the fee vault.
+              There is no collateral cap per position — size is only bounded by the per-market OI limit.
+            </P>
+
+            <H3>FIFO Payout Queue</H3>
+            <P>
+              If a winning trade exceeds the LP vault&apos;s available balance, the trader still closes their position.
+              They receive whatever USDC the LP vault can cover immediately, and the remaining amount is logged on-chain
+              as a shortfall. A permissionless <code>process_payouts</code> instruction processes the queue in FIFO order
+              as fees and liquidations replenish the LP vault. Traders always get paid — the only variable is timing.
             </P>
 
             <H3>Stop Loss / Take Profit</H3>
